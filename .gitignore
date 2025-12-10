@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Environment variables (ห้ามหลุดไป GitHub เด็ดขาด)
+.env
+.env.local
+.env.*
+
+# Next.js build output
+.next/
+out/
+
+# Backend build output
+dist/
+
+# System files
+.DS_Store
+*.log

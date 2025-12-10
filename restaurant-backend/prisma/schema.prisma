@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Table {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique // เช่น T1, T2
+  qrCode    String?  // URL หรือ Token
+  isOccupied Boolean @default(false)
+  orders    Order[]
+}
+
+model Category {
+  id    Int    @id @default(autoincrement())
+  name  String
+  menus Menu[]
+}
+
+model Menu {
+  id          Int      @id @default(autoincrement())
+  nameTH      String
+  nameEN      String
+  description String?
+  price       Decimal  @db.Decimal(10, 2)
+  imageUrl    String?
+  isAvailable Boolean  @default(true)
+  categoryId  Int
+  category    Category @relation(fields: [categoryId], references: [id])
+  orderItems  OrderItem[]
+}
+
+model Order {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  status      OrderStatus @default(PENDING)
+  totalPrice  Decimal  @db.Decimal(10, 2)
+  tableId     Int
+  table       Table    @relation(fields: [tableId], references: [id])
+  items       OrderItem[]
+}
+
+model OrderItem {
+  id        Int    @id @default(autoincrement())
+  quantity  Int
+  note      String?
+  menuId    Int
+  menu      Menu   @relation(fields: [menuId], references: [id])
+  orderId   Int
+  order     Order  @relation(fields: [orderId], references: [id])
+}
+
+enum OrderStatus {
+  PENDING
+  COOKING
+  SERVED
+  COMPLETED
+  CANCELLED
+}
