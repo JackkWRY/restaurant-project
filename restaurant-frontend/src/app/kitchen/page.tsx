@@ -51,6 +51,28 @@ export default function KitchenPage() {
     };
   }, []);
 
+  // --- ส่วนที่เพิ่มใหม่: ฟังก์ชันอัปเดตสถานะออเดอร์ ---
+  const handleUpdateStatus = async (orderId: number, newStatus: string) => {
+    try {
+      // 1. ยิง API ไปบอก Backend ว่า "เสิร์ฟแล้ว" (PATCH)
+      const res = await fetch(`http://localhost:3000/api/orders/${orderId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!res.ok) throw new Error('Failed to update');
+
+      // 2. ถ้าสำเร็จ ให้ลบออเดอร์นั้นออกจากหน้าจอทันที
+      setOrders((prev) => prev.filter((o) => o.id !== orderId));
+
+    } catch (error) {
+      console.error(error);
+      alert('เกิดข้อผิดพลาดในการอัปเดตสถานะ');
+    }
+  };
+  // ------------------------------------------------
+
   return (
     <main className="p-6 min-h-screen bg-slate-900 text-white">
       <h1 className="text-3xl font-bold mb-8 flex items-center gap-3">
@@ -90,11 +112,13 @@ export default function KitchenPage() {
                     </li>
                   ))}
                 </ul>
+                
+                {/* แก้ไขปุ่มกดให้เรียกฟังก์ชันจริง */}
                 <button 
                     className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white py-2 rounded font-bold transition-colors"
-                    onClick={() => alert('ทำเสร็จแล้ว (Mockup)')}
+                    onClick={() => handleUpdateStatus(order.id, 'SERVED')}
                 >
-                    เสร็จสิ้น
+                    เสร็จสิ้น (เสิร์ฟแล้ว)
                 </button>
               </CardContent>
             </Card>

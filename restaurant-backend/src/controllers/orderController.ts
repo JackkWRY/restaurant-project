@@ -56,3 +56,27 @@ export const createOrder = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to create order' });
   }
 };
+
+export const updateOrderStatus = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params; // รับ id จาก URL (เช่น /orders/5/status)
+    const { status } = req.body; // รับสถานะใหม่จาก body
+
+    // อัปเดตข้อมูลใน DB
+    const updatedOrder = await prisma.order.update({
+      where: { id: Number(id) },
+      data: { status: status },
+    });
+
+    // ส่งสัญญาณบอกทุกคนว่าออเดอร์นี้เปลี่ยนสถานะแล้วนะ (Optional: เผื่อหน้าลูกค้าอยากรู้)
+    const io = req.app.get('io');
+    io.emit('order_status_updated', updatedOrder);
+    
+    console.log(`✅ Order #${id} updated to ${status}`);
+    res.json({ status: 'success', data: updatedOrder });
+
+  } catch (error) {
+    console.error('Update Status Error:', error);
+    res.status(500).json({ error: 'Failed to update status' });
+  }
+};
