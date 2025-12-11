@@ -1,10 +1,9 @@
 import { Suspense } from "react";
-import { QrCode } from "lucide-react";
+import { QrCode, Lock } from "lucide-react"; 
 import MenuItem from "@/components/MenuItem"; 
 import FloatingCart from "@/components/FloatingCart"; 
 import TableDetector from "@/components/TableDetector"; 
 
-// ... (Interface Menu, Category, ApiResponse เหมือนเดิม) ...
 interface Menu {
   id: number;
   nameTH: string;
@@ -23,7 +22,6 @@ interface ApiResponse {
   data: Category[];
 }
 
-// ฟังก์ชันดึงข้อมูล (เหมือนเดิม)
 async function getMenus() {
   try {
     const res = await fetch('http://localhost:3000/api/menus', { cache: 'no-store' });
@@ -35,6 +33,19 @@ async function getMenus() {
   }
 }
 
+// ✅ ฟังก์ชันเช็คสถานะโต๊ะ
+async function getTableStatus(tableId: string) {
+    try {
+        const res = await fetch(`http://localhost:3000/api/tables/${tableId}`, { cache: 'no-store' });
+        if (!res.ok) return null;
+        const json = await res.json();
+        return json.data; 
+    } catch (error) {
+        console.error("Error fetching table status:", error); // ✅ เพิ่มบรรทัดนี้ (ใช้ตัวแปร error แล้ว)
+        return null;
+    }
+}
+
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
@@ -43,6 +54,7 @@ export default async function Home(props: Props) {
   const searchParams = await props.searchParams;
   const tableId = searchParams.tableId;
 
+  // 1. GUARD: ไม่มีเลขโต๊ะ -> ให้สแกน QR
   if (!tableId) {
     return (
       <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-slate-50 text-center">
@@ -55,14 +67,33 @@ export default async function Home(props: Props) {
             เพื่อระบุโต๊ะและเริ่มสั่งอาหาร <br/>
             โปรดสแกน QR Code ที่อยู่บนโต๊ะของคุณ
           </p>
-          <div className="text-xs text-slate-400 border-t pt-4 w-full">
-            Restaurant Web App
-          </div>
         </div>
       </main>
     );
   }
 
+  // 2. GUARD: เช็คสถานะโต๊ะจาก Backend
+  const table = await getTableStatus(tableId as string);
+  
+  // ถ้าหาโต๊ะไม่เจอ หรือ โต๊ะปิด (isAvailable = false)
+  if (!table || !table.isAvailable) {
+      return (
+        <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-slate-50 text-center">
+            <div className="bg-white p-8 rounded-2xl shadow-xl flex flex-col items-center max-w-sm w-full border-t-4 border-red-500">
+            <div className="bg-red-50 p-4 rounded-full mb-6">
+                <Lock size={64} className="text-red-500" />
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900 mb-2">โต๊ะนี้ปิดให้บริการ</h1>
+            <p className="text-slate-500 mb-6">
+                ขออภัย โต๊ะหมายเลข {tableId} ไม่สามารถสั่งอาหารได้ในขณะนี้ <br/>
+                กรุณาติดต่อพนักงาน
+            </p>
+            </div>
+        </main>
+      );
+  }
+
+  // --- ถ้าโต๊ะเปิดใช้งานปกติ ---
   const response = await getMenus();
   const categories = response?.data || [];
 
@@ -76,7 +107,7 @@ export default async function Home(props: Props) {
       <header className="mb-6 text-center mt-4">
         <h1 className="text-3xl font-bold text-slate-900">ร้านอาหารตามสั่ง 🍳</h1>
         <p className="text-slate-500 text-sm">
-          โต๊ะ: <span className="font-bold text-green-600 text-lg">{tableId}</span> | ยินดีต้อนรับ
+          โต๊ะ: <span className="font-bold text-green-600 text-lg">{table?.name || tableId}</span> | ยินดีต้อนรับ
         </p>
       </header>
       

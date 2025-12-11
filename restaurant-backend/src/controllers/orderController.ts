@@ -5,11 +5,29 @@ export const createOrder = async (req: Request, res: Response) => {
   try {
     const { tableId, items } = req.body;
 
+    // 1. Validate ข้อมูลพื้นฐาน
     if (!tableId || !items || items.length === 0) {
       res.status(400).json({ error: 'Missing tableId or items' });
       return;
     }
 
+    // ✅ 2. (เพิ่มใหม่) เช็คว่าโต๊ะมีอยู่จริง และ "เปิดให้บริการ" อยู่หรือไม่
+    const table = await prisma.table.findUnique({
+      where: { id: Number(tableId) }
+    });
+
+    if (!table) {
+      res.status(404).json({ error: 'Table not found' });
+      return;
+    }
+
+    if (!table.isAvailable) {
+      res.status(400).json({ error: 'This table is currently closed.' });
+      return;
+    }
+    // -------------------------------------------------------------
+
+    // 3. คำนวณราคา
     let totalPrice = 0;
     for (const item of items) {
       const menu = await prisma.menu.findUnique({ where: { id: item.id } });
@@ -18,7 +36,7 @@ export const createOrder = async (req: Request, res: Response) => {
       }
     }
 
-    // สร้างออเดอร์
+    // 4. สร้างออเดอร์
     const newOrder = await prisma.order.create({
       data: {
         tableId: Number(tableId),
@@ -34,20 +52,16 @@ export const createOrder = async (req: Request, res: Response) => {
       },
       include: {
         items: {
-          include: { menu: true } // *สำคัญ: พ่วงชื่อเมนูมาด้วย เพื่อให้ครัวอ่านรู้เรื่อง
+          include: { menu: true } 
         }, 
-        table: true // พ่วงชื่อโต๊ะมาด้วย
+        table: true 
       },
     });
 
-    // --- ส่วนที่เพิ่มมา (Socket.io Emit) ---
-    // ดึงตัวแปร io ที่เราฝากไว้ใน server.ts
+    // 5. Socket.io Emit
     const io = req.app.get('io');
-    
-    // ส่งสัญญาณชื่อ 'new_order' พร้อมข้อมูลออเดอร์ไปให้ทุกคน
     io.emit('new_order', newOrder);
     console.log(`📣 Emitted 'new_order' event for Order #${newOrder.id}`);
-    // ------------------------------------
 
     res.status(201).json({ status: 'success', data: newOrder });
 
@@ -59,16 +73,14 @@ export const createOrder = async (req: Request, res: Response) => {
 
 export const updateOrderStatus = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params; // รับ id จาก URL (เช่น /orders/5/status)
-    const { status } = req.body; // รับสถานะใหม่จาก body
+    const { id } = req.params; 
+    const { status } = req.body; 
 
-    // อัปเดตข้อมูลใน DB
     const updatedOrder = await prisma.order.update({
       where: { id: Number(id) },
       data: { status: status },
     });
 
-    // ส่งสัญญาณบอกทุกคนว่าออเดอร์นี้เปลี่ยนสถานะแล้วนะ (Optional: เผื่อหน้าลูกค้าอยากรู้)
     const io = req.app.get('io');
     io.emit('order_status_updated', updatedOrder);
     

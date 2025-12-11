@@ -27,7 +27,8 @@ export const getTablesStatus = async (req: Request, res: Response) => {
         name: table.name,
         isOccupied: table.orders.length > 0, // ถ้ามีออเดอร์ค้าง แปลว่าไม่ว่าง
         totalAmount: totalAmount,
-        activeOrders: table.orders.length // จำนวนออเดอร์ที่ค้างอยู่
+        activeOrders: table.orders.length, // จำนวนออเดอร์ที่ค้างอยู่
+        isAvailable: table.isAvailable // ✅ เพิ่มบรรทัดนี้ครับ (ส่งค่าสถานะเปิด-ปิดไป)
       };
     });
 

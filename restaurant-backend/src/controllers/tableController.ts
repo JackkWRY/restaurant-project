@@ -79,3 +79,37 @@ export const deleteTable = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to delete table' });
   }
 };
+
+// 4. เปิด-ปิดโต๊ะ
+export const toggleAvailability = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { isAvailable } = req.body; // รับค่า true/false จากหน้าบ้าน
+
+    const updatedTable = await prisma.table.update({
+      where: { id: Number(id) },
+      data: { isAvailable }
+    });
+
+    res.json({ status: 'success', data: updatedTable });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update availability' });
+  }
+};
+
+// 5. ดึงข้อมูลโต๊ะเดี่ยว (เพื่อให้ลูกค้าเช็คสถานะตอนสแกน)
+export const getTableById = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const table = await prisma.table.findUnique({ where: { id: Number(id) } });
+
+    if (!table) {
+      res.status(404).json({ error: 'Table not found' });
+      return;
+    }
+    
+    res.json({ status: 'success', data: table });
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching table' });
+  }
+};
