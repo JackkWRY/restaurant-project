@@ -7,6 +7,7 @@ import { Server } from 'socket.io';       // 2. นำเข้า socket.io
 import prisma from './prisma.js';
 import menuRoutes from './routes/menuRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
+import staffRoutes from './routes/staffRoutes.js';
 
 dotenv.config();
 
@@ -43,6 +44,7 @@ io.on('connection', (socket) => {
 // --- Register Routes ---
 app.use('/api', menuRoutes);
 app.use('/api', orderRoutes);
+app.use('/api', staffRoutes);
 
 // Home Route
 app.get('/', (req: Request, res: Response) => {
