@@ -8,6 +8,7 @@ import prisma from './prisma.js';
 import menuRoutes from './routes/menuRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import staffRoutes from './routes/staffRoutes.js';
+import tableRoutes from './routes/tableRoutes.js';
 
 dotenv.config();
 
@@ -45,6 +46,7 @@ io.on('connection', (socket) => {
 app.use('/api', menuRoutes);
 app.use('/api', orderRoutes);
 app.use('/api', staffRoutes);
+app.use('/api', tableRoutes);
 
 // Home Route
 app.get('/', (req: Request, res: Response) => {
