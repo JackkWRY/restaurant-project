@@ -28,7 +28,7 @@ export const getTablesStatus = async (req: Request, res: Response) => {
         isOccupied: table.orders.length > 0, // ถ้ามีออเดอร์ค้าง แปลว่าไม่ว่าง
         totalAmount: totalAmount,
         activeOrders: table.orders.length, // จำนวนออเดอร์ที่ค้างอยู่
-        isAvailable: table.isAvailable // ✅ เพิ่มบรรทัดนี้ครับ (ส่งค่าสถานะเปิด-ปิดไป)
+        isAvailable: table.isAvailable // ✅ ส่งค่าสถานะเปิด-ปิดไป
       };
     });
 
@@ -44,8 +44,7 @@ export const closeTable = async (req: Request, res: Response) => {
   try {
     const { id } = req.params; // รับ Table ID
 
-    // อัปเดตทุกออเดอร์ในโต๊ะนี้ ให้เป็นสถานะ COMPLETED (จ่ายเงินแล้ว)
-    // เฉพาะอันที่ยังไม่ Cancel และยังไม่ Complete
+    // 1. อัปเดตทุกออเดอร์ในโต๊ะนี้ ให้เป็นสถานะ COMPLETED (จ่ายเงินแล้ว)
     await prisma.order.updateMany({
       where: {
         tableId: Number(id),
@@ -54,11 +53,14 @@ export const closeTable = async (req: Request, res: Response) => {
       data: { status: 'COMPLETED' }
     });
 
-    // (Optional) ถ้ามีการใช้ Flag isOccupied ในตาราง Table ก็อัปเดตตรงนี้ด้วย
-    // await prisma.table.update({ where: { id: Number(id) }, data: { isOccupied: false } });
+    // 2. สั่งปิดโต๊ะ (Turn OFF) อัตโนมัติทันทีหลังเช็คบิล
+    await prisma.table.update({
+      where: { id: Number(id) },
+      data: { isAvailable: false } 
+    });
 
-    console.log(`💰 Table ${id} closed and paid.`);
-    res.json({ status: 'success', message: 'Table closed successfully' });
+    console.log(`💰 Table ${id} closed and paid. Auto-OFF triggered.`);
+    res.json({ status: 'success', message: 'Table closed and turned off' });
 
   } catch (error) {
     console.error(error);

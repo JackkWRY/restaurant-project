@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
-import { Pencil, Trash2, Plus, X, Check } from "lucide-react"; // เพิ่ม icon Power
+import { Pencil, Trash2, Plus, X, Check } from "lucide-react"; 
 
 interface TableStatus {
   id: number;
@@ -10,21 +10,19 @@ interface TableStatus {
   isOccupied: boolean;
   totalAmount: number;
   activeOrders: number;
-  isAvailable: boolean; // ✅ เพิ่มค่านี้
+  isAvailable: boolean;
 }
 
 export default function StaffPage() {
   const [tables, setTables] = useState<TableStatus[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // State สำหรับโหมดจัดการ
   const [isEditingMode, setIsEditingMode] = useState(false);
   const [newTableName, setNewTableName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
   const fetchTables = async () => {
     try {
-      // setLoading(true); // ปิด loading ชั่วคราวเพื่อให้รีเฟรชเนียนๆ ไม่กระพริบ
       const res = await fetch('http://localhost:3000/api/staff/tables');
       const data = await res.json();
       if (data.status === 'success') {
@@ -39,7 +37,7 @@ export default function StaffPage() {
 
   useEffect(() => {
     fetchTables();
-    const interval = setInterval(fetchTables, 5000); // เร็วขึ้นหน่อยเป็น 5 วิ
+    const interval = setInterval(fetchTables, 5000); 
     return () => clearInterval(interval);
   }, []);
 
@@ -48,7 +46,7 @@ export default function StaffPage() {
     try {
       const res = await fetch(`http://localhost:3000/api/staff/tables/${tableId}/close`, { method: 'POST' });
       if (res.ok) {
-        alert(`ปิดโต๊ะ ${tableName} เรียบร้อย!`);
+        alert(`ปิดโต๊ะ ${tableName} เรียบร้อย! (ระบบปิดรับออเดอร์อัตโนมัติ)`);
         fetchTables();
       }
     } catch (error) {
@@ -57,8 +55,15 @@ export default function StaffPage() {
     }
   };
 
-  // ✅ ฟังก์ชันเปิด-ปิดโต๊ะ
-  const handleToggleTable = async (tableId: number, currentStatus: boolean) => {
+  // ✅ แก้ไข: เพิ่มการรับค่า isOccupied เพื่อมาเช็คเงื่อนไข
+  const handleToggleTable = async (tableId: number, currentStatus: boolean, isOccupied: boolean) => {
+    
+    // เงื่อนไข 1: ถ้าจะปิด (Turn OFF) แต่โต๊ะยังไม่ว่าง (isOccupied) -> ห้ามปิด
+    if (currentStatus === true && isOccupied) {
+        alert("⚠️ ไม่สามารถปิดโต๊ะได้เนื่องจากยังมีรายการอาหารค้างอยู่ กรุณาเช็คบิลก่อน");
+        return; // จบการทำงาน ไม่ยิง API
+    }
+
     try {
       const res = await fetch(`http://localhost:3000/api/tables/${tableId}/availability`, {
         method: 'PATCH',
@@ -66,7 +71,6 @@ export default function StaffPage() {
         body: JSON.stringify({ isAvailable: !currentStatus })
       });
       if (res.ok) {
-        // อัปเดต state ทันทีเพื่อให้ UI ลื่นไหล
         setTables(prev => prev.map(t => t.id === tableId ? { ...t, isAvailable: !currentStatus } : t));
       }
     } catch (error) {
@@ -75,7 +79,7 @@ export default function StaffPage() {
     }
   };
 
-  // --- ฟังก์ชันจัดการโต๊ะ (CRUD) ---
+  // --- CRUD Functions ---
   const handleCreateTable = async () => {
     if (!newTableName.trim()) return;
     try {
@@ -109,7 +113,6 @@ export default function StaffPage() {
   const handleUpdateTableName = async (id: number, oldName: string) => {
     const newName = prompt("ใส่ชื่อโต๊ะใหม่:", oldName);
     if (!newName || newName === oldName) return;
-    
     try {
       await fetch(`http://localhost:3000/api/tables/${id}`, {
         method: 'PUT',
@@ -199,15 +202,13 @@ export default function StaffPage() {
             <Card 
               key={table.id} 
               className={`border-2 transition-all relative overflow-hidden ${
-                // Logic สีพื้นหลัง
                 !table.isAvailable 
-                  ? "border-slate-200 bg-slate-100 opacity-70" // ปิดโต๊ะ: สีเทาจางๆ
+                  ? "border-slate-200 bg-slate-100 opacity-70" 
                   : table.isOccupied && !isEditingMode
-                    ? "border-orange-400 bg-orange-50/50" // มีคนนั่ง: สีส้ม
-                    : "border-slate-200 bg-white" // ว่าง: สีขาว
+                    ? "border-orange-400 bg-orange-50/50" 
+                    : "border-slate-200 bg-white" 
               }`}
             >
-              {/* แถบสถานะด้านบน (ปิดอยู่) */}
               {!table.isAvailable && !isEditingMode && (
                   <div className="absolute top-0 left-0 right-0 bg-slate-500 text-white text-xs text-center py-1 z-10">
                       ⛔ ปิดให้บริการ
@@ -220,16 +221,17 @@ export default function StaffPage() {
                     {table.name}
                   </CardTitle>
                   
-                  {/* ปุ่ม Toggle (แสดงตลอดเวลาเพื่อให้กดเปิดปิดง่ายๆ) */}
                   {!isEditingMode && (
                       <div className="flex items-center gap-2">
                           <span className={`text-xs font-bold ${table.isAvailable ? 'text-green-600' : 'text-slate-400'}`}>
                               {table.isAvailable ? 'ON' : 'OFF'}
                           </span>
                           <button
-                            onClick={() => handleToggleTable(table.id, table.isAvailable)}
+                            onClick={() => handleToggleTable(table.id, table.isAvailable, table.isOccupied)}
                             className={`w-10 h-6 rounded-full p-1 transition-colors duration-300 ease-in-out ${
-                                table.isAvailable ? 'bg-green-500' : 'bg-slate-300'
+                                table.isAvailable 
+                                    ? (table.isOccupied ? 'bg-green-500/50 cursor-not-allowed' : 'bg-green-500') 
+                                    : 'bg-slate-300'
                             }`}
                           >
                               <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ease-in-out ${
@@ -239,7 +241,6 @@ export default function StaffPage() {
                       </div>
                   )}
 
-                  {/* ปุ่มแก้ไข/ลบ (เฉพาะ Edit Mode) */}
                   {isEditingMode && (
                       <div className="flex gap-1">
                           <button 
@@ -284,7 +285,6 @@ export default function StaffPage() {
                   <CardFooter>
                     <button
                     onClick={() => handleCloseTable(table.id, table.name)}
-                    // ปิดปุ่มถ้า: โต๊ะปิดบริการ หรือ โต๊ะไม่มีคนนั่ง
                     disabled={!table.isAvailable || !table.isOccupied}
                     className={`w-full py-2 rounded-lg font-bold transition-colors ${
                         table.isAvailable && table.isOccupied
