@@ -1,120 +1,199 @@
-import { Suspense } from "react";
-import { QrCode, Lock } from "lucide-react"; 
+"use client";
+
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { QrCode, Lock, Bell, History, X } from "lucide-react"; 
 import MenuItem from "@/components/MenuItem"; 
 import FloatingCart from "@/components/FloatingCart"; 
 import TableDetector from "@/components/TableDetector"; 
 
+// --- Types ---
 interface Menu {
   id: number;
   nameTH: string;
   price: number;
   imageUrl: string | null;
 }
-
 interface Category {
   id: number;
   name: string;
   menus: Menu[];
 }
-
-interface ApiResponse {
+interface HistoryItem {
+  id: number;
+  menuName: string;
+  price: number;
+  quantity: number;
   status: string;
-  data: Category[];
+  total: number;
+}
+interface TableInfo {
+    name: string;
+    isAvailable: boolean;
+    isCallingStaff: boolean;
 }
 
-async function getMenus() {
-  try {
-    const res = await fetch('http://localhost:3000/api/menus', { cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to fetch data');
-    return res.json() as Promise<ApiResponse>;
-  } catch (error) {
-    console.error("Error fetching menus:", error);
-    return null;
-  }
+// --- Main Component ---
+export default function Home() {
+  return (
+    <Suspense fallback={null}>
+      <HomeContent />
+    </Suspense>
+  );
 }
 
-// ✅ ฟังก์ชันเช็คสถานะโต๊ะ
-async function getTableStatus(tableId: string) {
-    try {
-        const res = await fetch(`http://localhost:3000/api/tables/${tableId}`, { cache: 'no-store' });
-        if (!res.ok) return null;
-        const json = await res.json();
-        return json.data; 
-    } catch (error) {
-        console.error("Error fetching table status:", error); // ✅ เพิ่มบรรทัดนี้ (ใช้ตัวแปร error แล้ว)
-        return null;
+function HomeContent() {
+  const searchParams = useSearchParams();
+  const tableIdParam = searchParams.get("tableId");
+  
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [tableInfo, setTableInfo] = useState<TableInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+  
+  // State สำหรับ Modal ประวัติ
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
+
+  // State สำหรับปุ่มเรียกพนักงาน
+  const [isCalling, setIsCalling] = useState(false);
+
+  // Load Initial Data
+  useEffect(() => {
+    if (!tableIdParam) {
+        setLoading(false);
+        return;
     }
-}
 
-type Props = {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
-}
+    const initData = async () => {
+        try {
+            // 1. ดึงเมนู
+            const resMenu = await fetch('http://localhost:3000/api/menus');
+            const dataMenu = await resMenu.json();
+            if (dataMenu.status === 'success') setCategories(dataMenu.data);
 
-export default async function Home(props: Props) {
-  const searchParams = await props.searchParams;
-  const tableId = searchParams.tableId;
+            // 2. ดึงข้อมูลโต๊ะ (เพื่อดูว่าเปิดอยู่ไหม + กำลังเรียกพนักงานอยู่ไหม)
+            const resTable = await fetch(`http://localhost:3000/api/tables/${tableIdParam}`);
+            const dataTable = await resTable.json();
+            if (dataTable.status === 'success') {
+                setTableInfo(dataTable.data);
+                setIsCalling(dataTable.data.isCallingStaff); // Sync สถานะปุ่ม
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  // 1. GUARD: ไม่มีเลขโต๊ะ -> ให้สแกน QR
-  if (!tableId) {
+    initData();
+  }, [tableIdParam]);
+
+  // ฟังก์ชันเรียกพนักงาน
+  const handleCallStaff = async () => {
+    if (!tableIdParam) return;
+    
+    // Toggle สถานะ (ถ้าเรียกอยู่ -> กดยกเลิก, ถ้ายัง -> กดเรียก)
+    const newStatus = !isCalling;
+    setIsCalling(newStatus); // เปลี่ยน UI ทันทีให้รู้สึกไว
+
+    try {
+        await fetch(`http://localhost:3000/api/tables/${tableIdParam}/call`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isCalling: newStatus })
+        });
+        if (newStatus) alert("🔔 เรียกพนักงานแล้ว กรุณารอสักครู่");
+        else alert("🔕 ยกเลิกการเรียกแล้ว");
+    } catch (error) {
+        console.error(error); // ✅ แก้ไขตรงนี้: เพิ่ม console.error เพื่อใช้งานตัวแปร error
+        alert("ส่งคำขอไม่สำเร็จ");
+        setIsCalling(!newStatus); // Revert UI
+    }
+  };
+
+  // ฟังก์ชันดูประวัติ
+  const handleViewHistory = async () => {
+    if (!tableIdParam) return;
+    setShowHistory(true);
+    try {
+        const res = await fetch(`http://localhost:3000/api/tables/${tableIdParam}/orders`);
+        const data = await res.json();
+        if (data.status === 'success') {
+            setHistoryItems(data.data);
+        }
+    } catch (error) {
+        console.error(error);
+    }
+  };
+
+  // --- Render Conditions ---
+
+  // 1. ไม่มี Table ID
+  if (!loading && !tableIdParam) {
     return (
-      <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-slate-50 text-center">
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-slate-50 text-center">
         <div className="bg-white p-8 rounded-2xl shadow-xl flex flex-col items-center max-w-sm w-full">
           <div className="bg-slate-100 p-4 rounded-full mb-6">
             <QrCode size={64} className="text-slate-800" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900 mb-2">กรุณาสแกน QR Code</h1>
-          <p className="text-slate-500 mb-6">
-            เพื่อระบุโต๊ะและเริ่มสั่งอาหาร <br/>
-            โปรดสแกน QR Code ที่อยู่บนโต๊ะของคุณ
-          </p>
+          <p className="text-slate-500 mb-6">เพื่อระบุโต๊ะและเริ่มสั่งอาหาร</p>
         </div>
-      </main>
+      </div>
     );
   }
 
-  // 2. GUARD: เช็คสถานะโต๊ะจาก Backend
-  const table = await getTableStatus(tableId as string);
-  
-  // ถ้าหาโต๊ะไม่เจอ หรือ โต๊ะปิด (isAvailable = false)
-  if (!table || !table.isAvailable) {
+  // 2. โต๊ะปิด
+  if (!loading && tableInfo && !tableInfo.isAvailable) {
       return (
-        <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-slate-50 text-center">
+        <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-slate-50 text-center">
             <div className="bg-white p-8 rounded-2xl shadow-xl flex flex-col items-center max-w-sm w-full border-t-4 border-red-500">
-            <div className="bg-red-50 p-4 rounded-full mb-6">
-                <Lock size={64} className="text-red-500" />
+                <div className="bg-red-50 p-4 rounded-full mb-6">
+                    <Lock size={64} className="text-red-500" />
+                </div>
+                <h1 className="text-2xl font-bold text-slate-900 mb-2">โต๊ะนี้ปิดให้บริการ</h1>
+                <p className="text-slate-500 mb-6">กรุณาติดต่อพนักงาน</p>
             </div>
-            <h1 className="text-2xl font-bold text-slate-900 mb-2">โต๊ะนี้ปิดให้บริการ</h1>
-            <p className="text-slate-500 mb-6">
-                ขออภัย โต๊ะหมายเลข {tableId} ไม่สามารถสั่งอาหารได้ในขณะนี้ <br/>
-                กรุณาติดต่อพนักงาน
-            </p>
-            </div>
-        </main>
+        </div>
       );
   }
 
-  // --- ถ้าโต๊ะเปิดใช้งานปกติ ---
-  const response = await getMenus();
-  const categories = response?.data || [];
-
   return (
-    <main className="container mx-auto p-4 max-w-md min-h-screen bg-white pb-24">
-      
-      <Suspense fallback={null}>
-        <TableDetector />
-      </Suspense>
+    <main className="container mx-auto p-4 max-w-md min-h-screen bg-white pb-24 relative">
+      <TableDetector />
 
-      <header className="mb-6 text-center mt-4">
-        <h1 className="text-3xl font-bold text-slate-900">ร้านอาหารตามสั่ง 🍳</h1>
-        <p className="text-slate-500 text-sm">
-          โต๊ะ: <span className="font-bold text-green-600 text-lg">{table?.name || tableId}</span> | ยินดีต้อนรับ
-        </p>
+      <header className="mb-6 mt-4 flex justify-between items-center">
+        <div>
+            <h1 className="text-2xl font-bold text-slate-900">ร้านอาหารตามสั่ง 🍳</h1>
+            <p className="text-slate-500 text-sm">
+            โต๊ะ: <span className="font-bold text-green-600">{tableInfo?.name || tableIdParam}</span>
+            </p>
+        </div>
+        
+        {/* ✅ ปุ่มเมนูลัด (เรียกพนักงาน / ดูประวัติ) */}
+        <div className="flex gap-2">
+            <button 
+                onClick={handleCallStaff}
+                className={`p-2 rounded-full shadow-sm border transition-all ${
+                    isCalling 
+                    ? "bg-red-100 text-red-600 border-red-200 animate-pulse" 
+                    : "bg-white text-slate-600 border-slate-200"
+                }`}
+            >
+                <Bell size={20} className={isCalling ? "fill-current" : ""} />
+            </button>
+            <button 
+                onClick={handleViewHistory}
+                className="p-2 rounded-full bg-white text-slate-600 shadow-sm border border-slate-200"
+            >
+                <History size={20} />
+            </button>
+        </div>
       </header>
       
-      {categories.length === 0 ? (
+      {categories.length === 0 && !loading ? (
         <div className="text-center p-10 bg-slate-50 rounded-lg border border-dashed">
           <p className="text-red-500 font-medium">ไม่พบเมนูอาหาร</p>
-          <p className="text-xs text-gray-400 mt-2">ตรวจสอบว่า Backend (Port 3000) รันอยู่หรือไม่</p>
         </div>
       ) : (
         <div className="space-y-8">
@@ -140,6 +219,48 @@ export default async function Home(props: Props) {
       )}
 
       <FloatingCart />
+
+      {/* ✅ Modal ประวัติการสั่ง */}
+      {showHistory && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in">
+            <div className="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+                <div className="bg-slate-900 p-4 text-white flex justify-between items-center">
+                    <h3 className="font-bold flex items-center gap-2"><History size={18}/> รายการที่สั่งไปแล้ว</h3>
+                    <button onClick={() => setShowHistory(false)}><X size={24}/></button>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto p-4">
+                    {historyItems.length === 0 ? (
+                        <p className="text-center text-slate-500 py-8">ยังไม่มีรายการที่สั่ง</p>
+                    ) : (
+                        <div className="space-y-3">
+                            {historyItems.map((item, idx) => (
+                                <div key={idx} className="flex justify-between items-center border-b pb-2 last:border-0">
+                                    <div>
+                                        <div className="font-bold text-slate-800">{item.menuName}</div>
+                                        <div className="text-xs text-slate-500">
+                                            สถานะ: <span className="font-bold text-blue-600">{item.status}</span>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-sm text-slate-600">x{item.quantity}</div>
+                                        <div className="font-bold text-slate-900">฿{item.total}</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                <div className="p-4 bg-slate-50 border-t">
+                     <div className="flex justify-between text-lg font-bold text-slate-900">
+                        <span>ยอดรวมทั้งหมด</span>
+                        <span>฿{historyItems.reduce((sum, i) => sum + i.total, 0).toLocaleString()}</span>
+                     </div>
+                </div>
+            </div>
+        </div>
+      )}
     </main>
   );
 }

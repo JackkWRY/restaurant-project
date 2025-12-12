@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link"; 
+import { io } from "socket.io-client"; 
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
-import { Pencil, Trash2, Plus, X, Check, Eye, UtensilsCrossed } from "lucide-react"; 
+import { Pencil, Trash2, Plus, X, Check, Eye, UtensilsCrossed, Bell } from "lucide-react"; 
 
-// Type สำหรับรายการโต๊ะหน้าหลัก
 interface TableStatus {
   id: number;
   name: string;
@@ -13,9 +13,9 @@ interface TableStatus {
   totalAmount: number;
   activeOrders: number;
   isAvailable: boolean;
+  isCallingStaff: boolean; 
 }
 
-// Type สำหรับรายละเอียดใน Modal (Item)
 interface OrderDetailItem {
   id: number;
   menuName: string;
@@ -29,17 +29,15 @@ export default function StaffPage() {
   const [tables, setTables] = useState<TableStatus[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // State Edit Mode
   const [isEditingMode, setIsEditingMode] = useState(false);
   const [newTableName, setNewTableName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
-  // State Modal Detail
   const [selectedTableId, setSelectedTableId] = useState<number | null>(null);
   const [tableDetails, setTableDetails] = useState<OrderDetailItem[]>([]);
   const [loadingDetails, setLoadingDetails] = useState(false);
 
-  // 1. ดึงข้อมูลรวม
+  // Fetch Tables
   const fetchTables = async () => {
     try {
       const res = await fetch('http://localhost:3000/api/staff/tables');
@@ -56,11 +54,35 @@ export default function StaffPage() {
 
   useEffect(() => {
     fetchTables();
+    
+    // เชื่อมต่อ Socket
+    const socket = io("http://localhost:3000");
+    
+    socket.on("table_updated", (updatedTable: TableStatus) => {
+        setTables(prev => prev.map(t => t.id === updatedTable.id ? { ...t, ...updatedTable } : t));
+    });
+
     const interval = setInterval(fetchTables, 5000); 
-    return () => clearInterval(interval);
+    return () => {
+        clearInterval(interval);
+        socket.disconnect();
+    };
   }, []);
 
-  // 2. ดึงรายละเอียดเมื่อกดเลือกโต๊ะ
+  // ฟังก์ชันกดรับทราบ (ปิดเสียงเรียก)
+  const handleAcknowledgeCall = async (tableId: number) => {
+    try {
+        await fetch(`http://localhost:3000/api/tables/${tableId}/call`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isCalling: false }) // ปิดการเรียก
+        });
+        setTables(prev => prev.map(t => t.id === tableId ? { ...t, isCallingStaff: false } : t));
+    } catch (error) {
+        console.error(error);
+    }
+  };
+
   const handleViewDetails = async (id: number) => {
     setSelectedTableId(id);
     setLoadingDetails(true);
@@ -78,7 +100,6 @@ export default function StaffPage() {
     }
   };
 
-  // ปิด Modal
   const closeModal = () => {
     setSelectedTableId(null);
     setTableDetails([]);
@@ -118,7 +139,6 @@ export default function StaffPage() {
     }
   };
 
-  // --- CRUD Functions ---
   const handleCreateTable = async () => {
     if (!newTableName.trim()) return;
     try {
@@ -185,7 +205,6 @@ export default function StaffPage() {
         </div>
       </header>
 
-      {/* Create Table Section */}
       {isEditingMode && (
          <div className="mb-6">
             {!isCreating ? (
@@ -205,15 +224,29 @@ export default function StaffPage() {
       {loading && tables.length === 0 ? (
         <p className="text-center text-slate-500 py-10">กำลังโหลดข้อมูล...</p>
       ) : (
-        /* Tables Grid */
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {tables.map((table) => (
-              <Card key={table.id} className={`border-2 transition-all relative overflow-hidden ${
-                  !table.isAvailable ? "border-slate-200 bg-slate-100 opacity-70" 
-                  : table.isOccupied && !isEditingMode ? "border-orange-400 bg-orange-50/50" : "border-slate-200 bg-white"
-              }`}>
+              <Card 
+                key={table.id} 
+                className={`border-2 transition-all relative overflow-hidden ${
+                    // ✅ กลับมาใช้แบบกระพริบทั้งการ์ด
+                    table.isCallingStaff ? "border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-pulse" 
+                    : !table.isAvailable ? "border-slate-200 bg-slate-100 opacity-70" 
+                    : table.isOccupied && !isEditingMode ? "border-orange-400 bg-orange-50/50" : "border-slate-200 bg-white"
+                }`}
+              >
                 {!table.isAvailable && !isEditingMode && (
                     <div className="absolute top-0 left-0 right-0 bg-slate-500 text-white text-xs text-center py-1 z-10">⛔ ปิดให้บริการ</div>
+                )}
+                
+                {/* ✅ กลับมาใช้แถบแจ้งเตือนด้านบน */}
+                {table.isCallingStaff && (
+                    <div 
+                        onClick={() => handleAcknowledgeCall(table.id)}
+                        className="absolute top-0 left-0 right-0 bg-red-600 text-white text-xs font-bold text-center py-1 z-20 cursor-pointer hover:bg-red-700 flex justify-center items-center gap-1"
+                    >
+                        <Bell size={12} className="fill-current animate-bounce" /> ลูกค้าเรียก! (กดเพื่อรับทราบ)
+                    </div>
                 )}
 
                 <CardHeader className="pb-2 mt-2">
@@ -289,7 +322,7 @@ export default function StaffPage() {
         </div>
       )}
 
-      {/* Modal แสดงรายละเอียดรายการอาหาร */}
+      {/* Modal Details */}
       {selectedTableId !== null && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">

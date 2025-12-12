@@ -12,7 +12,8 @@ model Table {
   name        String   @unique // เช่น T1, T2
   qrCode      String?  // URL หรือ Token
   isOccupied  Boolean  @default(false)
-  isAvailable Boolean  @default(true) // ✅ เพิ่มบรรทัดนี้ครับ
+  isAvailable Boolean  @default(true)
+  isCallingStaff Boolean  @default(false)
   orders      Order[]
 }
 
