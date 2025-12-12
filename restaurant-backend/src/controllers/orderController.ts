@@ -92,3 +92,25 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to update status' });
   }
 };
+
+export const getActiveOrders = async (req: Request, res: Response) => {
+  try {
+    const orders = await prisma.order.findMany({
+      where: {
+        status: { in: ['PENDING', 'COOKING'] }
+      },
+      include: {
+        items: {
+          include: { menu: true }
+        },
+        table: true
+      },
+      orderBy: { createdAt: 'asc' }
+    });
+
+    res.json({ status: 'success', data: orders });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to fetch active orders' });
+  }
+};
