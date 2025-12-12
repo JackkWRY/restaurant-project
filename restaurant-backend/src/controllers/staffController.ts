@@ -67,3 +67,48 @@ export const closeTable = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to close table' });
   }
 };
+
+// 3. ดึงรายละเอียดของโต๊ะ (รายการอาหาร)
+export const getTableDetails = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const table = await prisma.table.findUnique({
+      where: { id: Number(id) },
+      include: {
+        orders: {
+          where: { status: { not: 'COMPLETED' } }, // เอาเฉพาะที่กินอยู่
+          include: {
+            items: {
+              include: { menu: true } // พ่วงชื่อเมนูมาด้วย
+            }
+          }
+        }
+      }
+    });
+
+    if (!table) {
+      res.status(404).json({ error: 'Table not found' });
+      return;
+    }
+
+    // จัด Format ข้อมูลให้หน้าบ้านใช้ง่ายๆ
+    // รวมรายการอาหารจากหลายๆ ออเดอร์ (กรณีสั่งหลายรอบ) มาเป็น List เดียว
+    const allItems = table.orders.flatMap(order => 
+      order.items.map(item => ({
+        id: item.id,
+        menuName: item.menu.nameTH,
+        price: Number(item.menu.price),
+        quantity: item.quantity,
+        total: Number(item.menu.price) * item.quantity,
+        status: order.status
+      }))
+    );
+
+    res.json({ status: 'success', data: { ...table, items: allItems } });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to fetch table details' });
+  }
+};

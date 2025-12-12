@@ -10,10 +10,14 @@ import { Trash2, Minus, Plus } from "lucide-react";
 export default function CartPage() {
   const router = useRouter();
   
+  // ดึง tableId มาใช้
   const { items, addItem, removeItem, deleteItem, clearCart, totalPrice, tableId } = useCartStore();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const total = totalPrice();
+
+  // ✅ สร้างตัวแปร URL ปลายทาง (ถ้ามีโต๊ะ ให้กลับไปโต๊ะเดิม, ถ้าไม่มี ให้กลับหน้าแรก)
+  const homeUrl = tableId && tableId > 0 ? `/?tableId=${tableId}` : "/";
 
   const handleConfirmOrder = async () => {
     if (items.length === 0) return;
@@ -39,11 +43,8 @@ export default function CartPage() {
       alert(`สั่งอาหารเรียบร้อย! ออเดอร์หมายเลข #${result.data.id} (โต๊ะ ${tableId})`);
       clearCart(); 
       
-      if (tableId && tableId !== 1) {
-        router.push(`/?tableId=${tableId}`);
-      } else {
-        router.push("/");
-      }
+      // ✅ 1. แก้ไขจุด Redirect หลังสั่งเสร็จ
+      router.push(homeUrl);
 
     } catch (error) {
       console.error(error);
@@ -59,9 +60,9 @@ export default function CartPage() {
         <h1 className="text-2xl font-bold text-slate-900 mb-2">ตะกร้าว่างเปล่า 🛒</h1>
         <p className="text-slate-500 mb-6">คุณยังไม่ได้เลือกอาหารเลย</p>
         
-        {/* ปุ่มกลับ (กรณีตะกร้าว่าง) */}
+        {/* ✅ 2. แก้ไขปุ่มกลับ (กรณีตะกร้าว่าง) */}
         <Link 
-          href={tableId && tableId !== 1 ? `/?tableId=${tableId}` : "/"} 
+          href={homeUrl} 
           className="bg-slate-900 text-white px-6 py-2 rounded-full font-bold hover:bg-slate-800 transition-colors"
         >
           กลับไปเลือกอาหาร
@@ -74,9 +75,9 @@ export default function CartPage() {
     <main className="container mx-auto p-4 max-w-md min-h-screen bg-slate-50 flex flex-col">
       <header className="flex items-center mb-6 mt-2 relative">
         
-        {/* ปุ่มกลับ (กรณีปกติ) */}
+        {/* ✅ 3. แก้ไขปุ่มกลับ (ลูกศรด้านบน) */}
         <Link 
-          href={tableId && tableId !== 1 ? `/?tableId=${tableId}` : "/"} 
+          href={homeUrl}
           className="absolute left-0 p-2 text-slate-500 hover:text-slate-900"
         >
           ← กลับ
@@ -89,6 +90,7 @@ export default function CartPage() {
       <div className="flex-1 space-y-4 overflow-y-auto pb-24 px-1">
         {items.map((item) => (
           <Card key={item.id} className="flex items-center justify-between p-4 shadow-none border-b last:border-none bg-white">
+            
             {/* ส่วนซ้าย: รายละเอียด */}
             <div className="flex-1"> 
               <h3 className="font-bold text-slate-900 text-lg">{item.name}</h3>
@@ -100,7 +102,6 @@ export default function CartPage() {
 
             {/* ส่วนขวา: ปุ่มเพิ่ม/ลด และปุ่มลบ */}
             <div className="flex items-center">
-              {/* ปุ่มเพิ่ม/ลด จำนวน */}
               <div className="flex items-center bg-slate-100 rounded-full p-1 mr-4">
                 <button 
                   onClick={() => removeItem(item.id)}
@@ -117,7 +118,6 @@ export default function CartPage() {
                 </button>
               </div>
 
-              {/* ปุ่มลบ (ถังขยะ) */}
               <button
                 onClick={() => deleteItem(item.id)}
                 className="text-slate-400 hover:text-red-500 transition-colors p-2"
