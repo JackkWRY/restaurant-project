@@ -229,7 +229,6 @@ export default function StaffPage() {
               <Card 
                 key={table.id} 
                 className={`border-2 transition-all relative overflow-hidden ${
-                    // ✅ กลับมาใช้แบบกระพริบทั้งการ์ด
                     table.isCallingStaff ? "border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-pulse" 
                     : !table.isAvailable ? "border-slate-200 bg-slate-100 opacity-70" 
                     : table.isOccupied && !isEditingMode ? "border-orange-400 bg-orange-50/50" : "border-slate-200 bg-white"
@@ -239,7 +238,6 @@ export default function StaffPage() {
                     <div className="absolute top-0 left-0 right-0 bg-slate-500 text-white text-xs text-center py-1 z-10">⛔ ปิดให้บริการ</div>
                 )}
                 
-                {/* ✅ กลับมาใช้แถบแจ้งเตือนด้านบน */}
                 {table.isCallingStaff && (
                     <div 
                         onClick={() => handleAcknowledgeCall(table.id)}
@@ -372,33 +370,8 @@ export default function StaffPage() {
               )}
             </div>
 
-            <div className="p-4 bg-slate-50 border-t flex justify-between items-center">
-                <div className="text-slate-500 text-sm">
-                    รวม {tableDetails.reduce((sum, i) => sum + i.quantity, 0)} รายการ
-                </div>
-                <div className="text-xl font-bold text-slate-900">
-                    ยอดรวม ฿{tableDetails.reduce((sum, i) => sum + i.total, 0).toLocaleString()}
-                </div>
-            </div>
-            
             <div className="p-4 bg-white border-t flex gap-2">
-                <Link 
-                    href={`/?tableId=${selectedTableId}`} 
-                    target="_blank"
-                    className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold text-center hover:bg-blue-700"
-                >
-                    + สั่งเพิ่ม
-                </Link>
-                <button 
-                    onClick={() => {
-                        const tableName = tables.find(t => t.id === selectedTableId)?.name || "";
-                        handleCloseTable(selectedTableId, tableName);
-                    }}
-                    disabled={tableDetails.length === 0}
-                    className="flex-1 bg-slate-900 text-white py-3 rounded-lg font-bold hover:bg-slate-700 disabled:bg-slate-300 disabled:cursor-not-allowed"
-                >
-                    💰 เช็คบิลเลย
-                </button>
+                <button onClick={() => closeModal()} className="w-full bg-slate-200 text-slate-600 py-3 rounded-lg font-bold">ปิด</button>
             </div>
           </div>
         </div>
