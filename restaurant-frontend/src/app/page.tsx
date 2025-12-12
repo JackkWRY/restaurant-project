@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { io } from "socket.io-client"; 
 import { QrCode, Lock, Bell, History, X } from "lucide-react"; 
 import MenuItem from "@/components/MenuItem"; 
 import FloatingCart from "@/components/FloatingCart"; 
@@ -28,6 +29,7 @@ interface HistoryItem {
   total: number;
 }
 interface TableInfo {
+    id: number; 
     name: string;
     isAvailable: boolean;
     isCallingStaff: boolean;
@@ -57,7 +59,7 @@ function HomeContent() {
   // State สำหรับปุ่มเรียกพนักงาน
   const [isCalling, setIsCalling] = useState(false);
 
-  // Load Initial Data
+  // Load Initial Data & Connect Socket
   useEffect(() => {
     if (!tableIdParam) {
         setLoading(false);
@@ -71,12 +73,12 @@ function HomeContent() {
             const dataMenu = await resMenu.json();
             if (dataMenu.status === 'success') setCategories(dataMenu.data);
 
-            // 2. ดึงข้อมูลโต๊ะ (เพื่อดูว่าเปิดอยู่ไหม + กำลังเรียกพนักงานอยู่ไหม)
+            // 2. ดึงข้อมูลโต๊ะ
             const resTable = await fetch(`http://localhost:3000/api/tables/${tableIdParam}`);
             const dataTable = await resTable.json();
             if (dataTable.status === 'success') {
                 setTableInfo(dataTable.data);
-                setIsCalling(dataTable.data.isCallingStaff); // Sync สถานะปุ่ม
+                setIsCalling(dataTable.data.isCallingStaff); // Sync สถานะเริ่มต้น
             }
         } catch (error) {
             console.error(error);
@@ -86,15 +88,40 @@ function HomeContent() {
     };
 
     initData();
+
+    const socket = io("http://localhost:3000");
+
+    socket.on("connect", () => {
+        console.log("✅ Customer connected to socket");
+    });
+
+    socket.on("table_updated", (updatedTable: TableInfo) => {
+        if (String(updatedTable.id) === String(tableIdParam)) {
+            console.log("🔔 Table Updated:", updatedTable);
+            
+            setIsCalling(updatedTable.isCallingStaff);
+
+            setTableInfo(prev => prev ? { 
+                ...prev, 
+                isAvailable: updatedTable.isAvailable,
+                name: updatedTable.name,
+                id: updatedTable.id
+            } : null);
+        }
+    });
+
+    return () => {
+        socket.disconnect();
+    };
+
   }, [tableIdParam]);
 
   // ฟังก์ชันเรียกพนักงาน
   const handleCallStaff = async () => {
     if (!tableIdParam) return;
     
-    // Toggle สถานะ (ถ้าเรียกอยู่ -> กดยกเลิก, ถ้ายัง -> กดเรียก)
     const newStatus = !isCalling;
-    setIsCalling(newStatus); // เปลี่ยน UI ทันทีให้รู้สึกไว
+    setIsCalling(newStatus); 
 
     try {
         await fetch(`http://localhost:3000/api/tables/${tableIdParam}/call`, {
@@ -105,9 +132,9 @@ function HomeContent() {
         if (newStatus) alert("🔔 เรียกพนักงานแล้ว กรุณารอสักครู่");
         else alert("🔕 ยกเลิกการเรียกแล้ว");
     } catch (error) {
-        console.error(error); // ✅ แก้ไขตรงนี้: เพิ่ม console.error เพื่อใช้งานตัวแปร error
+        console.error(error);
         alert("ส่งคำขอไม่สำเร็จ");
-        setIsCalling(!newStatus); // Revert UI
+        setIsCalling(!newStatus); 
     }
   };
 
@@ -128,7 +155,6 @@ function HomeContent() {
 
   // --- Render Conditions ---
 
-  // 1. ไม่มี Table ID
   if (!loading && !tableIdParam) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-slate-50 text-center">
@@ -143,7 +169,6 @@ function HomeContent() {
     );
   }
 
-  // 2. โต๊ะปิด
   if (!loading && tableInfo && !tableInfo.isAvailable) {
       return (
         <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-slate-50 text-center">
@@ -170,7 +195,6 @@ function HomeContent() {
             </p>
         </div>
         
-        {/* ✅ ปุ่มเมนูลัด (เรียกพนักงาน / ดูประวัติ) */}
         <div className="flex gap-2">
             <button 
                 onClick={handleCallStaff}
@@ -220,7 +244,6 @@ function HomeContent() {
 
       <FloatingCart />
 
-      {/* ✅ Modal ประวัติการสั่ง */}
       {showHistory && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in">
             <div className="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
