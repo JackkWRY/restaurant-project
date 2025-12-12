@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image"; 
-import { Plus, Pencil, Trash2, List, Utensils, X, Image as ImageIcon, Save } from "lucide-react";
+import { Plus, Pencil, Trash2, List, Utensils, X, Image as ImageIcon, Save, Settings } from "lucide-react";
 
 // --- Types ---
 interface Category {
@@ -22,7 +22,7 @@ interface Menu {
 }
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'categories' | 'menus'>('categories');
+  const [activeTab, setActiveTab] = useState<'categories' | 'menus' | 'settings'>('categories');
 
   return (
     <main className="min-h-screen bg-slate-50 flex flex-col">
@@ -45,9 +45,7 @@ export default function AdminPage() {
               <button 
                 onClick={() => setActiveTab('categories')}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg font-bold text-left transition-colors ${
-                    activeTab === 'categories' 
-                    ? 'bg-purple-600 text-white shadow-md' 
-                    : 'bg-white text-slate-600 hover:bg-slate-100'
+                    activeTab === 'categories' ? 'bg-purple-600 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100'
                 }`}
               >
                  <List size={20} /> จัดการหมวดหมู่
@@ -55,23 +53,96 @@ export default function AdminPage() {
               <button 
                 onClick={() => setActiveTab('menus')}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg font-bold text-left transition-colors ${
-                    activeTab === 'menus' 
-                    ? 'bg-purple-600 text-white shadow-md' 
-                    : 'bg-white text-slate-600 hover:bg-slate-100'
+                    activeTab === 'menus' ? 'bg-purple-600 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100'
                 }`}
               >
                  <Utensils size={20} /> จัดการเมนูอาหาร
+              </button>
+              {/* ✅ ปุ่มเมนูใหม่ Settings */}
+              <button 
+                onClick={() => setActiveTab('settings')}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg font-bold text-left transition-colors ${
+                    activeTab === 'settings' ? 'bg-purple-600 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                 <Settings size={20} /> ตั้งค่าร้าน
               </button>
            </nav>
         </aside>
 
         {/* Content Area */}
         <section className="flex-1 bg-white rounded-2xl shadow-sm border p-6 min-h-[500px]">
-            {activeTab === 'categories' ? <CategoryManager /> : <MenuManager />}
+            {activeTab === 'categories' && <CategoryManager />}
+            {activeTab === 'menus' && <MenuManager />}
+            {activeTab === 'settings' && <SettingsManager />}
         </section>
       </div>
     </main>
   );
+}
+
+// ==========================================
+// 🟢 Component: Settings Manager
+// ==========================================
+function SettingsManager() {
+    const [restaurantName, setRestaurantName] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const res = await fetch('http://localhost:3000/api/settings/name');
+                const data = await res.json();
+                if (data.status === 'success') setRestaurantName(data.data);
+            } catch (error) { console.error(error); }
+        };
+        fetchSettings();
+    }, []);
+
+    const handleSave = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            const res = await fetch('http://localhost:3000/api/settings/name', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: restaurantName })
+            });
+            if (res.ok) alert("บันทึกชื่อร้านเรียบร้อยแล้ว ✅");
+            else alert("บันทึกไม่สำเร็จ");
+        } catch (error) { console.error(error); alert("เกิดข้อผิดพลาด"); }
+        finally { setLoading(false); }
+    };
+
+    return (
+        <div className="max-w-lg">
+            <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                <Settings className="text-purple-600"/> ตั้งค่าร้าน
+            </h2>
+            
+            <form onSubmit={handleSave} className="space-y-4">
+                <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">ชื่อร้านอาหาร (ที่แสดงในหน้าลูกค้า)</label>
+                    <input 
+                        type="text" 
+                        required 
+                        className="w-full border p-3 rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-purple-200 outline-none transition-all"
+                        value={restaurantName}
+                        onChange={(e) => setRestaurantName(e.target.value)}
+                        placeholder="เช่น ร้านเจ๊ไฝ ประตูผี"
+                    />
+                </div>
+                
+                <button 
+                    type="submit" 
+                    disabled={loading}
+                    className="bg-purple-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-purple-700 flex items-center gap-2 disabled:bg-slate-400"
+                >
+                    {loading ? "กำลังบันทึก..." : <><Save size={20} /> บันทึกการเปลี่ยนแปลง</>}
+                </button>
+            </form>
+        </div>
+    );
 }
 
 // ==========================================
@@ -193,7 +264,7 @@ function MenuManager() {
     
     // Form States
     const [isFormOpen, setIsFormOpen] = useState(false);
-    const [editingId, setEditingId] = useState<number | null>(null); // ✅ ตัวระบุว่ากำลังแก้ไข ID ไหน
+    const [editingId, setEditingId] = useState<number | null>(null);
     
     const [newName, setNewName] = useState("");
     const [newPrice, setNewPrice] = useState("");

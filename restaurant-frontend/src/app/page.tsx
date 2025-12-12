@@ -52,6 +52,9 @@ function HomeContent() {
   const [tableInfo, setTableInfo] = useState<TableInfo | null>(null);
   const [loading, setLoading] = useState(true);
   
+  // State ชื่อร้าน
+  const [restaurantName, setRestaurantName] = useState("ร้านอาหาร 🍳");
+
   // State สำหรับ Modal ประวัติ
   const [showHistory, setShowHistory] = useState(false);
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
@@ -80,6 +83,12 @@ function HomeContent() {
                 setTableInfo(dataTable.data);
                 setIsCalling(dataTable.data.isCallingStaff); // Sync สถานะเริ่มต้น
             }
+
+            // 3. ดึงชื่อร้าน (เพิ่มใหม่)
+            const resName = await fetch('http://localhost:3000/api/settings/name');
+            const dataName = await resName.json();
+            if (dataName.status === 'success') setRestaurantName(dataName.data);
+
         } catch (error) {
             console.error(error);
         } finally {
@@ -189,7 +198,8 @@ function HomeContent() {
 
       <header className="mb-6 mt-4 flex justify-between items-center">
         <div>
-            <h1 className="text-2xl font-bold text-slate-900">ร้านอาหารตามสั่ง 🍳</h1>
+            <h1 className="text-2xl font-bold text-slate-900">{restaurantName}</h1>
+            
             <p className="text-slate-500 text-sm">
             โต๊ะ: <span className="font-bold text-green-600">{tableInfo?.name || tableIdParam}</span>
             </p>
