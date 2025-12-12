@@ -1,8 +1,8 @@
-"use client"; // บรรทัดนี้สำคัญ! บอกว่าเป็น Client Component
+"use client";
 
 import Image from "next/image";
 import { Card, CardTitle } from "@/components/ui/card";
-import { useCartStore } from "@/store/useCartStore"; // เรียกใช้ Store
+import { useCartStore } from "@/store/useCartStore";
 
 interface MenuItemProps {
   id: number;
@@ -12,10 +12,8 @@ interface MenuItemProps {
 }
 
 export default function MenuItem({ id, nameTH, price, imageUrl }: MenuItemProps) {
-  // ดึงฟังก์ชัน addItem และ items มาจาก Store
   const { addItem, items } = useCartStore();
   
-  // เช็คว่าเมนูนี้ถูกเลือกไปกี่จานแล้ว
   const currentItem = items.find((item) => item.id === id);
   const quantity = currentItem ? currentItem.quantity : 0;
 
@@ -30,6 +28,7 @@ export default function MenuItem({ id, nameTH, price, imageUrl }: MenuItemProps)
             fill
             className="object-cover"
             sizes="(max-width: 768px) 33vw, 100px"
+            unoptimized
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-xs text-slate-400">
@@ -52,7 +51,13 @@ export default function MenuItem({ id, nameTH, price, imageUrl }: MenuItemProps)
 
           {/* ปุ่มกดสั่ง */}
           <button
-            onClick={() => addItem({ id, name: nameTH, price })}
+            onClick={() => addItem({ 
+              id, 
+              nameTH,
+              price,
+              imageUrl,
+              note: ""
+            })}
             className={`text-xs px-3 py-1 rounded-full transition-colors ${
               quantity > 0
                 ? "bg-green-600 text-white"

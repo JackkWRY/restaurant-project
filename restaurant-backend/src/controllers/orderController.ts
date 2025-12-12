@@ -11,7 +11,7 @@ export const createOrder = async (req: Request, res: Response) => {
       return;
     }
 
-    // ✅ 2. (เพิ่มใหม่) เช็คว่าโต๊ะมีอยู่จริง และ "เปิดให้บริการ" อยู่หรือไม่
+    // 2. เช็คสถานะโต๊ะ
     const table = await prisma.table.findUnique({
       where: { id: Number(tableId) }
     });
@@ -25,12 +25,11 @@ export const createOrder = async (req: Request, res: Response) => {
       res.status(400).json({ error: 'This table is currently closed.' });
       return;
     }
-    // -------------------------------------------------------------
 
-    // 3. คำนวณราคา
+    // 3. คำนวณราคา (re-calculate เพื่อความปลอดภัย)
     let totalPrice = 0;
     for (const item of items) {
-      const menu = await prisma.menu.findUnique({ where: { id: item.id } });
+      const menu = await prisma.menu.findUnique({ where: { id: Number(item.menuId) } });
       if (menu) {
         totalPrice += Number(menu.price) * item.quantity;
       }
@@ -44,7 +43,7 @@ export const createOrder = async (req: Request, res: Response) => {
         status: 'PENDING',
         items: {
           create: items.map((item: any) => ({
-            menuId: item.id,
+            menuId: Number(item.menuId), 
             quantity: item.quantity,
             note: item.note || '',
           })),

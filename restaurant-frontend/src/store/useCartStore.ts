@@ -1,36 +1,41 @@
 import { create } from 'zustand';
 
-// กำหนดหน้าตาของสินค้าในตะกร้า
 export interface CartItem {
   id: number;
-  name: string;
+  nameTH: string;
   price: number;
   quantity: number;
+  note?: string;
+  imageUrl?: string | null;
 }
 
 interface CartStore {
   items: CartItem[];
   tableId: number;
   
+  // Actions
+  setTableId: (id: number) => void;
   addItem: (item: Omit<CartItem, 'quantity'>) => void;
   removeItem: (id: number) => void;
-  deleteItem: (id: number) => void;
+  increaseQuantity: (id: number) => void;
+  decreaseQuantity: (id: number) => void;
   clearCart: () => void;
+  
+  // Getters
   totalPrice: () => number;
   totalItems: () => number;
-  setTableId: (id: number) => void;
 }
 
 export const useCartStore = create<CartStore>((set, get) => ({
   items: [],
   tableId: 0,
 
-  // เพิ่มสินค้า
+  setTableId: (id: number) => set({ tableId: id }),
+
   addItem: (newItem) => {
     set((state) => {
       const existingItem = state.items.find((item) => item.id === newItem.id);
       if (existingItem) {
-        // ถ้ามีอยู่แล้ว ให้เพิ่มจำนวน
         return {
           items: state.items.map((item) =>
             item.id === newItem.id
@@ -39,46 +44,41 @@ export const useCartStore = create<CartStore>((set, get) => ({
           ),
         };
       }
-      // ถ้ายังไม่มี ให้เพิ่มใหม่โดยเริ่มที่ 1
       return { items: [...state.items, { ...newItem, quantity: 1 }] };
     });
   },
 
-  // ลบสินค้า (ลดจำนวน หรือเอาออกเลยถ้าเหลือ 0)
   removeItem: (id) => {
-    set((state) => {
-      const existingItem = state.items.find((item) => item.id === id);
-      if (existingItem && existingItem.quantity > 1) {
-        return {
-          items: state.items.map((item) =>
-            item.id === id ? { ...item, quantity: item.quantity - 1 } : item
-          ),
-        };
-      }
-      return { items: state.items.filter((item) => item.id !== id) };
-    });
-  },
-
-  // ลบสินค้าออกจากตะกร้าเลย
-  deleteItem: (id) => {
     set((state) => ({
-      items: state.items.filter((item) => item.id !== id) // กรองเอา ID นั้นทิ้งไปเลย
+      items: state.items.filter((item) => item.id !== id)
     }));
   },
 
-  // ล้างตะกร้า
+  increaseQuantity: (id) => {
+    set((state) => ({
+      items: state.items.map((item) =>
+        item.id === id ? { ...item, quantity: item.quantity + 1 } : item
+      ),
+    }));
+  },
+
+  decreaseQuantity: (id) => {
+    set((state) => ({
+      items: state.items
+        .map((item) =>
+          item.id === id ? { ...item, quantity: item.quantity - 1 } : item
+        )
+        .filter((item) => item.quantity > 0),
+    }));
+  },
+
   clearCart: () => set({ items: [] }),
 
-  // คำนวณราคารวม
   totalPrice: () => {
     return get().items.reduce((total, item) => total + item.price * item.quantity, 0);
   },
   
-  // นับจำนวนจานรวม
   totalItems: () => {
     return get().items.reduce((total, item) => total + item.quantity, 0);
   },
-
-  // ✅ 4. ฟังก์ชันเปลี่ยนเลขโต๊ะ (ใช้ตอน Detector จับค่าจาก URL ได้)
-  setTableId: (id: number) => set({ tableId: id }),
 }));
