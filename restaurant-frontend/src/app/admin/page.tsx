@@ -19,6 +19,7 @@ interface Menu {
   imageUrl: string | null;
   categoryId: number;
   category?: { name: string };
+  isRecommended?: boolean;
 }
 
 export default function AdminPage() {
@@ -256,10 +257,10 @@ function CategoryManager() {
 }
 
 // ==========================================
-// 🟡 Component: Menu Manager (อัปเกรดใหม่: เพิ่ม/ลบ/แก้ไข)
+// 🟡 Component: Menu Manager
 // ==========================================
 function MenuManager() {
-    const [menus, setMenus] = useState<Menu[]>([]);
+    const [menus, setMenus] = useState<Menu[]>([]); 
     const [categories, setCategories] = useState<Category[]>([]);
     
     // Form States
@@ -270,6 +271,7 @@ function MenuManager() {
     const [newPrice, setNewPrice] = useState("");
     const [newCategoryId, setNewCategoryId] = useState("");
     const [newImage, setNewImage] = useState("");
+    const [isRecommended, setIsRecommended] = useState(false);
 
     const refreshData = async () => {
         try {
@@ -307,29 +309,27 @@ function MenuManager() {
         return () => { isMounted = false; };
     }, []);
 
-    // ✅ ฟังก์ชัน Reset ฟอร์ม
     const resetForm = () => {
         setNewName("");
         setNewPrice("");
         setNewCategoryId("");
         setNewImage("");
+        setIsRecommended(false);
         setEditingId(null);
         setIsFormOpen(false);
     };
 
-    // ✅ ฟังก์ชันเริ่มแก้ไข (ดึงข้อมูลมาใส่ฟอร์ม)
     const handleStartEdit = (menu: Menu) => {
         setNewName(menu.nameTH);
         setNewPrice(menu.price.toString());
         setNewCategoryId(menu.categoryId.toString());
         setNewImage(menu.imageUrl || "");
+        setIsRecommended(menu.isRecommended || false); 
         setEditingId(menu.id);
         setIsFormOpen(true);
-        // เลื่อนหน้าจอไปที่ฟอร์ม (Optional)
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    // ✅ ฟังก์ชันบันทึก (รองรับทั้ง สร้าง และ แก้ไข)
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
@@ -338,20 +338,19 @@ function MenuManager() {
             nameEN: newName, 
             price: newPrice,
             categoryId: newCategoryId, 
-            imageUrl: newImage
+            imageUrl: newImage,
+            isRecommended: isRecommended
         };
 
         try {
             let res;
             if (editingId) {
-                // 🟡 โหมดแก้ไข (PUT)
                 res = await fetch(`http://localhost:3000/api/menus/${editingId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
             } else {
-                // 🟢 โหมดสร้างใหม่ (POST)
                 res = await fetch('http://localhost:3000/api/menus', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -393,10 +392,8 @@ function MenuManager() {
                 </button>
             </div>
 
-            {/* Form (ใช้ร่วมกันทั้งเพิ่มและแก้ไข) */}
             {isFormOpen && (
                 <form onSubmit={handleSubmit} className="bg-slate-50 p-6 rounded-xl border mb-6 animate-in fade-in slide-in-from-top-4 relative">
-                    {/* Badge บอกสถานะ */}
                     <div className={`absolute top-4 right-4 text-xs font-bold px-2 py-1 rounded ${editingId ? "bg-blue-100 text-blue-600" : "bg-green-100 text-green-600"}`}>
                         {editingId ? "โหมดแก้ไข" : "โหมดสร้างใหม่"}
                     </div>
@@ -430,6 +427,19 @@ function MenuManager() {
                         </div>
                     </div>
                     
+                    <div className="mt-4 flex items-center gap-2">
+                        <input 
+                            type="checkbox" 
+                            id="isRecommended" 
+                            checked={isRecommended} 
+                            onChange={(e) => setIsRecommended(e.target.checked)}
+                            className="w-5 h-5 accent-purple-600 cursor-pointer"
+                        />
+                        <label htmlFor="isRecommended" className="text-slate-700 font-bold cursor-pointer select-none">
+                            ตั้งเป็นเมนูแนะนำ (Recommended) ★
+                        </label>
+                    </div>
+                    
                     <div className="mt-6 flex gap-2">
                         <button type="submit" className={`px-6 py-2 rounded-lg font-bold text-white flex items-center gap-2 ${editingId ? "bg-blue-600 hover:bg-blue-700" : "bg-green-600 hover:bg-green-700"}`}>
                             <Save size={18} /> {editingId ? "บันทึกการแก้ไข" : "สร้างเมนูใหม่"}
@@ -443,7 +453,6 @@ function MenuManager() {
                 </form>
             )}
 
-            {/* Table */}
             <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm">
                 <table className="w-full text-left">
                     <thead className="bg-slate-100 text-slate-600 font-bold text-sm">
@@ -461,17 +470,14 @@ function MenuManager() {
                                 <td className="p-4">
                                     <div className="w-12 h-12 bg-slate-200 rounded-lg overflow-hidden flex items-center justify-center text-slate-400 relative">
                                         {menu.imageUrl ? (
-                                            <Image 
-                                                src={menu.imageUrl} 
-                                                alt={menu.nameTH} 
-                                                fill 
-                                                className="object-cover"
-                                                unoptimized
-                                            />
+                                            <Image src={menu.imageUrl} alt={menu.nameTH} fill className="object-cover" unoptimized />
                                         ) : <ImageIcon size={20}/>}
                                     </div>
                                 </td>
-                                <td className="p-4 font-bold text-slate-800">{menu.nameTH}</td>
+                                <td className="p-4">
+                                    <div className="font-bold text-slate-800">{menu.nameTH}</div>
+                                    {menu.isRecommended && <span className="text-xs text-orange-500 font-bold">★ เมนูแนะนำ</span>}
+                                </td>
                                 <td className="p-4 text-sm text-slate-500">
                                     <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded border border-purple-100">
                                         {menu.category?.name || '-'}
@@ -480,23 +486,8 @@ function MenuManager() {
                                 <td className="p-4 font-bold text-slate-900">฿{menu.price}</td>
                                 <td className="p-4 text-right">
                                     <div className="flex justify-end gap-1">
-                                        {/* ✅ ปุ่มแก้ไข */}
-                                        <button 
-                                            onClick={() => handleStartEdit(menu)}
-                                            className="p-2 text-blue-500 hover:bg-blue-100 rounded-lg transition-colors"
-                                            title="แก้ไข"
-                                        >
-                                            <Pencil size={18} />
-                                        </button>
-                                        
-                                        {/* ปุ่มลบ */}
-                                        <button 
-                                            onClick={() => handleDelete(menu.id)}
-                                            className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-colors"
-                                            title="ลบ"
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
+                                        <button onClick={() => handleStartEdit(menu)} className="p-2 text-blue-500 hover:bg-blue-100 rounded-lg transition-colors" title="แก้ไข"><Pencil size={18} /></button>
+                                        <button onClick={() => handleDelete(menu.id)} className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-colors" title="ลบ"><Trash2 size={18} /></button>
                                     </div>
                                 </td>
                             </tr>

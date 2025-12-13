@@ -10,9 +10,10 @@ interface MenuItemProps {
   nameTH: string;
   price: number;
   imageUrl: string | null;
+  isRecommended: boolean;
 }
 
-export default function MenuItem({ id, nameTH, price, imageUrl }: MenuItemProps) {
+export default function MenuItem({ id, nameTH, price, imageUrl, isRecommended }: MenuItemProps) {
   const { addItem, items, increaseQuantity, decreaseQuantity, removeItem } = useCartStore();
   
   const currentItem = items.find((item) => item.id === id);
@@ -45,7 +46,10 @@ export default function MenuItem({ id, nameTH, price, imageUrl }: MenuItemProps)
           <CardTitle className="text-base font-semibold text-slate-900 line-clamp-1">
             {nameTH}
           </CardTitle>
-          <p className="text-xs text-slate-500 mt-0.5">เมนูแนะนำ</p>
+          
+          {isRecommended && (
+            <p className="text-xs text-orange-500 font-bold mt-0.5">★ เมนูแนะนำ</p>
+          )}
         </div>
 
         <div className="flex justify-between items-center">

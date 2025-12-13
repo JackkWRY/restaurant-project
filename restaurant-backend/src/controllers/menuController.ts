@@ -1,14 +1,13 @@
 import type { Request, Response } from 'express';
-import prisma from '../prisma.js'; // Import ตัวเชื่อม DB ที่เราเพิ่งสร้าง
+import prisma from '../prisma.js';
 
-// 1. ดึงเมนูทั้งหมด แยกตามหมวดหมู่ (เหมาะกับหน้าสั่งอาหารของลูกค้า)
+// 1. ดึงเมนูทั้งหมด แยกตามหมวดหมู่
 export const getMenus = async (req: Request, res: Response) => {
   try {
-    // ดึง Category ทั้งหมด และ "พ่วง" (include) รายการเมนูมาด้วย
     const categories = await prisma.category.findMany({
       include: {
         menus: {
-          where: { isAvailable: true }, // เอาเฉพาะที่มีของ
+          where: { isAvailable: true },
           orderBy: { id: 'asc' }
         }
       },
@@ -22,11 +21,11 @@ export const getMenus = async (req: Request, res: Response) => {
   }
 };
 
-// 2. ดึงเมนูทั้งหมด แบบรายการยาวๆ (เหมาะกับหน้าจัดการของ Staff/Admin)
+// 2. ดึงเมนูทั้งหมด แบบรายการยาวๆ
 export const getAllMenuItems = async (req: Request, res: Response) => {
   try {
     const menus = await prisma.menu.findMany({
-      include: { category: true }, // พ่วงชื่อหมวดหมู่มาด้วย
+      include: { category: true },
       orderBy: { id: 'asc' }
     });
     res.json({ status: 'success', data: menus });
@@ -38,7 +37,7 @@ export const getAllMenuItems = async (req: Request, res: Response) => {
 // 3. สร้างเมนูใหม่
 export const createMenu = async (req: Request, res: Response) => {
   try {
-    const { nameTH, nameEN, price, categoryId, imageUrl } = req.body;
+    const { nameTH, nameEN, price, categoryId, imageUrl, isRecommended } = req.body;
     
     const newMenu = await prisma.menu.create({
       data: {
@@ -46,8 +45,9 @@ export const createMenu = async (req: Request, res: Response) => {
         nameEN,
         price: Number(price),
         categoryId: Number(categoryId),
-        imageUrl: imageUrl || '', // ถ้าไม่ใส่รูป ให้เป็นว่างๆ
-        isAvailable: true
+        imageUrl: imageUrl || '',
+        isAvailable: true,
+        isRecommended: Boolean(isRecommended) 
       }
     });
 
@@ -62,7 +62,7 @@ export const createMenu = async (req: Request, res: Response) => {
 export const updateMenu = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { nameTH, nameEN, price, categoryId, imageUrl, isAvailable } = req.body;
+    const { nameTH, nameEN, price, categoryId, imageUrl, isAvailable, isRecommended } = req.body;
 
     const updatedMenu = await prisma.menu.update({
       where: { id: Number(id) },
@@ -72,7 +72,8 @@ export const updateMenu = async (req: Request, res: Response) => {
         price: Number(price),
         categoryId: Number(categoryId),
         imageUrl,
-        isAvailable
+        isAvailable,
+        isRecommended: isRecommended !== undefined ? Boolean(isRecommended) : undefined
       }
     });
 
@@ -83,16 +84,13 @@ export const updateMenu = async (req: Request, res: Response) => {
   }
 };
 
-// 5. ลบเมนู
+// 5. ลบเมนู (เหมือนเดิม)
 export const deleteMenu = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    
-    // ลบข้อมูล (Soft delete หรือ Hard delete ก็ได้ แต่ Prisma ลบเลยคือ Hard delete)
     await prisma.menu.delete({
       where: { id: Number(id) }
     });
-
     res.json({ status: 'success', message: 'Menu deleted' });
   } catch (error) {
     console.error("Delete Menu Error:", error);

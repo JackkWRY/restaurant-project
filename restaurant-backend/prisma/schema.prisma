@@ -36,6 +36,7 @@ model Menu {
   price       Decimal  @db.Decimal(10, 2)
   imageUrl    String?
   isAvailable Boolean  @default(true)
+  isRecommended Boolean @default(false)
   categoryId  Int
   category    Category @relation(fields: [categoryId], references: [id])
   orderItems  OrderItem[]
