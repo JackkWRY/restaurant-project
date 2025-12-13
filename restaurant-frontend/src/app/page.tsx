@@ -7,6 +7,7 @@ import { QrCode, Lock, Bell, History, X, ChevronDown, ChevronUp } from "lucide-r
 import MenuItem from "@/components/MenuItem"; 
 import FloatingCart from "@/components/FloatingCart"; 
 import TableDetector from "@/components/TableDetector"; 
+import { useCartStore } from "@/store/useCartStore";
 
 // --- Types ---
 interface Menu {
@@ -48,6 +49,8 @@ function HomeContent() {
   const searchParams = useSearchParams();
   const tableIdParam = searchParams.get("tableId");
   
+  const { totalItems } = useCartStore(); 
+
   const [categories, setCategories] = useState<Category[]>([]);
   const [tableInfo, setTableInfo] = useState<TableInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -204,7 +207,7 @@ function HomeContent() {
         </div>
       )}
 
-      <FloatingCart />
+      {totalItems() > 0 && <FloatingCart />}
 
       {/* Modal History */}
       {showHistory && (

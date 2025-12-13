@@ -7,7 +7,9 @@ import { useCartStore } from "@/store/useCartStore";
 
 export default function FloatingCart() {
   const { items, removeItem, increaseQuantity, decreaseQuantity, clearCart, totalPrice, totalItems } = useCartStore();
+  
   const [isOpen, setIsOpen] = useState(false);
+  
   const searchParams = useSearchParams();
   const tableId = searchParams.get("tableId");
 
