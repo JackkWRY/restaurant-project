@@ -58,16 +58,28 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 
     const updatedOrder = await prisma.order.update({
       where: { id: Number(id) },
-      data: { status: status },
+      data: { 
+        status: status,
+        items: {
+          updateMany: {
+            where: { status: { not: 'CANCELLED' } },
+            data: { status: status }
+          }
+        }
+      },
       include: {
         table: true,
-        items: { include: { menu: true } }
+        items: { 
+          where: { status: { not: 'CANCELLED' } },
+          include: { menu: true } 
+        }
       }
     });
 
     const io = req.app.get('io');
     io.emit('order_status_updated', updatedOrder);
     
+    console.log(`✅ Order #${id} updated to ${status} (Synced items)`);
     res.json({ status: 'success', data: updatedOrder });
   } catch (error) {
     console.error('Update Status Error:', error);
@@ -82,11 +94,16 @@ export const getActiveOrders = async (req: Request, res: Response) => {
         status: { in: ['PENDING', 'COOKING', 'READY'] } 
       },
       include: {
-        items: { include: { menu: true } },
+        items: { 
+          where: { status: { not: 'CANCELLED' } }, 
+          include: { menu: true } 
+        },
         table: true
       },
       orderBy: { createdAt: 'asc' }
     });
+
+    const validOrders = orders.filter(order => order.items.length > 0);
 
     res.json({ status: 'success', data: orders });
   } catch (error) {

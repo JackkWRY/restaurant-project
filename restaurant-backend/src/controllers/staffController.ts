@@ -8,15 +8,28 @@ export const getTablesStatus = async (req: Request, res: Response) => {
       include: {
         orders: {
           where: {
-            status: { notIn: ['COMPLETED', 'CANCELLED'] }
+            status: { not: 'COMPLETED' }
           },
-          include: { items: true }
+          include: { 
+            items: {
+              include: { menu: true }
+            }
+          }
         }
       }
     });
 
     const tableData = tables.map(table => {
-      const totalAmount = table.orders.reduce((sum, order) => sum + Number(order.totalPrice), 0);
+      const totalAmount = table.orders.reduce((orderSum, order) => {
+        if (order.status === 'CANCELLED') return orderSum;
+
+        const itemsTotal = order.items.reduce((itemSum, item) => {
+          if (item.status === 'CANCELLED') return itemSum;
+          return itemSum + (Number(item.menu.price) * item.quantity);
+        }, 0);
+
+        return orderSum + itemsTotal;
+      }, 0);
       
       const readyCount = table.orders.filter(order => order.status === 'READY').length;
 
@@ -51,11 +64,18 @@ export const closeTable = async (req: Request, res: Response) => {
       data: { status: 'COMPLETED' }
     });
 
+    await prisma.order.deleteMany({
+        where: {
+            tableId: Number(id),
+            status: 'CANCELLED'
+        }
+    });
+
     await prisma.table.update({
       where: { id: Number(id) },
       data: { isOccupied: false, isCallingStaff: false } 
     });
-    
+
     res.json({ status: 'success', message: 'Table closed' });
   } catch (error) {
     console.error(error);
@@ -90,7 +110,7 @@ export const getTableDetails = async (req: Request, res: Response) => {
         price: Number(item.menu.price),
         quantity: item.quantity,
         total: Number(item.menu.price) * item.quantity,
-        status: order.status
+        status: item.status
       }))
     );
 
@@ -98,5 +118,42 @@ export const getTableDetails = async (req: Request, res: Response) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to fetch details' });
+  }
+};
+
+export const cancelOrderItem = async (req: Request, res: Response) => {
+  try {
+    const { itemId } = req.params;
+
+    const updatedItem = await prisma.orderItem.update({
+      where: { id: Number(itemId) },
+      data: { status: 'CANCELLED' }
+    });
+
+    const parentOrder = await prisma.order.findUnique({
+        where: { id: updatedItem.orderId },
+        include: {
+            table: true,
+            items: {
+                where: { status: { not: 'CANCELLED' } },
+                include: { menu: true }
+            }
+        }
+    });
+
+    const io = req.app.get('io');
+
+    if (parentOrder && parentOrder.items.length > 0) {
+        io.emit('order_status_updated', parentOrder);
+    } else if (parentOrder && parentOrder.items.length === 0) {
+        io.emit('order_status_updated', { ...parentOrder, status: 'COMPLETED' });
+    }
+
+    io.emit('order_status_updated', { id: itemId, status: 'CANCELLED' });
+
+    res.json({ status: 'success', message: 'Item cancelled' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to cancel item' });
   }
 };

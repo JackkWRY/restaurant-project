@@ -161,7 +161,7 @@ export const getCustomerOrders = async (req: Request, res: Response) => {
         menuName: item.menu.nameTH,
         price: Number(item.menu.price),
         quantity: item.quantity,
-        status: order.status,
+        status: item.status,
         total: Number(item.menu.price) * item.quantity
       }))
     );

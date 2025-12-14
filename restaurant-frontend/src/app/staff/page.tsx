@@ -144,19 +144,22 @@ export default function StaffPage() {
     try { await fetch(`http://localhost:3000/api/tables/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newName }) }); fetchTables(); } catch (error) { console.error(error); }
   };
 
-  const handleCancelOrder = async (orderId: number, menuName: string) => {
+  const handleCancelOrder = async (itemId: number, menuName: string) => {
     if(!confirm(`ต้องการยกเลิกเมนู "${menuName}" ใช่หรือไม่?`)) return;
+    
     try {
-        const res = await fetch(`http://localhost:3000/api/orders/${orderId}/status`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: 'CANCELLED' })
+        const res = await fetch(`http://localhost:3000/api/staff/items/${itemId}/cancel`, {
+            method: 'PATCH'
         });
+        
         if (res.ok) {
             if (selectedTableId) handleViewDetails(selectedTableId);
             fetchTables();
         }
-    } catch (error) { console.error(error); alert("ยกเลิกรายการไม่สำเร็จ"); }
+    } catch (error) {
+        console.error(error);
+        alert("ยกเลิกรายการไม่สำเร็จ");
+    }
   };
 
   const getStatusDisplay = (status: string) => {
@@ -315,7 +318,7 @@ export default function StaffPage() {
                             <td className="p-2 text-center">
                                 {!isCancelled ? (
                                     <button 
-                                        onClick={() => handleCancelOrder(item.orderId, item.menuName)}
+                                        onClick={() => handleCancelOrder(item.id, item.menuName)}
                                         className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
                                         title="ยกเลิกรายการนี้"
                                     >
