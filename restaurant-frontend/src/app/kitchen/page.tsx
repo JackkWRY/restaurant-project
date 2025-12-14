@@ -133,8 +133,10 @@ export default function KitchenPage() {
   if (loading) return <div className="min-h-screen bg-slate-900 text-white flex justify-center items-center">Loading...</div>;
 
   return (
-    <main className="p-4 min-h-screen bg-slate-900 text-white overflow-x-hidden">
-      <header className="flex justify-between items-center mb-6">
+    <main className="h-screen flex flex-col p-4 bg-slate-900 text-white overflow-hidden">
+      
+      {/* Header */}
+      <header className="shrink-0 flex justify-between items-center mb-4">
         <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-3">
             👨‍🍳 Kitchen Display (Item View)
             <span className="text-xs font-normal bg-green-600 px-3 py-1 rounded-full animate-pulse">Live</span>
@@ -142,15 +144,16 @@ export default function KitchenPage() {
         <button onClick={fetchActiveItems} className="bg-slate-800 p-2 rounded-full hover:bg-slate-700"><RefreshCw size={20} /></button>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[calc(100vh-100px)]">
+      {/* Grid Container (ยืดเต็มพื้นที่ที่เหลือ) */}
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 min-h-0">
         
         {/* Column 1: PENDING */}
-        <div className="flex flex-col gap-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700">
-            <h2 className="font-bold text-lg text-yellow-400 flex items-center gap-2 border-b border-slate-700 pb-2">
+        <div className="flex flex-col h-full bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
+            <h2 className="shrink-0 font-bold text-lg text-yellow-400 flex items-center gap-2 p-4 pb-2 border-b border-slate-700 bg-slate-800/80 backdrop-blur-sm z-10">
                 <Clock /> รอคิว (Pending) 
                 <span className="ml-auto bg-slate-700 px-2 rounded text-white text-sm">{pendingItems.length}</span>
             </h2>
-            <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+            <div className="flex-1 overflow-y-auto p-4 pt-2 space-y-3 custom-scrollbar">
                 {pendingItems.map(item => (
                     <KitchenCard key={item.id} item={item} 
                         btnLabel="🔥 เริ่มทำ" 
@@ -162,12 +165,12 @@ export default function KitchenPage() {
         </div>
 
         {/* Column 2: COOKING */}
-        <div className="flex flex-col gap-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700">
-            <h2 className="font-bold text-lg text-orange-400 flex items-center gap-2 border-b border-slate-700 pb-2">
+        <div className="flex flex-col h-full bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
+            <h2 className="shrink-0 font-bold text-lg text-orange-400 flex items-center gap-2 p-4 pb-2 border-b border-slate-700 bg-slate-800/80 backdrop-blur-sm z-10">
                 <ChefHat /> กำลังปรุง (Cooking) 
                 <span className="ml-auto bg-slate-700 px-2 rounded text-white text-sm">{cookingItems.length}</span>
             </h2>
-            <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+            <div className="flex-1 overflow-y-auto p-4 pt-2 space-y-3 custom-scrollbar">
                 {cookingItems.map(item => (
                     <KitchenCard key={item.id} item={item} 
                         btnLabel="✅ เสร็จแล้ว" 
@@ -179,12 +182,12 @@ export default function KitchenPage() {
         </div>
 
         {/* Column 3: READY */}
-        <div className="flex flex-col gap-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700">
-            <h2 className="font-bold text-lg text-green-400 flex items-center gap-2 border-b border-slate-700 pb-2">
+        <div className="flex flex-col h-full bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
+            <h2 className="shrink-0 font-bold text-lg text-green-400 flex items-center gap-2 p-4 pb-2 border-b border-slate-700 bg-slate-800/80 backdrop-blur-sm z-10">
                 <BellRing /> รอเสิร์ฟ (Ready) 
                 <span className="ml-auto bg-slate-700 px-2 rounded text-white text-sm">{readyItems.length}</span>
             </h2>
-            <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+            <div className="flex-1 overflow-y-auto p-4 pt-2 space-y-3 custom-scrollbar">
                 {readyItems.map(item => (
                     <KitchenCard key={item.id} item={item} 
                         btnLabel="🚀 เสิร์ฟแล้ว" 
@@ -202,7 +205,7 @@ export default function KitchenPage() {
 
 function KitchenCard({ item, btnLabel, btnColor, onAction }: { item: KitchenItem, btnLabel: string, btnColor: string, onAction: () => void }) {
     return (
-        <Card className="bg-slate-800 border-slate-600 text-slate-100 shadow-lg animate-in fade-in slide-in-from-bottom-2">
+        <Card className="bg-slate-800 border-slate-600 text-slate-100 shadow-lg">
             <CardHeader className="p-3 bg-slate-900/50 flex flex-row justify-between items-start border-b border-slate-700">
                 <div className="flex items-center gap-2">
                     <span className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded">
