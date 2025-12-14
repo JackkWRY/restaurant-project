@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link"; 
 import { io } from "socket.io-client"; 
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
-import { Pencil, Trash2, Plus, X, Check, Eye, UtensilsCrossed, Bell, ChefHat } from "lucide-react"; 
+import { Pencil, Trash2, Plus, X, Check, Eye, UtensilsCrossed, Bell, ChefHat, Ban } from "lucide-react"; 
 
 interface TableStatus {
   id: number;
@@ -19,6 +19,7 @@ interface TableStatus {
 
 interface OrderDetailItem {
   id: number;
+  orderId: number;
   menuName: string;
   price: number;
   quantity: number;
@@ -63,6 +64,13 @@ export default function StaffPage() {
 
     socket.on("order_status_updated", () => {
         fetchTables();
+        if (selectedTableId) {
+             fetch(`http://localhost:3000/api/staff/tables/${selectedTableId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') setTableDetails(data.data.items);
+                });
+        }
     });
 
     const interval = setInterval(fetchTables, 10000);
@@ -70,7 +78,7 @@ export default function StaffPage() {
         clearInterval(interval);
         socket.disconnect();
     };
-  }, []);
+  }, [selectedTableId]);
 
   const handleAcknowledgeCall = async (tableId: number) => {
     try {
@@ -136,6 +144,33 @@ export default function StaffPage() {
     try { await fetch(`http://localhost:3000/api/tables/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newName }) }); fetchTables(); } catch (error) { console.error(error); }
   };
 
+  const handleCancelOrder = async (orderId: number, menuName: string) => {
+    if(!confirm(`ต้องการยกเลิกเมนู "${menuName}" ใช่หรือไม่?`)) return;
+    try {
+        const res = await fetch(`http://localhost:3000/api/orders/${orderId}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'CANCELLED' })
+        });
+        if (res.ok) {
+            if (selectedTableId) handleViewDetails(selectedTableId);
+            fetchTables();
+        }
+    } catch (error) { console.error(error); alert("ยกเลิกรายการไม่สำเร็จ"); }
+  };
+
+  const getStatusDisplay = (status: string) => {
+    switch (status) {
+        case 'PENDING': return { label: '🕒 รอคิว', color: 'text-yellow-600' };
+        case 'COOKING': return { label: '🍳 กำลังทำ', color: 'text-orange-600' };
+        case 'READY': return { label: '✨ พร้อมเสิร์ฟ', color: 'text-green-600 animate-pulse font-bold' };
+        case 'SERVED': return { label: '✅ เสิร์ฟแล้ว', color: 'text-green-700 font-bold' };
+        case 'COMPLETED': return { label: '💰 จ่ายแล้ว', color: 'text-slate-500' };
+        case 'CANCELLED': return { label: '❌ ยกเลิกแล้ว', color: 'text-red-500 font-bold' };
+        default: return { label: status, color: 'text-slate-500' };
+    }
+  };
+
   return (
     <main className="min-h-screen bg-slate-100 p-6 relative">
       <header className="flex justify-between items-center mb-8 bg-white p-4 rounded-xl shadow-sm">
@@ -178,14 +213,12 @@ export default function StaffPage() {
               >
                 {!table.isAvailable && !isEditingMode && <div className="absolute top-0 left-0 right-0 bg-slate-500 text-white text-xs text-center py-1 z-10">⛔ ปิดให้บริการ</div>}
                 
-                {/* 🔔 แจ้งเตือน: ลูกค้าเรียก */}
                 {table.isCallingStaff && (
                     <div onClick={() => handleAcknowledgeCall(table.id)} className="absolute top-0 left-0 right-0 bg-red-600 text-white text-xs font-bold text-center py-1 z-20 cursor-pointer hover:bg-red-700 flex justify-center items-center gap-1 animate-pulse">
                         <Bell size={12} className="fill-current" /> ลูกค้าเรียก!
                     </div>
                 )}
                 
-                {/* 🍔 แจ้งเตือน: อาหารพร้อมเสิร์ฟ (READY) */}
                 {!table.isCallingStaff && table.readyOrderCount > 0 && (
                     <div className="absolute top-0 left-0 right-0 bg-green-600 text-white text-xs font-bold text-center py-1 z-20 flex justify-center items-center gap-1 animate-bounce">
                         <ChefHat size={12} /> อาหารพร้อมเสิร์ฟ ({table.readyOrderCount})
@@ -248,27 +281,70 @@ export default function StaffPage() {
               <h2 className="text-xl font-bold flex items-center gap-2"><UtensilsCrossed size={20} /> รายการอาหารโต๊ะ {tables.find(t => t.id === selectedTableId)?.name}</h2>
               <button onClick={closeModal} className="text-slate-300 hover:text-white"><X size={24} /></button>
             </div>
+            
             <div className="p-4 overflow-y-auto flex-1">
               {loadingDetails ? <p className="text-center text-slate-500 py-10">กำลังโหลดรายการ...</p> : tableDetails.length === 0 ? <div className="text-center py-10 text-slate-500">ยังไม่มีรายการอาหาร</div> : (
                 <table className="w-full text-left">
-                  <thead className="bg-slate-100 text-slate-600 text-sm"><tr><th className="p-2 rounded-l">เมนู</th><th className="p-2 text-center">จำนวน</th><th className="p-2 text-right rounded-r">รวม</th></tr></thead>
-                  <tbody className="divide-y">
-                    {tableDetails.map((item, idx) => (
-                      <tr key={`${item.id}-${idx}`}>
-                        <td className="p-2 text-slate-800 font-medium">{item.menuName}
-                            <div className={`text-xs font-bold ${item.status === 'READY' ? 'text-green-600 animate-pulse' : 'text-slate-400 font-normal'}`}>
-                                {item.status === 'READY' ? '✨ พร้อมเสิร์ฟ' : item.status}
-                            </div>
-                        </td>
-                        <td className="p-2 text-center text-slate-600">x{item.quantity}</td>
-                        <td className="p-2 text-right text-slate-900 font-bold">฿{item.total}</td>
+                  <thead className="bg-slate-100 text-slate-600 text-sm">
+                      <tr>
+                          <th className="p-2 rounded-l">เมนู</th>
+                          <th className="p-2 text-center">จำนวน</th>
+                          <th className="p-2 text-right">รวม</th>
+                          <th className="p-2 text-center rounded-r">จัดการ</th>
                       </tr>
-                    ))}
+                  </thead>
+                  <tbody className="divide-y">
+                    {tableDetails.map((item, idx) => {
+                      const { label, color } = getStatusDisplay(item.status);
+                      const isCancelled = item.status === 'CANCELLED';
+                      
+                      return (
+                        <tr key={`${item.id}-${idx}`} className={isCancelled ? "bg-slate-50 opacity-60" : ""}>
+                            <td className="p-2">
+                                <span className={`font-medium ${isCancelled ? "line-through text-slate-500" : "text-slate-800"}`}>
+                                    {item.menuName}
+                                </span>
+                                <div className={`text-xs mt-0.5 ${color}`}>
+                                    {label}
+                                </div>
+                            </td>
+                            <td className="p-2 text-center text-slate-600">x{item.quantity}</td>
+                            <td className="p-2 text-right font-bold text-slate-900">
+                                {isCancelled ? <span className="line-through text-slate-400">฿{item.total}</span> : `฿${item.total}`}
+                            </td>
+                            <td className="p-2 text-center">
+                                {!isCancelled ? (
+                                    <button 
+                                        onClick={() => handleCancelOrder(item.orderId, item.menuName)}
+                                        className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                                        title="ยกเลิกรายการนี้"
+                                    >
+                                        <Ban size={16} />
+                                    </button>
+                                ) : (
+                                    <span className="text-slate-300">-</span>
+                                )}
+                            </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               )}
             </div>
-            <div className="p-4 bg-white border-t flex gap-2"><button onClick={() => closeModal()} className="w-full bg-slate-200 text-slate-600 py-3 rounded-lg font-bold">ปิด</button></div>
+            
+            <div className="p-4 bg-slate-50 border-t">
+                 <div className="flex justify-between items-center mb-4">
+                    <span className="font-bold text-slate-600">ยอดรวมสุทธิ</span>
+                    <span className="text-2xl font-bold text-slate-900">
+                        ฿{tableDetails
+                            .filter(i => i.status !== 'CANCELLED')
+                            .reduce((sum, i) => sum + i.total, 0)
+                            .toLocaleString()}
+                    </span>
+                 </div>
+                <button onClick={() => closeModal()} className="w-full bg-slate-200 text-slate-600 py-3 rounded-lg font-bold">ปิดหน้าต่าง</button>
+            </div>
           </div>
         </div>
       )}

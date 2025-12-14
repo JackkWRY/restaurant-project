@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { io } from "socket.io-client"; 
 import { QrCode, Lock, Bell, History, X, ChevronDown, ChevronUp } from "lucide-react";
@@ -57,12 +57,20 @@ function HomeContent() {
   const [loading, setLoading] = useState(true);
   const [restaurantName, setRestaurantName] = useState("ร้านอาหาร 🍳");
 
-  // State Modal & Call Staff
   const [showHistory, setShowHistory] = useState(false);
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
   const [isCalling, setIsCalling] = useState(false);
 
-  // Load Data
+  const handleViewHistory = useCallback(async () => {
+    if (!tableIdParam) return;
+    setShowHistory(true);
+    try {
+        const res = await fetch(`http://localhost:3000/api/tables/${tableIdParam}/orders`);
+        const data = await res.json();
+        if (data.status === 'success') setHistoryItems(data.data);
+    } catch (error) { console.error(error); }
+  }, [tableIdParam]);
+
   useEffect(() => {
     if (!tableIdParam) {
         setLoading(false);
@@ -104,10 +112,13 @@ function HomeContent() {
         }
     });
 
-    return () => { socket.disconnect(); };
-  }, [tableIdParam]);
+    socket.on("order_status_updated", () => {
+        if (showHistory) handleViewHistory(); 
+    });
 
-  // Functions
+    return () => { socket.disconnect(); };
+  }, [tableIdParam, showHistory, handleViewHistory]);
+
   const handleCallStaff = async () => {
     if (!tableIdParam) return;
     const newStatus = !isCalling;
@@ -127,17 +138,18 @@ function HomeContent() {
     }
   };
 
-  const handleViewHistory = async () => {
-    if (!tableIdParam) return;
-    setShowHistory(true);
-    try {
-        const res = await fetch(`http://localhost:3000/api/tables/${tableIdParam}/orders`);
-        const data = await res.json();
-        if (data.status === 'success') setHistoryItems(data.data);
-    } catch (error) { console.error(error); }
+  const getStatusDisplay = (status: string) => {
+    switch (status) {
+        case 'PENDING': return { label: '🕒 รอคิว', color: 'text-yellow-600' };
+        case 'COOKING': return { label: '🍳 กำลังทำ', color: 'text-orange-600' };
+        case 'READY': return { label: '✨ พร้อมเสิร์ฟ', color: 'text-green-600 animate-pulse font-bold' };
+        case 'SERVED': return { label: '✅ เสิร์ฟแล้ว', color: 'text-green-700 font-bold' };
+        case 'COMPLETED': return { label: '💰 จ่ายแล้ว', color: 'text-slate-500' };
+        case 'CANCELLED': return { label: '❌ ยกเลิกแล้ว', color: 'text-red-500 font-bold' };
+        default: return { label: status, color: 'text-slate-500' };
+    }
   };
 
-  // --- Render Conditions ---
   if (!loading && !tableIdParam) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-slate-50 text-center">
@@ -224,20 +236,28 @@ function HomeContent() {
                         <p className="text-center text-slate-500 py-8">ยังไม่มีรายการที่สั่ง</p>
                     ) : (
                         <div className="space-y-3">
-                            {historyItems.map((item, idx) => (
-                                <div key={idx} className="flex justify-between items-center border-b pb-2 last:border-0">
-                                    <div>
-                                        <div className="font-bold text-slate-800">{item.menuName}</div>
-                                        <div className="text-xs text-slate-500">
-                                            สถานะ: <span className="font-bold text-blue-600">{item.status}</span>
+                            {historyItems.map((item, idx) => {
+                                const { label, color } = getStatusDisplay(item.status);
+                                const isCancelled = item.status === 'CANCELLED';
+                                return (
+                                    <div key={idx} className={`flex justify-between items-start border-b pb-3 last:border-0 ${isCancelled ? 'bg-slate-50 opacity-60' : ''}`}>
+                                        <div>
+                                            <div className={`font-bold text-lg ${isCancelled ? 'line-through text-slate-500' : 'text-slate-800'}`}>
+                                                {item.menuName}
+                                            </div>
+                                            <div className={`text-xs mt-1 ${color}`}>
+                                                {label}
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-sm text-slate-500">x{item.quantity}</div>
+                                            <div className={`font-bold ${isCancelled ? 'line-through text-slate-400' : 'text-slate-900'}`}>
+                                                ฿{item.total}
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="text-right">
-                                        <div className="text-sm text-slate-600">x{item.quantity}</div>
-                                        <div className="font-bold text-slate-900">฿{item.total}</div>
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>
@@ -245,7 +265,12 @@ function HomeContent() {
                 <div className="p-4 bg-slate-50 border-t">
                      <div className="flex justify-between text-lg font-bold text-slate-900">
                         <span>ยอดรวม</span>
-                        <span>฿{historyItems.reduce((sum, i) => sum + i.total, 0).toLocaleString()}</span>
+                        <span>
+                            ฿{historyItems
+                                .filter(i => i.status !== 'CANCELLED')
+                                .reduce((sum, i) => sum + i.total, 0)
+                                .toLocaleString()}
+                        </span>
                      </div>
                 </div>
             </div>
@@ -255,7 +280,6 @@ function HomeContent() {
   );
 }
 
-// Component ย่อย: Accordion สำหรับหมวดหมู่
 function CategoryAccordion({ category }: { category: Category }) {
     const [isOpen, setIsOpen] = useState(false);
 

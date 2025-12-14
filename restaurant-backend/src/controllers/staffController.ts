@@ -42,6 +42,7 @@ export const getTablesStatus = async (req: Request, res: Response) => {
 export const closeTable = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+
     await prisma.order.updateMany({
       where: {
         tableId: Number(id),
@@ -49,10 +50,12 @@ export const closeTable = async (req: Request, res: Response) => {
       },
       data: { status: 'COMPLETED' }
     });
+
     await prisma.table.update({
       where: { id: Number(id) },
       data: { isOccupied: false, isCallingStaff: false } 
     });
+    
     res.json({ status: 'success', message: 'Table closed' });
   } catch (error) {
     console.error(error);
@@ -63,19 +66,26 @@ export const closeTable = async (req: Request, res: Response) => {
 export const getTableDetails = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+
     const table = await prisma.table.findUnique({
       where: { id: Number(id) },
       include: {
         orders: {
-          where: { status: { notIn: ['COMPLETED', 'CANCELLED'] } },
+          where: { status: { notIn: ['COMPLETED'] } },
           include: { items: { include: { menu: true } } }
         }
       }
     });
-    if (!table) { res.status(404).json({ error: 'Table not found' }); return; }
+
+    if (!table) {
+      res.status(404).json({ error: 'Table not found' });
+      return;
+    }
+
     const allItems = table.orders.flatMap(order => 
       order.items.map(item => ({
         id: item.id,
+        orderId: order.id,
         menuName: item.menu.nameTH,
         price: Number(item.menu.price),
         quantity: item.quantity,
@@ -83,6 +93,7 @@ export const getTableDetails = async (req: Request, res: Response) => {
         status: order.status
       }))
     );
+
     res.json({ status: 'success', data: { ...table, items: allItems } });
   } catch (error) {
     console.error(error);
