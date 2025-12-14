@@ -138,3 +138,41 @@ export const getOrdersByTable = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Failed to fetch table orders' });
     }
 };
+
+export const updateOrderItemStatus = async (req: Request, res: Response) => {
+  try {
+    const { itemId } = req.params;
+    const { status } = req.body;
+
+    const updatedItem = await prisma.orderItem.update({
+      where: { id: Number(itemId) },
+      data: { status },
+      include: {
+        menu: true,
+        order: {
+            include: { table: true }
+        }
+      }
+    });
+
+    const io = req.app.get('io');
+    
+    const payload = {
+        id: updatedItem.id,
+        orderId: updatedItem.orderId,
+        status: updatedItem.status,
+        menuName: updatedItem.menu.nameTH,
+        tableName: updatedItem.order.table.name,
+        quantity: updatedItem.quantity,
+        note: updatedItem.note,
+        createdAt: updatedItem.order.createdAt
+    };
+
+    io.emit('item_status_updated', payload);
+
+    res.json({ status: 'success', data: updatedItem });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to update item status' });
+  }
+};

@@ -1,97 +1,134 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { io } from "socket.io-client";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Clock, ChefHat, BellRing, RefreshCw } from "lucide-react";
 
-type OrderStatus = 'PENDING' | 'COOKING' | 'READY' | 'SERVED' | 'COMPLETED' | 'CANCELLED';
+// --- Types ---
+type ItemStatus = 'PENDING' | 'COOKING' | 'READY' | 'SERVED' | 'COMPLETED' | 'CANCELLED';
 
-interface OrderItem {
+interface RawOrderItem {
   id: number;
   quantity: number;
   note?: string;
-  menu: { nameTH: string };
+  status: ItemStatus;
+  menu: {
+    nameTH: string;
+  };
 }
 
-interface Order {
+interface RawOrder {
   id: number;
-  tableId: number;
-  status: OrderStatus;
+  table: {
+    name: string;
+  };
   createdAt: string;
-  items: OrderItem[];
-  table?: { name: string };
+  items: RawOrderItem[];
 }
 
-interface KitchenCardProps {
-  order: Order;
-  btnLabel: string;
-  btnColor: string;
-  onAction: () => void;
+interface KitchenItem {
+  id: number;          
+  orderId: number;     
+  tableName: string;   
+  menuName: string;    
+  quantity: number;    
+  note?: string;       
+  status: ItemStatus;
+  createdAt: string;   
 }
 
 export default function KitchenPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [items, setItems] = useState<KitchenItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchActiveOrders = async () => {
+  const flattenOrders = (orders: RawOrder[]): KitchenItem[] => {
+    return orders.flatMap((order) => 
+      order.items
+        .filter((item) => item.status !== 'CANCELLED' && item.status !== 'SERVED' && item.status !== 'COMPLETED')
+        .map((item) => ({
+          id: item.id,
+          orderId: order.id,
+          tableName: order.table.name,
+          menuName: item.menu.nameTH,
+          quantity: item.quantity,
+          note: item.note,
+          status: item.status,
+          createdAt: order.createdAt
+        }))
+    );
+  };
+
+  const fetchActiveItems = useCallback(async () => {
     try {
       const res = await fetch('http://localhost:3000/api/orders/active');
       const data = await res.json();
       if (data.status === 'success') {
-        setOrders(data.data);
+        const flatItems = flattenOrders(data.data);
+        setItems(flatItems);
       }
     } catch (error) {
       console.error("Failed to fetch orders:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchActiveOrders();
+    fetchActiveItems();
     const socket = io("http://localhost:3000");
 
-    socket.on("new_order", (newOrder: Order) => {
-      setOrders((prev) => [...prev, newOrder]); 
+    socket.on("new_order", (newOrder: RawOrder) => {
+        const newItems = newOrder.items.map((item) => ({
+            id: item.id,
+            orderId: newOrder.id,
+            tableName: newOrder.table.name,
+            menuName: item.menu.nameTH,
+            quantity: item.quantity,
+            note: item.note,
+            status: item.status,
+            createdAt: newOrder.createdAt
+        }));
+        setItems(prev => [...prev, ...newItems]); 
     });
     
-    socket.on("order_status_updated", (updatedOrder: Order) => {
-       setOrders((prev) => {
-           if (['SERVED', 'COMPLETED', 'CANCELLED'].includes(updatedOrder.status)) {
-               return prev.filter(o => o.id !== updatedOrder.id);
+    socket.on("item_status_updated", (updatedItem: KitchenItem) => {
+       setItems(prev => {
+           if (['SERVED', 'COMPLETED', 'CANCELLED'].includes(updatedItem.status)) {
+               return prev.filter(i => i.id !== updatedItem.id);
            }
-           return prev.map(o => o.id === updatedOrder.id ? updatedOrder : o);
+           return prev.map(i => i.id === updatedItem.id ? { ...i, status: updatedItem.status } : i);
        });
     });
 
-    return () => { socket.disconnect(); };
-  }, []);
+    socket.on("order_status_updated", () => {
+        fetchActiveItems();
+    });
 
-  const handleUpdateStatus = async (orderId: number, newStatus: OrderStatus) => {
-    setOrders(prev => {
-        if (newStatus === 'SERVED') {
-            return prev.filter(o => o.id !== orderId);
-        }
-        return prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o);
+    return () => { socket.disconnect(); };
+  }, [fetchActiveItems]);
+
+  const handleUpdateStatus = async (itemId: number, newStatus: ItemStatus) => {
+    setItems(prev => {
+        if (newStatus === 'SERVED') return prev.filter(i => i.id !== itemId);
+        return prev.map(i => i.id === itemId ? { ...i, status: newStatus } : i);
     });
 
     try {
-      await fetch(`http://localhost:3000/api/orders/${orderId}/status`, {
+      await fetch(`http://localhost:3000/api/orders/items/${itemId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       });
     } catch (error) { 
         console.error(error); 
-        fetchActiveOrders(); 
+        fetchActiveItems(); 
     }
   };
 
-  // แยกกลุ่มออเดอร์
-  const pendingOrders = orders.filter(o => o.status === 'PENDING');
-  const cookingOrders = orders.filter(o => o.status === 'COOKING');
-  const readyOrders = orders.filter(o => o.status === 'READY');
+  const pendingItems = items.filter(i => i.status === 'PENDING');
+  const cookingItems = items.filter(i => i.status === 'COOKING');
+  const readyItems = items.filter(i => i.status === 'READY');
 
   if (loading) return <div className="min-h-screen bg-slate-900 text-white flex justify-center items-center">Loading...</div>;
 
@@ -99,60 +136,60 @@ export default function KitchenPage() {
     <main className="p-4 min-h-screen bg-slate-900 text-white overflow-x-hidden">
       <header className="flex justify-between items-center mb-6">
         <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-3">
-            👨‍🍳 Kitchen Display (KDS)
+            👨‍🍳 Kitchen Display (Item View)
             <span className="text-xs font-normal bg-green-600 px-3 py-1 rounded-full animate-pulse">Live</span>
         </h1>
-        <button onClick={fetchActiveOrders} className="bg-slate-800 p-2 rounded-full hover:bg-slate-700"><RefreshCw size={20} /></button>
+        <button onClick={fetchActiveItems} className="bg-slate-800 p-2 rounded-full hover:bg-slate-700"><RefreshCw size={20} /></button>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[calc(100vh-100px)]">
         
-        {/* Column 1: PENDING -> COOKING */}
+        {/* Column 1: PENDING */}
         <div className="flex flex-col gap-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700">
             <h2 className="font-bold text-lg text-yellow-400 flex items-center gap-2 border-b border-slate-700 pb-2">
                 <Clock /> รอคิว (Pending) 
-                <span className="ml-auto bg-slate-700 px-2 rounded text-white text-sm">{pendingOrders.length}</span>
+                <span className="ml-auto bg-slate-700 px-2 rounded text-white text-sm">{pendingItems.length}</span>
             </h2>
             <div className="flex-1 overflow-y-auto space-y-3 pr-2">
-                {pendingOrders.map(order => (
-                    <KitchenCard key={order.id} order={order} 
+                {pendingItems.map(item => (
+                    <KitchenCard key={item.id} item={item} 
                         btnLabel="🔥 เริ่มทำ" 
                         btnColor="bg-yellow-600 hover:bg-yellow-700" 
-                        onAction={() => handleUpdateStatus(order.id, 'COOKING')} 
+                        onAction={() => handleUpdateStatus(item.id, 'COOKING')} 
                     />
                 ))}
             </div>
         </div>
 
-        {/* Column 2: COOKING -> READY */}
+        {/* Column 2: COOKING */}
         <div className="flex flex-col gap-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700">
             <h2 className="font-bold text-lg text-orange-400 flex items-center gap-2 border-b border-slate-700 pb-2">
                 <ChefHat /> กำลังปรุง (Cooking) 
-                <span className="ml-auto bg-slate-700 px-2 rounded text-white text-sm">{cookingOrders.length}</span>
+                <span className="ml-auto bg-slate-700 px-2 rounded text-white text-sm">{cookingItems.length}</span>
             </h2>
             <div className="flex-1 overflow-y-auto space-y-3 pr-2">
-                {cookingOrders.map(order => (
-                    <KitchenCard key={order.id} order={order} 
-                        btnLabel="✅ เสร็จแล้ว (พร้อมเสิร์ฟ)" 
+                {cookingItems.map(item => (
+                    <KitchenCard key={item.id} item={item} 
+                        btnLabel="✅ เสร็จแล้ว" 
                         btnColor="bg-orange-600 hover:bg-orange-700" 
-                        onAction={() => handleUpdateStatus(order.id, 'READY')} 
+                        onAction={() => handleUpdateStatus(item.id, 'READY')} 
                     />
                 ))}
             </div>
         </div>
 
-        {/* Column 3: READY -> SERVED */}
+        {/* Column 3: READY */}
         <div className="flex flex-col gap-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700">
             <h2 className="font-bold text-lg text-green-400 flex items-center gap-2 border-b border-slate-700 pb-2">
                 <BellRing /> รอเสิร์ฟ (Ready) 
-                <span className="ml-auto bg-slate-700 px-2 rounded text-white text-sm">{readyOrders.length}</span>
+                <span className="ml-auto bg-slate-700 px-2 rounded text-white text-sm">{readyItems.length}</span>
             </h2>
             <div className="flex-1 overflow-y-auto space-y-3 pr-2">
-                {readyOrders.map(order => (
-                    <KitchenCard key={order.id} order={order} 
-                        btnLabel="🚀 เสิร์ฟแล้ว (นำออกจากจอ)" 
+                {readyItems.map(item => (
+                    <KitchenCard key={item.id} item={item} 
+                        btnLabel="🚀 เสิร์ฟแล้ว" 
                         btnColor="bg-green-600 hover:bg-green-700 shadow-green-900/20" 
-                        onAction={() => handleUpdateStatus(order.id, 'SERVED')} 
+                        onAction={() => handleUpdateStatus(item.id, 'SERVED')} 
                     />
                 ))}
             </div>
@@ -163,28 +200,36 @@ export default function KitchenPage() {
   );
 }
 
-function KitchenCard({ order, btnLabel, btnColor, onAction }: KitchenCardProps) {
+function KitchenCard({ item, btnLabel, btnColor, onAction }: { item: KitchenItem, btnLabel: string, btnColor: string, onAction: () => void }) {
     return (
         <Card className="bg-slate-800 border-slate-600 text-slate-100 shadow-lg animate-in fade-in slide-in-from-bottom-2">
             <CardHeader className="p-3 bg-slate-900/50 flex flex-row justify-between items-start border-b border-slate-700">
-                <div>
-                  <CardTitle className="text-lg font-bold text-white">โต๊ะ {order.table?.name || order.tableId}</CardTitle>
-                  <p className="text-xs text-slate-400 mt-1">#{order.id}</p>
+                <div className="flex items-center gap-2">
+                    <span className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded">
+                        {item.tableName}
+                    </span>
+                    <span className="text-xs text-slate-400">#{item.orderId}</span>
                 </div>
-                <div className="bg-blue-900/50 px-2 py-1 rounded text-xs text-blue-200 font-mono">
-                    {new Date(order.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute:'2-digit' })}
+                <div className="text-xs text-slate-400 font-mono">
+                    {new Date(item.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute:'2-digit' })}
                 </div>
             </CardHeader>
             <CardContent className="p-3">
-                <ul className="space-y-2 mb-3">
-                  {order.items.map((item, index) => (
-                    <li key={index} className="flex justify-between items-start text-sm">
-                      <div className="flex-1"><span className="text-slate-200">{item.menu.nameTH}</span>{item.note && <div className="text-red-400 text-xs italic">{item.note}</div>}</div>
-                      <span className="font-bold text-yellow-500 ml-2">x{item.quantity}</span>
-                    </li>
-                  ))}
-                </ul>
-                <button className={`w-full py-2 rounded-lg font-bold text-sm transition-all active:scale-95 shadow-md ${btnColor}`} onClick={onAction}>{btnLabel}</button>
+                <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1">
+                        <div className="text-lg font-bold text-white leading-tight">{item.menuName}</div>
+                        {item.note && <div className="text-red-400 text-sm italic mt-1">*{item.note}</div>}
+                    </div>
+                    <div className="bg-slate-700 px-3 py-1 rounded-lg ml-2">
+                        <span className="text-xl font-bold text-yellow-500">x{item.quantity}</span>
+                    </div>
+                </div>
+                <button 
+                    className={`w-full py-3 rounded-lg font-bold text-sm transition-all active:scale-95 shadow-md ${btnColor}`} 
+                    onClick={onAction}
+                >
+                    {btnLabel}
+                </button>
             </CardContent>
         </Card>
     );
