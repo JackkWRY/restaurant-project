@@ -5,9 +5,8 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'placehold.co', // อนุญาตเว็บนี้
+        hostname: 'placehold.co',
       },
-      // ในอนาคตถ้าใช้ Cloudinary ก็มาเพิ่มตรงนี้
     ],
   },
 };

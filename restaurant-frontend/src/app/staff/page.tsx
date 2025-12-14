@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link"; 
 import { io } from "socket.io-client"; 
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
-import { Pencil, Trash2, Plus, X, Check, Eye, UtensilsCrossed, Bell } from "lucide-react"; 
+import { Pencil, Trash2, Plus, X, Check, Eye, UtensilsCrossed, Bell, ChefHat } from "lucide-react"; 
 
 interface TableStatus {
   id: number;
@@ -14,6 +14,7 @@ interface TableStatus {
   activeOrders: number;
   isAvailable: boolean;
   isCallingStaff: boolean; 
+  readyOrderCount: number;
 }
 
 interface OrderDetailItem {
@@ -37,7 +38,6 @@ export default function StaffPage() {
   const [tableDetails, setTableDetails] = useState<OrderDetailItem[]>([]);
   const [loadingDetails, setLoadingDetails] = useState(false);
 
-  // Fetch Tables
   const fetchTables = async () => {
     try {
       const res = await fetch('http://localhost:3000/api/staff/tables');
@@ -55,32 +55,31 @@ export default function StaffPage() {
   useEffect(() => {
     fetchTables();
     
-    // เชื่อมต่อ Socket
     const socket = io("http://localhost:3000");
     
-    socket.on("table_updated", (updatedTable: TableStatus) => {
-        setTables(prev => prev.map(t => t.id === updatedTable.id ? { ...t, ...updatedTable } : t));
+    socket.on("table_updated", () => {
+        fetchTables();
     });
 
-    const interval = setInterval(fetchTables, 5000); 
+    socket.on("order_status_updated", () => {
+        fetchTables();
+    });
+
+    const interval = setInterval(fetchTables, 10000);
     return () => {
         clearInterval(interval);
         socket.disconnect();
     };
   }, []);
 
-  // ฟังก์ชันกดรับทราบ (ปิดเสียงเรียก)
   const handleAcknowledgeCall = async (tableId: number) => {
     try {
         await fetch(`http://localhost:3000/api/tables/${tableId}/call`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ isCalling: false }) // ปิดการเรียก
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isCalling: false })
         });
-        setTables(prev => prev.map(t => t.id === tableId ? { ...t, isCallingStaff: false } : t));
-    } catch (error) {
-        console.error(error);
-    }
+        fetchTables();
+    } catch (error) { console.error(error); }
   };
 
   const handleViewDetails = async (id: number) => {
@@ -89,97 +88,52 @@ export default function StaffPage() {
     try {
       const res = await fetch(`http://localhost:3000/api/staff/tables/${id}`);
       const data = await res.json();
-      if (data.status === 'success') {
-        setTableDetails(data.data.items);
-      }
-    } catch (error) {
-      console.error(error);
-      alert("ดูรายละเอียดไม่ได้");
-    } finally {
-      setLoadingDetails(false);
-    }
+      if (data.status === 'success') setTableDetails(data.data.items);
+    } catch (error) { console.error(error); } 
+    finally { setLoadingDetails(false); }
   };
 
-  const closeModal = () => {
-    setSelectedTableId(null);
-    setTableDetails([]);
-  };
+  const closeModal = () => { setSelectedTableId(null); setTableDetails([]); };
 
   const handleCloseTable = async (tableId: number, tableName: string) => {
     if (!confirm(`ยืนยันการเช็คบิลและปิดโต๊ะ ${tableName}?`)) return;
     try {
       const res = await fetch(`http://localhost:3000/api/staff/tables/${tableId}/close`, { method: 'POST' });
-      if (res.ok) {
-        alert(`ปิดโต๊ะ ${tableName} เรียบร้อย!`);
-        fetchTables();
-        closeModal(); 
-      }
-    } catch (error) {
-      console.error(error);
-      alert('เชื่อมต่อ Server ไม่ได้');
-    }
+      if (res.ok) { alert(`ปิดโต๊ะ ${tableName} เรียบร้อย!`); fetchTables(); closeModal(); }
+    } catch (error) { console.error(error); }
   };
 
   const handleToggleTable = async (tableId: number, currentStatus: boolean, isOccupied: boolean) => {
-    if (currentStatus === true && isOccupied) {
-        alert("⚠️ ไม่สามารถปิดโต๊ะได้เนื่องจากยังมีรายการอาหารค้างอยู่");
-        return;
-    }
+    if (currentStatus === true && isOccupied) { alert("⚠️ ปิดโต๊ะไม่ได้ มีรายการค้างอยู่"); return; }
     try {
-      const res = await fetch(`http://localhost:3000/api/tables/${tableId}/availability`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+      await fetch(`http://localhost:3000/api/tables/${tableId}/availability`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isAvailable: !currentStatus })
       });
-      if (res.ok) {
-        setTables(prev => prev.map(t => t.id === tableId ? { ...t, isAvailable: !currentStatus } : t));
-      }
-    } catch (error) {
-      console.error(error);
-    }
+      fetchTables();
+    } catch (error) { console.error(error); }
   };
 
   const handleCreateTable = async () => {
     if (!newTableName.trim()) return;
     try {
       const res = await fetch('http://localhost:3000/api/tables', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newTableName })
       });
-      if (res.ok) {
-        setNewTableName("");
-        setIsCreating(false);
-        fetchTables();
-      }
-    } catch (error) {
-      console.error(error);
-    }
+      if (res.ok) { setNewTableName(""); setIsCreating(false); fetchTables(); }
+    } catch (error) { console.error(error); }
   };
 
   const handleDeleteTable = async (id: number) => {
-    if (!confirm("⚠️ คำเตือน: ลบโต๊ะ?")) return;
-    try {
-      await fetch(`http://localhost:3000/api/tables/${id}`, { method: 'DELETE' });
-      fetchTables();
-    } catch (error) {
-      console.error(error);
-    }
+    if (!confirm("⚠️ ลบโต๊ะ?")) return;
+    try { await fetch(`http://localhost:3000/api/tables/${id}`, { method: 'DELETE' }); fetchTables(); } catch (error) { console.error(error); }
   };
 
   const handleUpdateTableName = async (id: number, oldName: string) => {
-    const newName = prompt("ใส่ชื่อโต๊ะใหม่:", oldName);
+    const newName = prompt("ชื่อโต๊ะใหม่:", oldName);
     if (!newName || newName === oldName) return;
-    try {
-      await fetch(`http://localhost:3000/api/tables/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newName })
-      });
-      fetchTables();
-    } catch (error) {
-      console.error(error);
-    }
+    try { await fetch(`http://localhost:3000/api/tables/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newName }) }); fetchTables(); } catch (error) { console.error(error); }
   };
 
   return (
@@ -187,20 +141,12 @@ export default function StaffPage() {
       <header className="flex justify-between items-center mb-8 bg-white p-4 rounded-xl shadow-sm">
         <div>
             <h1 className="text-3xl font-bold text-slate-800">จัดการโต๊ะ & แคชเชียร์ 🏪</h1>
-            <p className="text-slate-500 text-sm mt-1">
-                {isEditingMode ? "🔧 โหมดแก้ไข" : "👋 พร้อมให้บริการ"}
-            </p>
+            <p className="text-slate-500 text-sm mt-1">{isEditingMode ? "🔧 โหมดแก้ไข" : "👋 พร้อมให้บริการ"}</p>
         </div>
         <div className="flex gap-2">
-            {isEditingMode ? (
-                <button onClick={() => setIsEditingMode(false)} className="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2">
-                    <Check size={18} /> เสร็จสิ้น
-                </button>
-            ) : (
-                <button onClick={() => setIsEditingMode(true)} className="bg-white border-2 border-slate-200 text-slate-600 px-4 py-2 rounded-lg font-bold flex items-center gap-2">
-                    <Pencil size={18} /> แก้ไขผัง
-                </button>
-            )}
+            <button onClick={() => setIsEditingMode(!isEditingMode)} className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 ${isEditingMode ? "bg-slate-800 text-white" : "bg-white border-2 border-slate-200 text-slate-600"}`}>
+                {isEditingMode ? <><Check size={18} /> เสร็จสิ้น</> : <><Pencil size={18} /> แก้ไขผัง</>}
+            </button>
              <button onClick={() => fetchTables()} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">🔄</button>
         </div>
       </header>
@@ -208,9 +154,7 @@ export default function StaffPage() {
       {isEditingMode && (
          <div className="mb-6">
             {!isCreating ? (
-                <button onClick={() => setIsCreating(true)} className="w-full bg-slate-200 border-2 border-dashed border-slate-400 text-slate-600 py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-300">
-                    <Plus size={24} /> เพิ่มโต๊ะใหม่
-                </button>
+                <button onClick={() => setIsCreating(true)} className="w-full bg-slate-200 border-2 border-dashed border-slate-400 text-slate-600 py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-300"><Plus size={24} /> เพิ่มโต๊ะใหม่</button>
             ) : (
                 <div className="bg-white p-4 rounded-xl shadow-sm flex gap-2 items-center animate-in fade-in zoom-in">
                     <input type="text" placeholder="ชื่อโต๊ะ" className="border p-2 rounded-lg flex-1" value={newTableName} onChange={(e) => setNewTableName(e.target.value)} autoFocus />
@@ -221,44 +165,44 @@ export default function StaffPage() {
          </div>
       )}
 
-      {loading && tables.length === 0 ? (
-        <p className="text-center text-slate-500 py-10">กำลังโหลดข้อมูล...</p>
-      ) : (
+      {loading && tables.length === 0 ? <p className="text-center text-slate-500 py-10">กำลังโหลดข้อมูล...</p> : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {tables.map((table) => (
               <Card 
                 key={table.id} 
                 className={`border-2 transition-all relative overflow-hidden ${
-                    table.isCallingStaff ? "border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-pulse" 
+                    table.isCallingStaff ? "border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]" 
                     : !table.isAvailable ? "border-slate-200 bg-slate-100 opacity-70" 
                     : table.isOccupied && !isEditingMode ? "border-orange-400 bg-orange-50/50" : "border-slate-200 bg-white"
                 }`}
               >
-                {!table.isAvailable && !isEditingMode && (
-                    <div className="absolute top-0 left-0 right-0 bg-slate-500 text-white text-xs text-center py-1 z-10">⛔ ปิดให้บริการ</div>
+                {!table.isAvailable && !isEditingMode && <div className="absolute top-0 left-0 right-0 bg-slate-500 text-white text-xs text-center py-1 z-10">⛔ ปิดให้บริการ</div>}
+                
+                {/* 🔔 แจ้งเตือน: ลูกค้าเรียก */}
+                {table.isCallingStaff && (
+                    <div onClick={() => handleAcknowledgeCall(table.id)} className="absolute top-0 left-0 right-0 bg-red-600 text-white text-xs font-bold text-center py-1 z-20 cursor-pointer hover:bg-red-700 flex justify-center items-center gap-1 animate-pulse">
+                        <Bell size={12} className="fill-current" /> ลูกค้าเรียก!
+                    </div>
                 )}
                 
-                {table.isCallingStaff && (
-                    <div 
-                        onClick={() => handleAcknowledgeCall(table.id)}
-                        className="absolute top-0 left-0 right-0 bg-red-600 text-white text-xs font-bold text-center py-1 z-20 cursor-pointer hover:bg-red-700 flex justify-center items-center gap-1"
-                    >
-                        <Bell size={12} className="fill-current animate-bounce" /> ลูกค้าเรียก! (กดเพื่อรับทราบ)
+                {/* 🍔 แจ้งเตือน: อาหารพร้อมเสิร์ฟ (READY) */}
+                {!table.isCallingStaff && table.readyOrderCount > 0 && (
+                    <div className="absolute top-0 left-0 right-0 bg-green-600 text-white text-xs font-bold text-center py-1 z-20 flex justify-center items-center gap-1 animate-bounce">
+                        <ChefHat size={12} /> อาหารพร้อมเสิร์ฟ ({table.readyOrderCount})
                     </div>
                 )}
 
-                <CardHeader className="pb-2 mt-2">
+                <CardHeader className="pb-2 mt-4">
                   <div className="flex justify-between items-center">
                     <CardTitle className={`text-2xl font-bold ${!table.isAvailable ? 'text-slate-400' : 'text-slate-800'}`}>{table.name}</CardTitle>
                     
-                    {!isEditingMode && (
+                    {!isEditingMode ? (
                         <div className="flex items-center gap-2">
                             <button onClick={() => handleToggleTable(table.id, table.isAvailable, table.isOccupied)} className={`w-10 h-6 rounded-full p-1 transition-colors duration-300 ${table.isAvailable ? (table.isOccupied ? 'bg-green-500/50 cursor-not-allowed' : 'bg-green-500') : 'bg-slate-300'}`}>
                                 <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ${table.isAvailable ? 'translate-x-4' : 'translate-x-0'}`} />
                             </button>
                         </div>
-                    )}
-                    {isEditingMode && (
+                    ) : (
                         <div className="flex gap-1">
                             <button onClick={() => handleUpdateTableName(table.id, table.name)} className="p-1 bg-slate-100 rounded text-blue-600"><Pencil size={16} /></button>
                             <button onClick={() => handleDeleteTable(table.id)} className="p-1 bg-slate-100 rounded text-red-600"><Trash2 size={16} /></button>
@@ -274,43 +218,19 @@ export default function StaffPage() {
                         <span className={`text-3xl font-bold ${table.isAvailable ? (table.isOccupied ? "text-slate-900" : "text-slate-300") : "text-slate-300"}`}>
                             ฿{table.totalAmount.toLocaleString()}
                         </span>
-                        
-                        <button 
-                          onClick={() => handleViewDetails(table.id)}
-                          disabled={!table.isAvailable}
-                          className="text-xs text-blue-600 underline mt-1 flex items-center gap-1 hover:text-blue-800 disabled:text-slate-400 disabled:no-underline"
-                        >
+                        <button onClick={() => handleViewDetails(table.id)} disabled={!table.isAvailable} className="text-xs text-blue-600 underline mt-1 flex items-center gap-1 hover:text-blue-800 disabled:text-slate-400 disabled:no-underline">
                           <Eye size={12} /> ดูรายการ ({table.activeOrders})
                         </button>
                     </div>
-                  ) : (
-                      <div className="text-center text-slate-400 py-4 text-sm">ID: {table.id}<br/>(แก้ไข)</div>
-                  )}
+                  ) : <div className="text-center text-slate-400 py-4 text-sm">ID: {table.id}<br/>(แก้ไข)</div>}
                 </CardContent>
 
                 {!isEditingMode && (
                     <CardFooter className="flex gap-2">
-                      <Link 
-                          href={`/?tableId=${table.id}`} 
-                          target="_blank" 
-                          className={`flex-1 py-2 rounded-lg font-bold text-center text-sm flex items-center justify-center gap-1 transition-colors ${
-                              table.isAvailable 
-                              ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
-                              : "bg-slate-200 text-slate-400 cursor-not-allowed pointer-events-none"
-                          }`}
-                      >
+                      <Link href={`/?tableId=${table.id}`} target="_blank" className={`flex-1 py-2 rounded-lg font-bold text-center text-sm flex items-center justify-center gap-1 transition-colors ${table.isAvailable ? "bg-blue-100 text-blue-700 hover:bg-blue-200" : "bg-slate-200 text-slate-400 pointer-events-none"}`}>
                           <UtensilsCrossed size={16} /> สั่ง
                       </Link>
-
-                      <button
-                          onClick={() => handleCloseTable(table.id, table.name)}
-                          disabled={!table.isAvailable || !table.isOccupied}
-                          className={`flex-1 py-2 rounded-lg font-bold text-sm transition-colors ${
-                              table.isAvailable && table.isOccupied
-                              ? "bg-slate-900 text-white hover:bg-slate-700 shadow-md"
-                              : "bg-slate-200 text-slate-400 cursor-not-allowed"
-                          }`}
-                      >
+                      <button onClick={() => handleCloseTable(table.id, table.name)} disabled={!table.isAvailable || !table.isOccupied} className={`flex-1 py-2 rounded-lg font-bold text-sm transition-colors ${table.isAvailable && table.isOccupied ? "bg-slate-900 text-white hover:bg-slate-700 shadow-md" : "bg-slate-200 text-slate-400 cursor-not-allowed"}`}>
                           💰 เช็คบิล
                       </button>
                   </CardFooter>
@@ -325,41 +245,20 @@ export default function StaffPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
             <div className="p-4 bg-slate-900 text-white flex justify-between items-center">
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <UtensilsCrossed size={20} /> รายการอาหารโต๊ะ {tables.find(t => t.id === selectedTableId)?.name}
-              </h2>
+              <h2 className="text-xl font-bold flex items-center gap-2"><UtensilsCrossed size={20} /> รายการอาหารโต๊ะ {tables.find(t => t.id === selectedTableId)?.name}</h2>
               <button onClick={closeModal} className="text-slate-300 hover:text-white"><X size={24} /></button>
             </div>
-            
             <div className="p-4 overflow-y-auto flex-1">
-              {loadingDetails ? (
-                <p className="text-center text-slate-500 py-10">กำลังโหลดรายการ...</p>
-              ) : tableDetails.length === 0 ? (
-                <div className="text-center py-10 text-slate-500">
-                    <p>ยังไม่มีรายการอาหาร</p>
-                    <Link 
-                        href={`/?tableId=${selectedTableId}`} 
-                        target="_blank"
-                        className="text-blue-600 underline mt-2 inline-block"
-                    >
-                        กดสั่งอาหารเลย
-                    </Link>
-                </div>
-              ) : (
+              {loadingDetails ? <p className="text-center text-slate-500 py-10">กำลังโหลดรายการ...</p> : tableDetails.length === 0 ? <div className="text-center py-10 text-slate-500">ยังไม่มีรายการอาหาร</div> : (
                 <table className="w-full text-left">
-                  <thead className="bg-slate-100 text-slate-600 text-sm">
-                    <tr>
-                      <th className="p-2 rounded-l">เมนู</th>
-                      <th className="p-2 text-center">จำนวน</th>
-                      <th className="p-2 text-right rounded-r">รวม</th>
-                    </tr>
-                  </thead>
+                  <thead className="bg-slate-100 text-slate-600 text-sm"><tr><th className="p-2 rounded-l">เมนู</th><th className="p-2 text-center">จำนวน</th><th className="p-2 text-right rounded-r">รวม</th></tr></thead>
                   <tbody className="divide-y">
                     {tableDetails.map((item, idx) => (
                       <tr key={`${item.id}-${idx}`}>
-                        <td className="p-2 text-slate-800 font-medium">
-                            {item.menuName}
-                            <div className="text-xs text-slate-400 font-normal">{item.status}</div>
+                        <td className="p-2 text-slate-800 font-medium">{item.menuName}
+                            <div className={`text-xs font-bold ${item.status === 'READY' ? 'text-green-600 animate-pulse' : 'text-slate-400 font-normal'}`}>
+                                {item.status === 'READY' ? '✨ พร้อมเสิร์ฟ' : item.status}
+                            </div>
                         </td>
                         <td className="p-2 text-center text-slate-600">x{item.quantity}</td>
                         <td className="p-2 text-right text-slate-900 font-bold">฿{item.total}</td>
@@ -369,10 +268,7 @@ export default function StaffPage() {
                 </table>
               )}
             </div>
-
-            <div className="p-4 bg-white border-t flex gap-2">
-                <button onClick={() => closeModal()} className="w-full bg-slate-200 text-slate-600 py-3 rounded-lg font-bold">ปิด</button>
-            </div>
+            <div className="p-4 bg-white border-t flex gap-2"><button onClick={() => closeModal()} className="w-full bg-slate-200 text-slate-600 py-3 rounded-lg font-bold">ปิด</button></div>
           </div>
         </div>
       )}

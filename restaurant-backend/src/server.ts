@@ -1,8 +1,8 @@
 import express, { type Request, type Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { createServer } from 'node:http'; // 1. นำเข้า http server
-import { Server } from 'socket.io';       // 2. นำเข้า socket.io
+import { createServer } from 'node:http';
+import { Server } from 'socket.io';
 
 import prisma from './prisma.js';
 import settingRoutes from './routes/settingRoutes.js';
@@ -17,13 +17,11 @@ dotenv.config();
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
-// 3. สร้าง HTTP Server ครอบ Express app ไว้
 const httpServer = createServer(app);
 
-// 4. ตั้งค่า Socket.io
 const io = new Server(httpServer, {
   cors: {
-    origin: "*", // อนุญาตให้ Frontend (Port 3001) เชื่อมต่อเข้ามาได้
+    origin: "*",
     methods: ["GET", "POST"]
   }
 });
@@ -32,10 +30,8 @@ const io = new Server(httpServer, {
 app.use(cors());
 app.use(express.json());
 
-// 5. ฝากตัวแปร io ไว้ใน app เพื่อให้ Controller เรียกใช้ได้
 app.set('io', io);
 
-// Log เมื่อมีคนเชื่อมต่อ Socket เข้ามา (เช่น หน้าจอครัวเปิดอยู่)
 io.on('connection', (socket) => {
   console.log('🔌 A client connected:', socket.id);
   
@@ -68,7 +64,6 @@ app.get('/api/tables', async (req: Request, res: Response) => {
   }
 });
 
-// 6. เปลี่ยนจาก app.listen เป็น httpServer.listen
 httpServer.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server is running on http://localhost:${PORT}`);
 });

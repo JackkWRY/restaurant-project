@@ -8,7 +8,7 @@ export const getCategories = async (req: Request, res: Response) => {
       orderBy: { id: 'asc' },
       include: {
         _count: {
-          select: { menus: true } // นับจำนวนเมนูในหมวดนี้มาให้ด้วย
+          select: { menus: true }
         }
       }
     });
@@ -54,7 +54,6 @@ export const deleteCategory = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    // เช็คก่อนว่ามีเมนูอาหารในหมวดนี้ไหม
     const category = await prisma.category.findUnique({
       where: { id: Number(id) },
       include: { menus: true }

@@ -9,14 +9,13 @@ export default function TableDetector() {
   const { setTableId } = useCartStore();
 
   useEffect(() => {
-    // ดึงค่า ?tableId=... จาก URL
     const id = searchParams.get("tableId");
     
     if (id) {
       console.log("📍 Detected Table ID:", id);
-      setTableId(Number(id)); // บันทึกลง Store
+      setTableId(Number(id));
     }
   }, [searchParams, setTableId]);
 
-  return null; // Component นี้ไม่ต้องแสดงผลอะไร แค่ทำงานเบื้องหลัง
+  return null;
 }

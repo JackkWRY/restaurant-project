@@ -6,15 +6,13 @@ export const createTable = async (req: Request, res: Response) => {
   try {
     const { name } = req.body;
     
-    // สร้าง QR Code อัตโนมัติจาก URL (สมมติว่า Frontend รันที่ Port 3001)
     const newTable = await prisma.table.create({
       data: {
         name,
-        qrCode: `http://localhost:3001/?tableId=` // เดี๋ยว Frontend ไปเติมเลขเอง
+        qrCode: `http://localhost:3001/?tableId=`
       }
     });
 
-    // อัปเดต QR Code ให้สมบูรณ์
     const updatedTable = await prisma.table.update({
       where: { id: newTable.id },
       data: { qrCode: `http://localhost:3001/?tableId=${newTable.id}` }
@@ -78,7 +76,7 @@ export const deleteTable = async (req: Request, res: Response) => {
 export const toggleAvailability = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { isAvailable } = req.body; // รับค่า true/false จากหน้าบ้าน
+    const { isAvailable } = req.body;
 
     const updatedTable = await prisma.table.update({
       where: { id: Number(id) },
@@ -108,7 +106,7 @@ export const getTableById = async (req: Request, res: Response) => {
   }
 };
 
-// ✅ 6. (เพิ่มใหม่) ลูกค้ากดเรียกพนักงาน (หรือพนักงานกดปิดเสียงเรียก)
+// 6. ลูกค้ากดเรียกพนักงาน (หรือพนักงานกดปิดเสียงเรียก)
 export const updateCallStaff = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -139,7 +137,7 @@ export const updateCallStaff = async (req: Request, res: Response) => {
   }
 };
 
-// ✅ 7. (เพิ่มใหม่) ดึงประวัติการสั่งอาหาร (สำหรับลูกค้าดูเอง)
+// 7. ดึงประวัติการสั่งอาหาร (สำหรับลูกค้าดูเอง)
 export const getCustomerOrders = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;

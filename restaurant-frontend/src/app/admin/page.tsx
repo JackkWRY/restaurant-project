@@ -59,7 +59,6 @@ export default function AdminPage() {
               >
                  <Utensils size={20} /> จัดการเมนูอาหาร
               </button>
-              {/* ✅ ปุ่มเมนูใหม่ Settings */}
               <button 
                 onClick={() => setActiveTab('settings')}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg font-bold text-left transition-colors ${

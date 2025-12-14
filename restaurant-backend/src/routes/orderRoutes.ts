@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { createOrder, updateOrderStatus, getActiveOrders } from '../controllers/orderController.js';
 
-
 const router = Router();
 
 router.post('/orders', createOrder);

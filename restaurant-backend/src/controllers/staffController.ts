@@ -1,7 +1,6 @@
 import type { Request, Response } from 'express';
 import prisma from '../prisma.js';
 
-// 1. ดึงสถานะทุกโต๊ะ พร้อมยอดเงินรวม (ของออเดอร์ที่ยังไม่จ่าย)
 export const getTablesStatus = async (req: Request, res: Response) => {
   try {
     const tables = await prisma.table.findMany({
@@ -9,7 +8,7 @@ export const getTablesStatus = async (req: Request, res: Response) => {
       include: {
         orders: {
           where: {
-            status: { not: 'COMPLETED' }
+            status: { notIn: ['COMPLETED', 'CANCELLED'] }
           },
           include: { items: true }
         }
@@ -19,14 +18,17 @@ export const getTablesStatus = async (req: Request, res: Response) => {
     const tableData = tables.map(table => {
       const totalAmount = table.orders.reduce((sum, order) => sum + Number(order.totalPrice), 0);
       
+      const readyCount = table.orders.filter(order => order.status === 'READY').length;
+
       return {
         id: table.id,
         name: table.name,
-        isOccupied: table.orders.length > 0,
+        isOccupied: table.isOccupied,
         totalAmount: totalAmount,
         activeOrders: table.orders.length,
         isAvailable: table.isAvailable,
-        isCallingStaff: table.isCallingStaff
+        isCallingStaff: table.isCallingStaff,
+        readyOrderCount: readyCount
       };
     });
 
@@ -37,11 +39,9 @@ export const getTablesStatus = async (req: Request, res: Response) => {
   }
 };
 
-// 2. ปิดโต๊ะ (เช็คบิล)
 export const closeTable = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-
     await prisma.order.updateMany({
       where: {
         tableId: Number(id),
@@ -49,45 +49,30 @@ export const closeTable = async (req: Request, res: Response) => {
       },
       data: { status: 'COMPLETED' }
     });
-
     await prisma.table.update({
       where: { id: Number(id) },
-      data: { isAvailable: false } 
+      data: { isOccupied: false, isCallingStaff: false } 
     });
-
-    console.log(`💰 Table ${id} closed and paid. Auto-OFF triggered.`);
-    res.json({ status: 'success', message: 'Table closed and turned off' });
-
+    res.json({ status: 'success', message: 'Table closed' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to close table' });
   }
 };
 
-// 3. ดึงรายละเอียดของโต๊ะ (รายการอาหาร)
 export const getTableDetails = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-
     const table = await prisma.table.findUnique({
       where: { id: Number(id) },
       include: {
         orders: {
-          where: { status: { not: 'COMPLETED' } },
-          include: {
-            items: {
-              include: { menu: true }
-            }
-          }
+          where: { status: { notIn: ['COMPLETED', 'CANCELLED'] } },
+          include: { items: { include: { menu: true } } }
         }
       }
     });
-
-    if (!table) {
-      res.status(404).json({ error: 'Table not found' });
-      return;
-    }
-
+    if (!table) { res.status(404).json({ error: 'Table not found' }); return; }
     const allItems = table.orders.flatMap(order => 
       order.items.map(item => ({
         id: item.id,
@@ -98,11 +83,9 @@ export const getTableDetails = async (req: Request, res: Response) => {
         status: order.status
       }))
     );
-
     res.json({ status: 'success', data: { ...table, items: allItems } });
-
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to fetch table details' });
+    res.status(500).json({ error: 'Failed to fetch details' });
   }
 };
