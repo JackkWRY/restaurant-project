@@ -112,34 +112,6 @@ export const getActiveOrders = async (req: Request, res: Response) => {
   }
 };
 
-export const getOrdersByTable = async (req: Request, res: Response) => {
-    try {
-        const { tableId } = req.params;
-        const orders = await prisma.order.findMany({
-            where: { tableId: Number(tableId) },
-            include: { items: { include: { menu: true } } },
-            orderBy: { createdAt: 'desc' }
-        });
-
-        const historyItems = orders.flatMap(order => 
-            order.items.map(item => ({
-                id: item.id,
-                menuName: item.menu.nameTH,
-                price: Number(item.menu.price),
-                quantity: item.quantity,
-                status: item.status,
-                total: Number(item.menu.price) * item.quantity,
-                note: item.note
-            }))
-        );
-
-        res.json({ status: 'success', data: historyItems });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to fetch table orders' });
-    }
-};
-
 export const updateOrderItemStatus = async (req: Request, res: Response) => {
   try {
     const { itemId } = req.params;

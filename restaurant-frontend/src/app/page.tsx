@@ -69,8 +69,6 @@ function HomeContent() {
         const res = await fetch(`http://localhost:3000/api/tables/${tableIdParam}/orders`);
         const data = await res.json();
 
-        console.log("History Data from Server:", data);
-        
         if (data.status === 'success') setHistoryItems(data.data);
     } catch (error) { console.error(error); }
   }, [tableIdParam]);
