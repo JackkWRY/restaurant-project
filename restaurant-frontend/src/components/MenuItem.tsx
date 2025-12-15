@@ -11,16 +11,19 @@ interface MenuItemProps {
   price: number;
   imageUrl: string | null;
   isRecommended: boolean;
+  isAvailable?: boolean;
 }
 
-export default function MenuItem({ id, nameTH, price, imageUrl, isRecommended }: MenuItemProps) {
+export default function MenuItem({ id, nameTH, price, imageUrl, isRecommended, isAvailable = true }: MenuItemProps) {
   const { addItem, items, increaseQuantity, decreaseQuantity, removeItem } = useCartStore();
   
   const currentItem = items.find((item) => item.id === id);
   const quantity = currentItem ? currentItem.quantity : 0;
 
+  const soldOutStyle = !isAvailable ? "opacity-60 grayscale pointer-events-none" : "";
+
   return (
-    <Card className="flex flex-row overflow-hidden shadow-sm border-slate-100 transition-all hover:shadow-md h-28">
+    <Card className={`flex flex-row overflow-hidden shadow-sm border-slate-100 transition-all hover:shadow-md h-28 relative ${soldOutStyle}`}>
       
       {/* รูปภาพ */}
       <div className="w-28 h-full bg-slate-200 flex-shrink-0 relative">
@@ -37,6 +40,14 @@ export default function MenuItem({ id, nameTH, price, imageUrl, isRecommended }:
           <div className="w-full h-full flex items-center justify-center text-xs text-slate-400">
             No Image
           </div>
+        )}
+
+        {!isAvailable && (
+             <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
+                 <span className="text-white font-bold border-2 border-white px-2 py-1 transform -rotate-12 rounded">
+                    หมด
+                 </span>
+             </div>
         )}
       </div>
 
@@ -56,48 +67,52 @@ export default function MenuItem({ id, nameTH, price, imageUrl, isRecommended }:
           <span className="font-bold text-lg text-green-600">฿{price}</span>
 
           {/* ส่วนควบคุมปุ่ม */}
-          {quantity > 0 ? (
-            <div className="flex items-center bg-slate-50 rounded-full p-1 border border-slate-100 shadow-sm animate-in fade-in zoom-in duration-200">
-              
-              <button
-                onClick={() => {
-                   if (quantity === 1) removeItem(id);
-                   else decreaseQuantity(id);
-                }}
-                className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${
-                  quantity === 1 
-                  ? "bg-white text-red-500 hover:bg-red-50 border border-red-100" 
-                  : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
-                }`}
-              >
-                {quantity === 1 ? <Trash2 size={14} /> : <Minus size={14} />}
-              </button>
+          {isAvailable && (
+            quantity > 0 ? (
+                <div className="flex items-center bg-slate-50 rounded-full p-1 border border-slate-100 shadow-sm animate-in fade-in zoom-in duration-200">
+                <button
+                    onClick={() => {
+                        if (quantity === 1) removeItem(id);
+                        else decreaseQuantity(id);
+                    }}
+                    className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${
+                    quantity === 1 
+                    ? "bg-white text-red-500 hover:bg-red-50 border border-red-100" 
+                    : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                    }`}
+                >
+                    {quantity === 1 ? <Trash2 size={14} /> : <Minus size={14} />}
+                </button>
 
-              <span className="w-8 text-center font-bold text-sm text-slate-800">
-                {quantity}
-              </span>
+                <span className="w-8 text-center font-bold text-sm text-slate-800">
+                    {quantity}
+                </span>
 
-              <button
-                onClick={() => increaseQuantity(id)}
-                className="w-7 h-7 flex items-center justify-center bg-white text-slate-600 rounded-full hover:bg-slate-100 border border-slate-200 active:scale-95 transition-all"
-              >
-                <Plus size={14} />
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => addItem({ 
-                id, 
-                nameTH, 
-                price,
-                imageUrl,
-                note: "" 
-              })}
-              className="bg-slate-100 text-slate-700 text-xs font-bold px-4 py-2 rounded-full hover:bg-slate-200 transition-colors"
-            >
-              ใส่ตะกร้า
-            </button>
+                <button
+                    onClick={() => increaseQuantity(id)}
+                    className="w-7 h-7 flex items-center justify-center bg-white text-slate-600 rounded-full hover:bg-slate-100 border border-slate-200 active:scale-95 transition-all"
+                >
+                    <Plus size={14} />
+                </button>
+                </div>
+            ) : (
+                <button
+                onClick={() => addItem({ 
+                    id, 
+                    nameTH, 
+                    price,
+                    imageUrl,
+                    note: "" 
+                })}
+                className="bg-slate-100 text-slate-700 text-xs font-bold px-4 py-2 rounded-full hover:bg-slate-200 transition-colors"
+                >
+                ใส่ตะกร้า
+                </button>
+            )
           )}
+
+          {!isAvailable && <span className="text-xs text-red-500 font-bold">สินค้าหมด</span>}
+
         </div>
       </div>
     </Card>

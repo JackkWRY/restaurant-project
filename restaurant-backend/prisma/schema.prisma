@@ -13,13 +13,13 @@ model Setting {
 }
 
 model Table {
-  id          Int      @id @default(autoincrement())
-  name        String   @unique // เช่น T1, T2
-  qrCode      String?  // URL หรือ Token
-  isOccupied  Boolean  @default(false)
-  isAvailable Boolean  @default(true)
-  isCallingStaff Boolean  @default(false)
-  orders      Order[]
+  id             Int     @id @default(autoincrement())
+  name           String  @unique 
+  qrCode         String? 
+  isOccupied     Boolean @default(false)
+  isAvailable    Boolean @default(true)
+  isCallingStaff Boolean @default(false)
+  orders         Order[]
 }
 
 model Category {
@@ -29,38 +29,39 @@ model Category {
 }
 
 model Menu {
-  id          Int      @id @default(autoincrement())
-  nameTH      String
-  nameEN      String
-  description String?
-  price       Decimal  @db.Decimal(10, 2)
-  imageUrl    String?
-  isAvailable Boolean  @default(true)
-  isRecommended Boolean @default(false)
-  categoryId  Int
-  category    Category @relation(fields: [categoryId], references: [id])
-  orderItems  OrderItem[]
+  id            Int         @id @default(autoincrement())
+  nameTH        String
+  nameEN        String
+  description   String?
+  price         Decimal     @db.Decimal(10, 2)
+  imageUrl      String?
+  isAvailable   Boolean     @default(true)
+  isVisible     Boolean     @default(true)
+  isRecommended Boolean     @default(false)
+  categoryId    Int
+  category      Category    @relation(fields: [categoryId], references: [id])
+  orderItems    OrderItem[]
 }
 
 model Order {
-  id          Int      @id @default(autoincrement())
-  createdAt   DateTime @default(now())
-  status      OrderStatus @default(PENDING)
-  totalPrice  Decimal  @db.Decimal(10, 2)
-  tableId     Int
-  table       Table    @relation(fields: [tableId], references: [id])
-  items       OrderItem[]
+  id         Int         @id @default(autoincrement())
+  createdAt  DateTime    @default(now())
+  status     OrderStatus @default(PENDING)
+  totalPrice Decimal     @db.Decimal(10, 2)
+  tableId    Int
+  table      Table       @relation(fields: [tableId], references: [id])
+  items      OrderItem[]
 }
 
 model OrderItem {
-  id        Int    @id @default(autoincrement())
-  quantity  Int
-  note      String?
-  menuId    Int
-  menu      Menu   @relation(fields: [menuId], references: [id])
-  orderId   Int
-  order     Order  @relation(fields: [orderId], references: [id])
-  status    OrderStatus @default(PENDING)
+  id       Int         @id @default(autoincrement())
+  quantity Int
+  note     String?
+  menuId   Int
+  menu     Menu        @relation(fields: [menuId], references: [id])
+  orderId  Int
+  order    Order       @relation(fields: [orderId], references: [id])
+  status   OrderStatus @default(PENDING)
 }
 
 enum OrderStatus {

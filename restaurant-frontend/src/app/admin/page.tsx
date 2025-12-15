@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image"; 
-import { Plus, Pencil, Trash2, List, Utensils, X, Image as ImageIcon, Save, Settings } from "lucide-react";
+import { Plus, Pencil, Trash2, List, Utensils, X, Image as ImageIcon, Save, Settings, Eye, EyeOff } from "lucide-react";
 
 // --- Types ---
 interface Category {
@@ -20,6 +20,8 @@ interface Menu {
   categoryId: number;
   category?: { name: string };
   isRecommended?: boolean;
+  isAvailable?: boolean;
+  isVisible?: boolean;
 }
 
 export default function AdminPage() {
@@ -271,7 +273,10 @@ function MenuManager() {
     const [newCategoryId, setNewCategoryId] = useState("");
     const [newImage, setNewImage] = useState("");
     const [isRecommended, setIsRecommended] = useState(false);
+    const [isAvailable, setIsAvailable] = useState(true);
+    const [isVisible, setIsVisible] = useState(true);
 
+    // 1. สร้างฟังก์ชันกลางเพื่อดึงข้อมูล
     const refreshData = async () => {
         try {
             const [resMenus, resCats] = await Promise.all([
@@ -287,25 +292,10 @@ function MenuManager() {
         } catch (error) { console.error(error); }
     };
 
+    // 2. เรียกใช้ใน useEffect
     useEffect(() => {
-        let isMounted = true;
-        const initFetch = async () => {
-            try {
-                const [resMenus, resCats] = await Promise.all([
-                    fetch('http://localhost:3000/api/menus/all'),
-                    fetch('http://localhost:3000/api/categories')
-                ]);
-                const dataMenus = await resMenus.json();
-                const dataCats = await resCats.json();
-                
-                if (isMounted) {
-                    if (dataMenus.status === 'success') setMenus(dataMenus.data);
-                    if (dataCats.status === 'success') setCategories(dataCats.data);
-                }
-            } catch (error) { console.error(error); }
-        };
-        initFetch();
-        return () => { isMounted = false; };
+        refreshData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const resetForm = () => {
@@ -314,6 +304,8 @@ function MenuManager() {
         setNewCategoryId("");
         setNewImage("");
         setIsRecommended(false);
+        setIsAvailable(true);
+        setIsVisible(true);
         setEditingId(null);
         setIsFormOpen(false);
     };
@@ -323,7 +315,10 @@ function MenuManager() {
         setNewPrice(menu.price.toString());
         setNewCategoryId(menu.categoryId.toString());
         setNewImage(menu.imageUrl || "");
-        setIsRecommended(menu.isRecommended || false); 
+        setIsRecommended(menu.isRecommended || false);
+        setIsAvailable(menu.isAvailable !== undefined ? menu.isAvailable : true);
+        setIsVisible(menu.isVisible !== undefined ? menu.isVisible : true);
+        
         setEditingId(menu.id);
         setIsFormOpen(true);
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -338,7 +333,9 @@ function MenuManager() {
             price: newPrice,
             categoryId: newCategoryId, 
             imageUrl: newImage,
-            isRecommended: isRecommended
+            isRecommended: isRecommended,
+            isAvailable: isAvailable,
+            isVisible: isVisible
         };
 
         try {
@@ -372,6 +369,18 @@ function MenuManager() {
         try {
             await fetch(`http://localhost:3000/api/menus/${id}`, { method: 'DELETE' });
             refreshData(); 
+        } catch (error) { console.error(error); }
+    };
+
+    const handleQuickToggle = async (id: number, field: 'isAvailable' | 'isVisible', currentValue: boolean | undefined) => {
+        try {
+            const newValue = !currentValue;
+            const res = await fetch(`http://localhost:3000/api/menus/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ [field]: newValue }) 
+            });
+            if (res.ok) refreshData();
         } catch (error) { console.error(error); }
     };
 
@@ -426,17 +435,19 @@ function MenuManager() {
                         </div>
                     </div>
                     
-                    <div className="mt-4 flex items-center gap-2">
-                        <input 
-                            type="checkbox" 
-                            id="isRecommended" 
-                            checked={isRecommended} 
-                            onChange={(e) => setIsRecommended(e.target.checked)}
-                            className="w-5 h-5 accent-purple-600 cursor-pointer"
-                        />
-                        <label htmlFor="isRecommended" className="text-slate-700 font-bold cursor-pointer select-none">
-                            ตั้งเป็นเมนูแนะนำ (Recommended) ★
-                        </label>
+                    <div className="mt-4 flex flex-wrap gap-6 border-t pt-4 border-slate-200">
+                        <div className="flex items-center gap-2">
+                            <input type="checkbox" id="isRecommended" checked={isRecommended} onChange={(e) => setIsRecommended(e.target.checked)} className="w-5 h-5 accent-orange-500 cursor-pointer"/>
+                            <label htmlFor="isRecommended" className="text-slate-700 font-bold cursor-pointer select-none">เมนูแนะนำ ★</label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <input type="checkbox" id="isAvailable" checked={isAvailable} onChange={(e) => setIsAvailable(e.target.checked)} className="w-5 h-5 accent-green-600 cursor-pointer"/>
+                            <label htmlFor="isAvailable" className="text-slate-700 font-bold cursor-pointer select-none">มีของ (Available)</label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <input type="checkbox" id="isVisible" checked={isVisible} onChange={(e) => setIsVisible(e.target.checked)} className="w-5 h-5 accent-blue-600 cursor-pointer"/>
+                            <label htmlFor="isVisible" className="text-slate-700 font-bold cursor-pointer select-none">แสดงในเมนู (Visible)</label>
+                        </div>
                     </div>
                     
                     <div className="mt-6 flex gap-2">
@@ -452,21 +463,22 @@ function MenuManager() {
                 </form>
             )}
 
-            <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm">
+            <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm bg-white">
                 <table className="w-full text-left">
                     <thead className="bg-slate-100 text-slate-600 font-bold text-sm">
                         <tr>
                             <th className="p-4">รูป</th>
                             <th className="p-4">ชื่อเมนู</th>
-                            <th className="p-4">หมวดหมู่</th>
                             <th className="p-4">ราคา</th>
+                            <th className="p-4 text-center">สถานะของ</th>
+                            <th className="p-4 text-center">การแสดงผล</th>
                             <th className="p-4 text-right">จัดการ</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                         {menus.map((menu) => (
                             <tr key={menu.id} className={`transition-colors ${editingId === menu.id ? "bg-blue-50" : "hover:bg-slate-50"}`}>
-                                <td className="p-4">
+                                <td className="p-4 w-20">
                                     <div className="w-12 h-12 bg-slate-200 rounded-lg overflow-hidden flex items-center justify-center text-slate-400 relative">
                                         {menu.imageUrl ? (
                                             <Image src={menu.imageUrl} alt={menu.nameTH} fill className="object-cover" unoptimized />
@@ -475,14 +487,37 @@ function MenuManager() {
                                 </td>
                                 <td className="p-4">
                                     <div className="font-bold text-slate-800">{menu.nameTH}</div>
-                                    {menu.isRecommended && <span className="text-xs text-orange-500 font-bold">★ เมนูแนะนำ</span>}
-                                </td>
-                                <td className="p-4 text-sm text-slate-500">
-                                    <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded border border-purple-100">
-                                        {menu.category?.name || '-'}
-                                    </span>
+                                    <div className="text-xs text-slate-500">{menu.category?.name || '-'}</div>
+                                    {menu.isRecommended && <span className="text-[10px] bg-orange-100 text-orange-600 px-1 py-0.5 rounded font-bold">★ แนะนำ</span>}
                                 </td>
                                 <td className="p-4 font-bold text-slate-900">฿{menu.price}</td>
+                                
+                                <td className="p-4 text-center">
+                                    <button 
+                                        onClick={() => handleQuickToggle(menu.id, 'isAvailable', menu.isAvailable)}
+                                        className={`px-3 py-1 rounded-full text-xs font-bold border w-24 transition-colors ${
+                                            menu.isAvailable 
+                                            ? "bg-green-100 text-green-700 border-green-200 hover:bg-green-200" 
+                                            : "bg-red-100 text-red-700 border-red-200 hover:bg-red-200"
+                                        }`}
+                                    >
+                                        {menu.isAvailable ? "🟢 มีของ" : "🔴 หมด"}
+                                    </button>
+                                </td>
+
+                                <td className="p-4 text-center">
+                                    <button 
+                                        onClick={() => handleQuickToggle(menu.id, 'isVisible', menu.isVisible)}
+                                        className={`px-3 py-1 rounded-full text-xs font-bold border w-24 transition-colors flex items-center justify-center gap-1 mx-auto ${
+                                            menu.isVisible 
+                                            ? "bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200" 
+                                            : "bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200"
+                                        }`}
+                                    >
+                                        {menu.isVisible ? <><Eye size={12}/> แสดง</> : <><EyeOff size={12}/> ซ่อน</>}
+                                    </button>
+                                </td>
+
                                 <td className="p-4 text-right">
                                     <div className="flex justify-end gap-1">
                                         <button onClick={() => handleStartEdit(menu)} className="p-2 text-blue-500 hover:bg-blue-100 rounded-lg transition-colors" title="แก้ไข"><Pencil size={18} /></button>

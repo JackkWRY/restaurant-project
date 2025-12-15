@@ -16,6 +16,7 @@ interface Menu {
   price: number;
   imageUrl: string | null;
   isRecommended: boolean;
+  isAvailable: boolean;
 }
 interface Category {
   id: number;
@@ -318,6 +319,7 @@ function CategoryAccordion({ category }: { category: Category }) {
                                 price={menu.price}
                                 imageUrl={menu.imageUrl}
                                 isRecommended={menu.isRecommended}
+                                isAvailable={menu.isAvailable}
                             />
                         ))}
                         {category.menus.length === 0 && (

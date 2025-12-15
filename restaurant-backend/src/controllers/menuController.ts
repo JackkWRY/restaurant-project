@@ -1,13 +1,13 @@
 import type { Request, Response } from 'express';
 import prisma from '../prisma.js';
 
-// 1. ดึงเมนูทั้งหมด แยกตามหมวดหมู่
+// 1. ดึงเมนูทั้งหมด (สำหรับหน้าลูกค้า)
 export const getMenus = async (req: Request, res: Response) => {
   try {
     const categories = await prisma.category.findMany({
       include: {
         menus: {
-          where: { isAvailable: true },
+          where: { isVisible: true }, 
           orderBy: { id: 'asc' }
         }
       },
@@ -21,7 +21,7 @@ export const getMenus = async (req: Request, res: Response) => {
   }
 };
 
-// 2. ดึงเมนูทั้งหมด แบบรายการยาวๆ
+// 2. ดึงเมนูทั้งหมด (สำหรับ Admin - เห็นทุกอย่าง)
 export const getAllMenuItems = async (req: Request, res: Response) => {
   try {
     const menus = await prisma.menu.findMany({
@@ -37,7 +37,7 @@ export const getAllMenuItems = async (req: Request, res: Response) => {
 // 3. สร้างเมนูใหม่
 export const createMenu = async (req: Request, res: Response) => {
   try {
-    const { nameTH, nameEN, price, categoryId, imageUrl, isRecommended } = req.body;
+    const { nameTH, nameEN, price, categoryId, imageUrl, isRecommended, isAvailable, isVisible } = req.body;
     
     const newMenu = await prisma.menu.create({
       data: {
@@ -46,8 +46,9 @@ export const createMenu = async (req: Request, res: Response) => {
         price: Number(price),
         categoryId: Number(categoryId),
         imageUrl: imageUrl || '',
-        isAvailable: true,
-        isRecommended: Boolean(isRecommended) 
+        isRecommended: Boolean(isRecommended),
+        isAvailable: isAvailable !== undefined ? Boolean(isAvailable) : true,
+        isVisible: isVisible !== undefined ? Boolean(isVisible) : true
       }
     });
 
@@ -62,7 +63,8 @@ export const createMenu = async (req: Request, res: Response) => {
 export const updateMenu = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { nameTH, nameEN, price, categoryId, imageUrl, isAvailable, isRecommended } = req.body;
+    
+    const { nameTH, nameEN, price, categoryId, imageUrl, isAvailable, isVisible, isRecommended } = req.body;
 
     const updatedMenu = await prisma.menu.update({
       where: { id: Number(id) },
@@ -72,8 +74,9 @@ export const updateMenu = async (req: Request, res: Response) => {
         price: Number(price),
         categoryId: Number(categoryId),
         imageUrl,
-        isAvailable,
-        isRecommended: isRecommended !== undefined ? Boolean(isRecommended) : undefined
+        isRecommended: isRecommended !== undefined ? Boolean(isRecommended) : undefined,
+        isAvailable: isAvailable !== undefined ? Boolean(isAvailable) : undefined,
+        isVisible: isVisible !== undefined ? Boolean(isVisible) : undefined
       }
     });
 
