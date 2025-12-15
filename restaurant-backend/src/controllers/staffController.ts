@@ -110,7 +110,8 @@ export const getTableDetails = async (req: Request, res: Response) => {
         price: Number(item.menu.price),
         quantity: item.quantity,
         total: Number(item.menu.price) * item.quantity,
-        status: item.status
+        status: item.status,
+        note: item.note
       }))
     );
 

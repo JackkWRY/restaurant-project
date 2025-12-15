@@ -29,6 +29,7 @@ interface HistoryItem {
   quantity: number;
   status: string;
   total: number;
+  note?: string;
 }
 interface TableInfo {
     id: number; 
@@ -67,6 +68,9 @@ function HomeContent() {
     try {
         const res = await fetch(`http://localhost:3000/api/tables/${tableIdParam}/orders`);
         const data = await res.json();
+
+        console.log("History Data from Server:", data);
+        
         if (data.status === 'success') setHistoryItems(data.data);
     } catch (error) { console.error(error); }
   }, [tableIdParam]);
@@ -241,15 +245,22 @@ function HomeContent() {
                                 const isCancelled = item.status === 'CANCELLED';
                                 return (
                                     <div key={idx} className={`flex justify-between items-start border-b pb-3 last:border-0 ${isCancelled ? 'bg-slate-50 opacity-60' : ''}`}>
-                                        <div>
-                                            <div className={`font-bold text-lg ${isCancelled ? 'line-through text-slate-500' : 'text-slate-800'}`}>
+                                        <div className="flex-1 min-w-0">
+                                            <div className={`font-bold text-lg leading-tight break-words ${isCancelled ? 'line-through text-slate-500' : 'text-slate-800'}`}>
                                                 {item.menuName}
                                             </div>
+                                            
+                                            {item.note && (
+                                                <div className="text-xs text-red-500 italic mt-0.5 break-words">
+                                                    *{item.note}
+                                                </div>
+                                            )}
+
                                             <div className={`text-xs mt-1 ${color}`}>
                                                 {label}
                                             </div>
                                         </div>
-                                        <div className="text-right">
+                                        <div className="text-right shrink-0 pl-2">
                                             <div className="text-sm text-slate-500">x{item.quantity}</div>
                                             <div className={`font-bold ${isCancelled ? 'line-through text-slate-400' : 'text-slate-900'}`}>
                                                 ฿{item.total}

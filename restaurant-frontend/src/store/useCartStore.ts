@@ -19,6 +19,7 @@ interface CartStore {
   removeItem: (id: number) => void;
   increaseQuantity: (id: number) => void;
   decreaseQuantity: (id: number) => void;
+  updateNote: (id: number, note: string) => void;
   clearCart: () => void;
   
   // Getters
@@ -44,7 +45,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
           ),
         };
       }
-      return { items: [...state.items, { ...newItem, quantity: 1 }] };
+      return { items: [...state.items, { ...newItem, quantity: 1, note: '' }] };
     });
   },
 
@@ -69,6 +70,14 @@ export const useCartStore = create<CartStore>((set, get) => ({
           item.id === id ? { ...item, quantity: item.quantity - 1 } : item
         )
         .filter((item) => item.quantity > 0),
+    }));
+  },
+
+  updateNote: (id, note) => {
+    set((state) => ({
+        items: state.items.map((item) => 
+            item.id === id ? { ...item, note: note } : item
+        )
     }));
   },
 

@@ -127,8 +127,9 @@ export const getOrdersByTable = async (req: Request, res: Response) => {
                 menuName: item.menu.nameTH,
                 price: Number(item.menu.price),
                 quantity: item.quantity,
-                status: order.status,
-                total: Number(item.menu.price) * item.quantity
+                status: item.status,
+                total: Number(item.menu.price) * item.quantity,
+                note: item.note
             }))
         );
 

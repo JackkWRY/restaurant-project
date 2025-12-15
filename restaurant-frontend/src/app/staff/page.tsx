@@ -25,6 +25,7 @@ interface OrderDetailItem {
   quantity: number;
   total: number;
   status: string;
+  note?: string;
 }
 
 export default function StaffPage() {
@@ -303,10 +304,17 @@ export default function StaffPage() {
                       
                       return (
                         <tr key={`${item.id}-${idx}`} className={isCancelled ? "bg-slate-50 opacity-60" : ""}>
-                            <td className="p-2">
-                                <span className={`font-medium ${isCancelled ? "line-through text-slate-500" : "text-slate-800"}`}>
+                            <td className="p-2 max-w-[150px]">
+                                <span className={`font-medium block truncate ${isCancelled ? "line-through text-slate-500" : "text-slate-800"}`}>
                                     {item.menuName}
                                 </span>
+                                
+                                {item.note && (
+                                    <div className="text-xs text-red-500 italic break-words mt-0.5">
+                                        *{item.note}
+                                    </div>
+                                )}
+
                                 <div className={`text-xs mt-0.5 ${color}`}>
                                     {label}
                                 </div>

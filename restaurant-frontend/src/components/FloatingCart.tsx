@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { ShoppingCart, X, Plus, Minus, Trash2, Utensils } from "lucide-react";
+import { ShoppingCart, X, Plus, Minus, Trash2, Utensils, MessageSquare } from "lucide-react"; // เพิ่ม Icon MessageSquare
 import { useCartStore } from "@/store/useCartStore";
 
 export default function FloatingCart() {
-  const { items, removeItem, increaseQuantity, decreaseQuantity, clearCart, totalPrice, totalItems } = useCartStore();
+  const { items, removeItem, increaseQuantity, decreaseQuantity, updateNote, clearCart, totalPrice, totalItems } = useCartStore();
   
   const [isOpen, setIsOpen] = useState(false);
   
@@ -25,7 +25,11 @@ export default function FloatingCart() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 tableId: Number(tableId),
-                items: items.map(i => ({ menuId: i.id, quantity: i.quantity, note: i.note })),
+                items: items.map(i => ({ 
+                    menuId: i.id, 
+                    quantity: i.quantity, 
+                    note: i.note
+                })),
                 totalPrice: totalPrice()
             })
         });
@@ -73,7 +77,8 @@ export default function FloatingCart() {
                 {items.map((item) => (
                     <div key={item.id} className="border-b border-slate-100 pb-4 last:border-0 last:pb-0">
                         <div className="mb-2"><h3 className="font-bold text-slate-800 text-lg leading-tight">{item.nameTH}</h3></div>
-                        <div className="flex justify-between items-center">
+                        
+                        <div className="flex justify-between items-center mb-3">
                             <div className="font-bold text-slate-900 text-lg">฿{(item.price * item.quantity).toLocaleString()}</div>
                             <div className="flex items-center gap-3">
                                 <div className="flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200">
@@ -83,6 +88,27 @@ export default function FloatingCart() {
                                 </div>
                                 <button onClick={() => removeItem(item.id)} className="w-10 h-10 flex items-center justify-center bg-red-50 text-red-500 rounded-lg hover:bg-red-100 border border-red-100"><Trash2 size={20} /></button>
                             </div>
+                        </div>
+
+                        <div className="mt-2">
+                          <div className="relative">
+                              <div className="absolute top-2.5 left-3 text-slate-400">
+                                  <MessageSquare size={16} />
+                              </div>
+
+                              <input 
+                                  type="text" 
+                                  maxLength={100} 
+                                  placeholder="รายละเอียดเพิ่มเติม (เช่น ไม่เผ็ด, ไม่ใส่ผัก)" 
+                                  className="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 pl-9 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:bg-white transition-all"
+                                  value={item.note || ''}
+                                  onChange={(e) => updateNote(item.id, e.target.value)}
+                              />
+                          </div>
+
+                          <div className={`text-xs text-right mt-1 ${ (item.note?.length || 0) >= 100 ? 'text-red-500 font-bold' : 'text-slate-400' }`}>
+                            {item.note?.length || 0}/100
+                          </div>
                         </div>
                     </div>
                 ))}
