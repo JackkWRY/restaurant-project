@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link"; 
 import { io } from "socket.io-client"; 
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
-import { Pencil, Trash2, Plus, X, Check, Eye, UtensilsCrossed, Bell, ChefHat, Ban } from "lucide-react"; 
+import { Pencil, Trash2, Plus, X, Check, Eye, UtensilsCrossed, Bell, ChefHat, Ban, ShoppingBag, Sparkles } from "lucide-react"; 
 
 interface TableStatus {
   id: number;
@@ -40,6 +40,9 @@ export default function StaffPage() {
   const [tableDetails, setTableDetails] = useState<OrderDetailItem[]>([]);
   const [loadingDetails, setLoadingDetails] = useState(false);
 
+  const [newOrderAlerts, setNewOrderAlerts] = useState<number[]>([]);
+  const [newOrderIds, setNewOrderIds] = useState<number[]>([]);
+
   const fetchTables = async () => {
     try {
       const res = await fetch('http://localhost:3000/api/staff/tables');
@@ -59,11 +62,31 @@ export default function StaffPage() {
     
     const socket = io("http://localhost:3000");
     
+    socket.on("new_order", (newOrder) => {
+        fetchTables(); 
+        setNewOrderAlerts((prev) => {
+            if (prev.includes(newOrder.tableId)) return prev;
+            return [...prev, newOrder.tableId];
+        });
+        setNewOrderIds((prev) => [...prev, newOrder.id]);
+    });
+
     socket.on("table_updated", () => {
         fetchTables();
     });
 
     socket.on("order_status_updated", () => {
+        fetchTables();
+        if (selectedTableId) {
+             fetch(`http://localhost:3000/api/staff/tables/${selectedTableId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') setTableDetails(data.data.items);
+                });
+        }
+    });
+
+    socket.on("item_status_updated", () => {
         fetchTables();
         if (selectedTableId) {
              fetch(`http://localhost:3000/api/staff/tables/${selectedTableId}`)
@@ -92,6 +115,8 @@ export default function StaffPage() {
   };
 
   const handleViewDetails = async (id: number) => {
+    setNewOrderAlerts((prev) => prev.filter((tableId) => tableId !== id));
+
     setSelectedTableId(id);
     setLoadingDetails(true);
     try {
@@ -102,15 +127,14 @@ export default function StaffPage() {
     finally { setLoadingDetails(false); }
   };
 
-  const closeModal = () => { setSelectedTableId(null); setTableDetails([]); };
-
-  // const handleCloseTable = async (tableId: number, tableName: string) => {
-  //   if (!confirm(`ยืนยันการเช็คบิลและปิดโต๊ะ ${tableName}?`)) return;
-  //   try {
-  //     const res = await fetch(`http://localhost:3000/api/staff/tables/${tableId}/close`, { method: 'POST' });
-  //     if (res.ok) { alert(`ปิดโต๊ะ ${tableName} เรียบร้อย!`); fetchTables(); closeModal(); }
-  //   } catch (error) { console.error(error); }
-  // };
+  const closeModal = () => { 
+      if (tableDetails.length > 0) {
+          const viewedOrderIds = tableDetails.map(item => item.orderId);
+          setNewOrderIds(prev => prev.filter(id => !viewedOrderIds.includes(id)));
+      }
+      setSelectedTableId(null); 
+      setTableDetails([]); 
+  };
 
   const handleCloseTable = async (tableId: number, tableName: string) => {
     if (!confirm(`ยืนยันการเช็คบิลและปิดโต๊ะ ${tableName}?`)) return;
@@ -124,6 +148,7 @@ export default function StaffPage() {
 
       if (res.ok) {
         alert(`💰 ปิดโต๊ะ ${tableName} เรียบร้อย!`); 
+        setNewOrderAlerts((prev) => prev.filter((tid) => tid !== tableId));
         fetchTables(); 
         closeModal(); 
       } else {
@@ -233,74 +258,81 @@ export default function StaffPage() {
 
       {loading && tables.length === 0 ? <p className="text-center text-slate-500 py-10">กำลังโหลดข้อมูล...</p> : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {tables.map((table) => (
-              <Card 
-                key={table.id} 
-                className={`border-2 transition-all relative overflow-hidden ${
-                    table.isCallingStaff ? "border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]" 
-                    : !table.isAvailable ? "border-slate-200 bg-slate-100 opacity-70" 
-                    : table.isOccupied && !isEditingMode ? "border-orange-400 bg-orange-50/50" : "border-slate-200 bg-white"
-                }`}
-              >
-                {!table.isAvailable && !isEditingMode && <div className="absolute top-0 left-0 right-0 bg-slate-500 text-white text-xs text-center py-1 z-10">⛔ ปิดให้บริการ</div>}
-                
-                {table.isCallingStaff && (
-                    <div onClick={() => handleAcknowledgeCall(table.id)} className="absolute top-0 left-0 right-0 bg-red-600 text-white text-xs font-bold text-center py-1 z-20 cursor-pointer hover:bg-red-700 flex justify-center items-center gap-1 animate-pulse">
-                        <Bell size={12} className="fill-current" /> ลูกค้าเรียก!
-                    </div>
-                )}
-                
-                {!table.isCallingStaff && table.readyOrderCount > 0 && (
-                    <div className="absolute top-0 left-0 right-0 bg-green-600 text-white text-xs font-bold text-center py-1 z-20 flex justify-center items-center gap-1 animate-bounce">
-                        <ChefHat size={12} /> อาหารพร้อมเสิร์ฟ ({table.readyOrderCount})
-                    </div>
-                )}
+            {tables.map((table) => {
+              const hasNewOrder = newOrderAlerts.includes(table.id);
 
-                <CardHeader className="pb-2 mt-4">
-                  <div className="flex justify-between items-center">
-                    <CardTitle className={`text-2xl font-bold ${!table.isAvailable ? 'text-slate-400' : 'text-slate-800'}`}>{table.name}</CardTitle>
-                    
+              return (
+                <Card 
+                  key={table.id} 
+                  className={`border-2 transition-all relative overflow-hidden ${
+                      table.isCallingStaff ? "border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]" 
+                      : hasNewOrder ? "border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)]" 
+                      : !table.isAvailable ? "border-slate-200 bg-slate-100 opacity-70" 
+                      : table.isOccupied && !isEditingMode ? "border-orange-400 bg-orange-50/50" : "border-slate-200 bg-white"
+                  }`}
+                >
+                  {!table.isAvailable && !isEditingMode && <div className="absolute top-0 left-0 right-0 bg-slate-500 text-white text-xs text-center py-1 z-10">⛔ ปิดให้บริการ</div>}
+                  
+                  {table.isCallingStaff ? (
+                      <div onClick={() => handleAcknowledgeCall(table.id)} className="absolute top-0 left-0 right-0 bg-red-600 text-white text-xs font-bold text-center py-1 z-20 cursor-pointer hover:bg-red-700 flex justify-center items-center gap-1 animate-pulse">
+                          <Bell size={12} className="fill-current" /> ลูกค้าเรียก!
+                      </div>
+                  ) : hasNewOrder ? ( 
+                      <div className="absolute top-0 left-0 right-0 bg-blue-600 text-white text-xs font-bold text-center py-1 z-20 flex justify-center items-center gap-1 animate-pulse">
+                          <ShoppingBag size={12} className="fill-current" /> มีออเดอร์ใหม่!
+                      </div>
+                  ) : table.readyOrderCount > 0 ? (
+                      <div className="absolute top-0 left-0 right-0 bg-green-600 text-white text-xs font-bold text-center py-1 z-20 flex justify-center items-center gap-1 animate-bounce">
+                          <ChefHat size={12} /> อาหารพร้อมเสิร์ฟ ({table.readyOrderCount})
+                      </div>
+                  ) : null}
+
+                  <CardHeader className="pb-2 mt-4">
+                    <div className="flex justify-between items-center">
+                      <CardTitle className={`text-2xl font-bold ${!table.isAvailable ? 'text-slate-400' : 'text-slate-800'}`}>{table.name}</CardTitle>
+                      
+                      {!isEditingMode ? (
+                          <div className="flex items-center gap-2">
+                              <button onClick={() => handleToggleTable(table.id, table.isAvailable, table.isOccupied)} className={`w-10 h-6 rounded-full p-1 transition-colors duration-300 ${table.isAvailable ? (table.isOccupied ? 'bg-green-500/50 cursor-not-allowed' : 'bg-green-500') : 'bg-slate-300'}`}>
+                                  <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ${table.isAvailable ? 'translate-x-4' : 'translate-x-0'}`} />
+                              </button>
+                          </div>
+                      ) : (
+                          <div className="flex gap-1">
+                              <button onClick={() => handleUpdateTableName(table.id, table.name)} className="p-1 bg-slate-100 rounded text-blue-600"><Pencil size={16} /></button>
+                              <button onClick={() => handleDeleteTable(table.id)} className="p-1 bg-slate-100 rounded text-red-600"><Trash2 size={16} /></button>
+                          </div>
+                      )}
+                    </div>
+                  </CardHeader>
+                  
+                  <CardContent>
                     {!isEditingMode ? (
-                        <div className="flex items-center gap-2">
-                            <button onClick={() => handleToggleTable(table.id, table.isAvailable, table.isOccupied)} className={`w-10 h-6 rounded-full p-1 transition-colors duration-300 ${table.isAvailable ? (table.isOccupied ? 'bg-green-500/50 cursor-not-allowed' : 'bg-green-500') : 'bg-slate-300'}`}>
-                                <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ${table.isAvailable ? 'translate-x-4' : 'translate-x-0'}`} />
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="flex gap-1">
-                            <button onClick={() => handleUpdateTableName(table.id, table.name)} className="p-1 bg-slate-100 rounded text-blue-600"><Pencil size={16} /></button>
-                            <button onClick={() => handleDeleteTable(table.id)} className="p-1 bg-slate-100 rounded text-red-600"><Trash2 size={16} /></button>
-                        </div>
-                    )}
-                  </div>
-                </CardHeader>
-                
-                <CardContent>
-                  {!isEditingMode ? (
-                    <div className="flex flex-col space-y-1">
-                        <span className="text-slate-500 text-sm">ยอดสุทธิ</span>
-                        <span className={`text-3xl font-bold ${table.isAvailable ? (table.isOccupied ? "text-slate-900" : "text-slate-300") : "text-slate-300"}`}>
-                            ฿{table.totalAmount.toLocaleString()}
-                        </span>
-                        <button onClick={() => handleViewDetails(table.id)} disabled={!table.isAvailable} className="text-xs text-blue-600 underline mt-1 flex items-center gap-1 hover:text-blue-800 disabled:text-slate-400 disabled:no-underline">
-                          <Eye size={12} /> ดูรายการ ({table.activeOrders})
-                        </button>
-                    </div>
-                  ) : <div className="text-center text-slate-400 py-4 text-sm">ID: {table.id}<br/>(แก้ไข)</div>}
-                </CardContent>
+                      <div className="flex flex-col space-y-1">
+                          <span className="text-slate-500 text-sm">ยอดสุทธิ</span>
+                          <span className={`text-3xl font-bold ${table.isAvailable ? (table.isOccupied ? "text-slate-900" : "text-slate-300") : "text-slate-300"}`}>
+                              ฿{table.totalAmount.toLocaleString()}
+                          </span>
+                          <button onClick={() => handleViewDetails(table.id)} disabled={!table.isAvailable} className="text-xs text-blue-600 underline mt-1 flex items-center gap-1 hover:text-blue-800 disabled:text-slate-400 disabled:no-underline">
+                            <Eye size={12} /> ดูรายการ ({table.activeOrders})
+                          </button>
+                      </div>
+                    ) : <div className="text-center text-slate-400 py-4 text-sm">ID: {table.id}<br/>(แก้ไข)</div>}
+                  </CardContent>
 
-                {!isEditingMode && (
-                    <CardFooter className="flex gap-2">
-                      <Link href={`/?tableId=${table.id}`} target="_blank" className={`flex-1 py-2 rounded-lg font-bold text-center text-sm flex items-center justify-center gap-1 transition-colors ${table.isAvailable ? "bg-blue-100 text-blue-700 hover:bg-blue-200" : "bg-slate-200 text-slate-400 pointer-events-none"}`}>
-                          <UtensilsCrossed size={16} /> สั่ง
-                      </Link>
-                      <button onClick={() => handleCloseTable(table.id, table.name)} disabled={!table.isAvailable || !table.isOccupied} className={`flex-1 py-2 rounded-lg font-bold text-sm transition-colors ${table.isAvailable && table.isOccupied ? "bg-slate-900 text-white hover:bg-slate-700 shadow-md" : "bg-slate-200 text-slate-400 cursor-not-allowed"}`}>
-                          💰 เช็คบิล
-                      </button>
-                  </CardFooter>
-                )}
-              </Card>
-            ))}
+                  {!isEditingMode && (
+                      <CardFooter className="flex gap-2">
+                        <Link href={`/?tableId=${table.id}`} target="_blank" className={`flex-1 py-2 rounded-lg font-bold text-center text-sm flex items-center justify-center gap-1 transition-colors ${table.isAvailable ? "bg-blue-100 text-blue-700 hover:bg-blue-200" : "bg-slate-200 text-slate-400 pointer-events-none"}`}>
+                            <UtensilsCrossed size={16} /> สั่ง
+                        </Link>
+                        <button onClick={() => handleCloseTable(table.id, table.name)} disabled={!table.isAvailable || !table.isOccupied} className={`flex-1 py-2 rounded-lg font-bold text-sm transition-colors ${table.isAvailable && table.isOccupied ? "bg-slate-900 text-white hover:bg-slate-700 shadow-md" : "bg-slate-200 text-slate-400 cursor-not-allowed"}`}>
+                            💰 เช็คบิล
+                        </button>
+                    </CardFooter>
+                  )}
+                </Card>
+              );
+            })}
         </div>
       )}
 
@@ -328,22 +360,30 @@ export default function StaffPage() {
                     {tableDetails.map((item, idx) => {
                       const { label, color } = getStatusDisplay(item.status);
                       const isCancelled = item.status === 'CANCELLED';
+                      const isNewItem = newOrderIds.includes(item.orderId);
                       
                       return (
-                        <tr key={`${item.id}-${idx}`} className={isCancelled ? "bg-slate-50 opacity-60" : ""}>
+                        <tr key={`${item.id}-${idx}`} className={`${isCancelled ? "bg-slate-50 opacity-60" : isNewItem ? "bg-blue-50" : ""}`}>
                             <td className="p-2 max-w-[150px]">
-                                <span className={`font-medium block truncate ${isCancelled ? "line-through text-slate-500" : "text-slate-800"}`}>
-                                    {item.menuName}
-                                </span>
-                                
-                                {item.note && (
-                                    <div className="text-xs text-red-500 italic break-words mt-0.5">
-                                        *{item.note}
+                                <div className="flex items-start gap-2">
+                                    <div className="flex-1 min-w-0">
+                                        <span className={`font-medium block truncate ${isCancelled ? "line-through text-slate-500" : "text-slate-800"}`}>
+                                            {item.menuName}
+                                        </span>
+                                        {item.note && (
+                                            <div className="text-xs text-red-500 italic break-words mt-0.5">
+                                                *{item.note}
+                                            </div>
+                                        )}
+                                        <div className={`text-xs mt-0.5 ${color}`}>
+                                            {label}
+                                        </div>
                                     </div>
-                                )}
-
-                                <div className={`text-xs mt-0.5 ${color}`}>
-                                    {label}
+                                    {isNewItem && !isCancelled && (
+                                        <span className="shrink-0 bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5 animate-pulse">
+                                            <Sparkles size={10} /> NEW
+                                        </span>
+                                    )}
                                 </div>
                             </td>
                             <td className="p-2 text-center text-slate-600">x{item.quantity}</td>
@@ -381,7 +421,7 @@ export default function StaffPage() {
                             .toLocaleString()}
                     </span>
                  </div>
-                <button onClick={() => closeModal()} className="w-full bg-slate-200 text-slate-600 py-3 rounded-lg font-bold">ปิดหน้าต่าง</button>
+                <button onClick={() => closeModal()} className="w-full bg-slate-200 text-slate-600 py-3 rounded-lg font-bold">ปิดหน้าต่าง (รับทราบ)</button>
             </div>
           </div>
         </div>
