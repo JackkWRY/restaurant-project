@@ -211,7 +211,11 @@ export default function StaffPage() {
     } catch (error) { console.error(error); alert("ยกเลิกรายการไม่สำเร็จ"); }
   };
 
-  const handleChangeStatus = async (itemId: number, newStatus: string) => {
+  const handleChangeStatus = async (itemId: number, newStatus: string, menuName: string) => {
+      if (newStatus === 'CANCELLED') {
+          handleCancelOrder(itemId, menuName);
+          return;
+      }
       try {
           const res = await fetch(`http://localhost:3000/api/orders/items/${itemId}/status`, {
               method: 'PATCH', headers: { 'Content-Type': 'application/json' },
@@ -362,7 +366,6 @@ export default function StaffPage() {
                           <th className="p-2 text-center">สถานะ</th>
                           <th className="p-2 text-center">จำนวน</th>
                           <th className="p-2 text-right rounded-r">รวม</th>
-                          <th className="p-2 text-center rounded-r">จัดการ</th>
                       </tr>
                   </thead>
                   <tbody className="divide-y">
@@ -385,21 +388,21 @@ export default function StaffPage() {
                             </td>
                             <td className="p-2 text-center">
                                 {!isCancelled ? (
-                                    <select value={item.status} onChange={(e) => handleChangeStatus(item.id, e.target.value)} className={`text-xs border rounded p-1 font-bold outline-none cursor-pointer ${statusColor}`}>
+                                    <select 
+                                        value={item.status} 
+                                        onChange={(e) => handleChangeStatus(item.id, e.target.value, item.menuName)} 
+                                        className={`text-xs border rounded p-1 font-bold outline-none cursor-pointer ${statusColor}`}
+                                    >
                                         <option value="PENDING">🕒 รอคิว</option>
                                         <option value="COOKING">🍳 กำลังทำ</option>
                                         <option value="READY">✨ พร้อมเสิร์ฟ</option>
                                         <option value="SERVED">✅ เสิร์ฟแล้ว</option>
+                                        <option value="CANCELLED">❌ ยกเลิกรายการ</option>
                                     </select>
                                 ) : <span className="text-xs text-red-500 font-bold border border-red-200 bg-red-50 px-2 py-1 rounded">ยกเลิกแล้ว</span>}
                             </td>
                             <td className="p-2 text-center text-slate-600">x{item.quantity}</td>
                             <td className="p-2 text-right font-bold text-slate-900">{isCancelled ? <span className="line-through text-slate-400">฿{item.total}</span> : `฿${item.total}`}</td>
-                            <td className="p-2 text-center">
-                                {!isCancelled ? (
-                                    <button onClick={() => handleCancelOrder(item.id, item.menuName)} className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors" title="ยกเลิก"><Ban size={16} /></button>
-                                ) : <span className="text-slate-300">-</span>}
-                            </td>
                         </tr>
                       );
                     })}
