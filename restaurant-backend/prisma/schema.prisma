@@ -64,6 +64,14 @@ model OrderItem {
   status   OrderStatus @default(PENDING)
 }
 
+model User {
+  id       Int      @id @default(autoincrement())
+  username String   @unique
+  password String
+  role     String   @default("STAFF")
+  createdAt DateTime @default(now())
+}
+
 enum OrderStatus {
   PENDING
   COOKING

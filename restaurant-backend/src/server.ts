@@ -5,6 +5,7 @@ import { createServer } from 'node:http';
 import { Server } from 'socket.io';
 
 import prisma from './prisma.js';
+import authRoutes from './routes/authRoutes.js';
 import settingRoutes from './routes/settingRoutes.js';
 import menuRoutes from './routes/menuRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
@@ -41,6 +42,7 @@ io.on('connection', (socket) => {
 });
 
 // --- Register Routes ---
+app.use('/api', authRoutes);
 app.use('/api', settingRoutes);
 app.use('/api', menuRoutes);
 app.use('/api', orderRoutes);

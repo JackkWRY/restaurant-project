@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image"; 
-import { Plus, Pencil, Trash2, List, Utensils, X, Image as ImageIcon, Save, Settings, Eye, EyeOff } from "lucide-react";
+import { useRouter } from "next/navigation"; // ✅ 1. เพิ่ม useRouter
+import { Plus, Pencil, Trash2, List, Utensils, X, Image as ImageIcon, Save, Settings, Eye, EyeOff, LogOut } from "lucide-react"; // ✅ 2. เพิ่ม LogOut
 
 // --- Types ---
 interface Category {
@@ -25,7 +26,25 @@ interface Menu {
 }
 
 export default function AdminPage() {
+  const router = useRouter(); // ✅ 3. เรียกใช้ Router
   const [activeTab, setActiveTab] = useState<'categories' | 'menus' | 'settings'>('categories');
+
+  // ✅ 4. เพิ่มระบบตรวจสอบ Login (Auth Guard)
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+    }
+  }, [router]);
+
+  // ✅ 5. ฟังก์ชัน Logout
+  const handleLogout = () => {
+    if (confirm("ต้องการออกจากระบบใช่หรือไม่?")) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        router.push("/login");
+    }
+  };
 
   return (
     <main className="min-h-screen bg-slate-50 flex flex-col">
@@ -35,9 +54,16 @@ export default function AdminPage() {
           <div className="flex items-center gap-2">
              <h1 className="text-2xl font-bold text-slate-900">Admin Dashboard 🛠️</h1>
           </div>
-          <Link href="/staff" className="text-sm font-medium text-slate-500 hover:text-slate-900">
-            ไปหน้า Staff →
-          </Link>
+          
+          <div className="flex items-center gap-6">
+            <Link href="/staff" className="text-sm font-medium text-slate-500 hover:text-slate-900">
+                ไปหน้า Staff →
+            </Link>
+            {/* ✅ 6. ปุ่ม Logout */}
+            <button onClick={handleLogout} className="text-sm font-medium text-red-500 hover:text-red-700 flex items-center gap-1 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors">
+                <LogOut size={16} /> ออกจากระบบ
+            </button>
+          </div>
         </div>
       </header>
 
@@ -84,7 +110,7 @@ export default function AdminPage() {
 }
 
 // ==========================================
-// 🟢 Component: Settings Manager
+// 🟢 Component: Settings Manager (เหมือนเดิม)
 // ==========================================
 function SettingsManager() {
     const [restaurantName, setRestaurantName] = useState("");
@@ -148,7 +174,7 @@ function SettingsManager() {
 }
 
 // ==========================================
-// 🟢 Component: Category Manager
+// 🟢 Component: Category Manager (เหมือนเดิม)
 // ==========================================
 function CategoryManager() {
     const [categories, setCategories] = useState<Category[]>([]);
@@ -258,7 +284,7 @@ function CategoryManager() {
 }
 
 // ==========================================
-// 🟡 Component: Menu Manager
+// 🟡 Component: Menu Manager (เหมือนเดิม)
 // ==========================================
 function MenuManager() {
     const [menus, setMenus] = useState<Menu[]>([]); 

@@ -1,19 +1,18 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs'; // ✅ 1. เพิ่มการ import bcrypt
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Starting seeding...');
 
-  // 1. ล้างข้อมูลเก่าก่อน (เพื่อไม่ให้ข้อมูลซ้ำเวลา รันหลายรอบ)
-  // ต้องเรียงลำดับการลบ เพราะมี Relation กัน (ลบลูกก่อนลบแม่)
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
   await prisma.menu.deleteMany();
   await prisma.category.deleteMany();
   await prisma.table.deleteMany();
+  // await prisma.user.deleteMany();
 
-  // 2. สร้าง Category (หมวดหมู่)
   const catFood = await prisma.category.create({
     data: { name: 'อาหารจานเดียว' },
   });
@@ -24,7 +23,6 @@ async function main() {
     data: { name: 'ของทานเล่น' },
   });
 
-  // 3. สร้าง Menu (รายการอาหาร)
   await prisma.menu.createMany({
     data: [
       {
@@ -66,7 +64,6 @@ async function main() {
     ],
   });
 
-  // 4. สร้าง Table (โต๊ะ)
   await prisma.table.createMany({
     data: [
       { name: 'T1', qrCode: 'https://example.com/qr/t1' },
@@ -77,7 +74,20 @@ async function main() {
     ],
   });
 
+  const password = await bcrypt.hash('password123', 10);
+  
+  const admin = await prisma.user.upsert({
+    where: { username: 'admin' },
+    update: {},
+    create: {
+      username: 'admin',
+      password: password,
+      role: 'ADMIN'
+    }
+  });
+
   console.log('✅ Seeding finished.');
+  console.log('👤 Admin user created:', admin.username);
 }
 
 main()
