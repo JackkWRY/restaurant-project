@@ -104,12 +104,39 @@ export default function StaffPage() {
 
   const closeModal = () => { setSelectedTableId(null); setTableDetails([]); };
 
+  // const handleCloseTable = async (tableId: number, tableName: string) => {
+  //   if (!confirm(`ยืนยันการเช็คบิลและปิดโต๊ะ ${tableName}?`)) return;
+  //   try {
+  //     const res = await fetch(`http://localhost:3000/api/staff/tables/${tableId}/close`, { method: 'POST' });
+  //     if (res.ok) { alert(`ปิดโต๊ะ ${tableName} เรียบร้อย!`); fetchTables(); closeModal(); }
+  //   } catch (error) { console.error(error); }
+  // };
+
   const handleCloseTable = async (tableId: number, tableName: string) => {
     if (!confirm(`ยืนยันการเช็คบิลและปิดโต๊ะ ${tableName}?`)) return;
+    
     try {
-      const res = await fetch(`http://localhost:3000/api/staff/tables/${tableId}/close`, { method: 'POST' });
-      if (res.ok) { alert(`ปิดโต๊ะ ${tableName} เรียบร้อย!`); fetchTables(); closeModal(); }
-    } catch (error) { console.error(error); }
+      const res = await fetch(`http://localhost:3000/api/tables/${tableId}/close`, { 
+        method: 'POST' 
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert(`💰 ปิดโต๊ะ ${tableName} เรียบร้อย!`); 
+        fetchTables(); 
+        closeModal(); 
+      } else {
+        if (data.error && data.error.includes("Some items are not yet SERVED")) {
+             alert("⚠️ ไม่สามารถเช็คบิลได้!\n\nยังมีรายการอาหารที่ยังทำไม่เสร็จ หรือยังไม่ได้เสิร์ฟ\nกรุณาจัดการให้เรียบร้อยก่อนครับ 👨‍🍳");
+         } else {
+             alert("เกิดข้อผิดพลาดในการปิดโต๊ะ: " + data.error);
+         }
+      }
+    } catch (error) { 
+        console.error(error); 
+        alert("เชื่อมต่อ Server ไม่ได้");
+    }
   };
 
   const handleToggleTable = async (tableId: number, currentStatus: boolean, isOccupied: boolean) => {

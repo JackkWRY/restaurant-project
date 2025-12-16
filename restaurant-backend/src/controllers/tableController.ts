@@ -173,3 +173,67 @@ export const getCustomerOrders = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to fetch customer orders' });
   }
 };
+
+// 8. เช็คบิลและปิดโต๊ะ
+export const closeTable = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const unservedItems = await prisma.orderItem.findFirst({
+      where: {
+        order: { 
+          tableId: Number(id),
+          status: { not: 'COMPLETED' }
+        },
+        status: {
+          notIn: ['SERVED', 'COMPLETED', 'CANCELLED'] 
+        }
+      }
+    });
+
+    if (unservedItems) {
+      console.log("Blocked by item:", unservedItems);
+      res.status(400).json({ 
+        status: 'error', 
+        error: 'Cannot close table. Some items are not yet SERVED or COMPLETED.' 
+      });
+      return; 
+    }
+
+    await prisma.orderItem.updateMany({
+      where: {
+        order: { 
+          tableId: Number(id),
+          status: { not: 'COMPLETED' }
+        },
+        status: { not: 'CANCELLED' }
+      },
+      data: { status: 'COMPLETED' }
+    });
+
+    await prisma.order.updateMany({
+      where: { 
+        tableId: Number(id),
+        status: { not: 'COMPLETED' }
+      },
+      data: { status: 'COMPLETED' }
+    });
+
+    await prisma.table.update({
+      where: { id: Number(id) },
+      data: { 
+        isOccupied: false,
+        isCallingStaff: false
+      }
+    });
+
+    const io = req.app.get('io');
+    io.emit('table_updated', { id: Number(id) }); 
+
+    res.json({ status: 'success', message: 'Table closed successfully' });
+
+  } catch (error) {
+    console.error("Close Table Error:", error);
+    res.status(500).json({ error: 'Failed to close table' });
+  }
+};

@@ -52,37 +52,6 @@ export const getTablesStatus = async (req: Request, res: Response) => {
   }
 };
 
-export const closeTable = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-
-    await prisma.order.updateMany({
-      where: {
-        tableId: Number(id),
-        status: { notIn: ['COMPLETED', 'CANCELLED'] }
-      },
-      data: { status: 'COMPLETED' }
-    });
-
-    await prisma.order.deleteMany({
-        where: {
-            tableId: Number(id),
-            status: 'CANCELLED'
-        }
-    });
-
-    await prisma.table.update({
-      where: { id: Number(id) },
-      data: { isOccupied: false, isCallingStaff: false } 
-    });
-
-    res.json({ status: 'success', message: 'Table closed' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to close table' });
-  }
-};
-
 export const getTableDetails = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
