@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link"; 
 import { io } from "socket.io-client"; 
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
@@ -43,6 +43,16 @@ export default function StaffPage() {
   const [newOrderAlerts, setNewOrderAlerts] = useState<number[]>([]);
   const [newOrderIds, setNewOrderIds] = useState<number[]>([]);
 
+  const refreshDetailsIfOpen = useCallback(() => {
+    if (selectedTableId) {
+        fetch(`http://localhost:3000/api/staff/tables/${selectedTableId}`)
+          .then(res => res.json())
+          .then(data => {
+              if (data.status === 'success') setTableDetails(data.data.items);
+          });
+    }
+  }, [selectedTableId]);
+
   const fetchTables = async () => {
     try {
       const res = await fetch('http://localhost:3000/api/staff/tables');
@@ -68,7 +78,7 @@ export default function StaffPage() {
             if (prev.includes(newOrder.tableId)) return prev;
             return [...prev, newOrder.tableId];
         });
-        setNewOrderIds((prev) => [...prev, newOrder.id]);
+        setNewOrderIds((prev) => [...prev, newOrder.id]); 
     });
 
     socket.on("table_updated", () => {
@@ -77,24 +87,12 @@ export default function StaffPage() {
 
     socket.on("order_status_updated", () => {
         fetchTables();
-        if (selectedTableId) {
-             fetch(`http://localhost:3000/api/staff/tables/${selectedTableId}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'success') setTableDetails(data.data.items);
-                });
-        }
+        refreshDetailsIfOpen();
     });
 
     socket.on("item_status_updated", () => {
         fetchTables();
-        if (selectedTableId) {
-             fetch(`http://localhost:3000/api/staff/tables/${selectedTableId}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'success') setTableDetails(data.data.items);
-                });
-        }
+        refreshDetailsIfOpen();
     });
 
     const interval = setInterval(fetchTables, 10000);
@@ -102,7 +100,7 @@ export default function StaffPage() {
         clearInterval(interval);
         socket.disconnect();
     };
-  }, [selectedTableId]);
+  }, [selectedTableId, refreshDetailsIfOpen]);
 
   const handleAcknowledgeCall = async (tableId: number) => {
     try {
@@ -116,7 +114,6 @@ export default function StaffPage() {
 
   const handleViewDetails = async (id: number) => {
     setNewOrderAlerts((prev) => prev.filter((tableId) => tableId !== id));
-
     setSelectedTableId(id);
     setLoadingDetails(true);
     try {
@@ -138,14 +135,11 @@ export default function StaffPage() {
 
   const handleCloseTable = async (tableId: number, tableName: string) => {
     if (!confirm(`ยืนยันการเช็คบิลและปิดโต๊ะ ${tableName}?`)) return;
-    
     try {
       const res = await fetch(`http://localhost:3000/api/tables/${tableId}/close`, { 
         method: 'POST' 
       });
-
       const data = await res.json();
-
       if (res.ok) {
         alert(`💰 ปิดโต๊ะ ${tableName} เรียบร้อย!`); 
         setNewOrderAlerts((prev) => prev.filter((tid) => tid !== tableId));
@@ -158,10 +152,7 @@ export default function StaffPage() {
              alert("เกิดข้อผิดพลาดในการปิดโต๊ะ: " + data.error);
          }
       }
-    } catch (error) { 
-        console.error(error); 
-        alert("เชื่อมต่อ Server ไม่ได้");
-    }
+    } catch (error) { console.error(error); alert("เชื่อมต่อ Server ไม่ได้"); }
   };
 
   const handleToggleTable = async (tableId: number, currentStatus: boolean, isOccupied: boolean) => {
@@ -199,31 +190,40 @@ export default function StaffPage() {
 
   const handleCancelOrder = async (itemId: number, menuName: string) => {
     if(!confirm(`ต้องการยกเลิกเมนู "${menuName}" ใช่หรือไม่?`)) return;
-    
     try {
-        const res = await fetch(`http://localhost:3000/api/staff/items/${itemId}/cancel`, {
-            method: 'PATCH'
-        });
-        
-        if (res.ok) {
-            if (selectedTableId) handleViewDetails(selectedTableId);
-            fetchTables();
-        }
-    } catch (error) {
-        console.error(error);
-        alert("ยกเลิกรายการไม่สำเร็จ");
-    }
+        const res = await fetch(`http://localhost:3000/api/staff/items/${itemId}/cancel`, { method: 'PATCH' });
+        if (res.ok) { refreshDetailsIfOpen(); fetchTables(); }
+    } catch (error) { console.error(error); alert("ยกเลิกรายการไม่สำเร็จ"); }
   };
 
-  const getStatusDisplay = (status: string) => {
+  const handleChangeStatus = async (itemId: number, newStatus: string) => {
+      try {
+          const res = await fetch(`http://localhost:3000/api/orders/items/${itemId}/status`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: newStatus })
+          });
+          
+          if (res.ok) {
+              refreshDetailsIfOpen();
+          } else {
+              alert("แก้ไขสถานะไม่สำเร็จ");
+          }
+      } catch (error) {
+          console.error(error);
+          alert("เชื่อมต่อ Server ไม่ได้");
+      }
+  };
+
+  const getStatusColor = (status: string) => {
     switch (status) {
-        case 'PENDING': return { label: '🕒 รอคิว', color: 'text-yellow-600' };
-        case 'COOKING': return { label: '🍳 กำลังทำ', color: 'text-orange-600' };
-        case 'READY': return { label: '✨ พร้อมเสิร์ฟ', color: 'text-green-600 animate-pulse font-bold' };
-        case 'SERVED': return { label: '✅ เสิร์ฟแล้ว', color: 'text-green-700 font-bold' };
-        case 'COMPLETED': return { label: '💰 จ่ายแล้ว', color: 'text-slate-500' };
-        case 'CANCELLED': return { label: '❌ ยกเลิกแล้ว', color: 'text-red-500 font-bold' };
-        default: return { label: status, color: 'text-slate-500' };
+        case 'PENDING': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+        case 'COOKING': return 'text-orange-600 bg-orange-50 border-orange-200';
+        case 'READY': return 'text-green-600 bg-green-50 border-green-200 font-bold';
+        case 'SERVED': return 'text-blue-700 bg-blue-50 border-blue-200 font-bold';
+        case 'COMPLETED': return 'text-slate-500 bg-slate-50 border-slate-200';
+        case 'CANCELLED': return 'text-red-500 bg-red-50 border-red-200 line-through';
+        default: return 'text-slate-500';
     }
   };
 
@@ -260,7 +260,6 @@ export default function StaffPage() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {tables.map((table) => {
               const hasNewOrder = newOrderAlerts.includes(table.id);
-
               return (
                 <Card 
                   key={table.id} 
@@ -305,7 +304,6 @@ export default function StaffPage() {
                       )}
                     </div>
                   </CardHeader>
-                  
                   <CardContent>
                     {!isEditingMode ? (
                       <div className="flex flex-col space-y-1">
@@ -319,7 +317,6 @@ export default function StaffPage() {
                       </div>
                     ) : <div className="text-center text-slate-400 py-4 text-sm">ID: {table.id}<br/>(แก้ไข)</div>}
                   </CardContent>
-
                   {!isEditingMode && (
                       <CardFooter className="flex gap-2">
                         <Link href={`/?tableId=${table.id}`} target="_blank" className={`flex-1 py-2 rounded-lg font-bold text-center text-sm flex items-center justify-center gap-1 transition-colors ${table.isAvailable ? "bg-blue-100 text-blue-700 hover:bg-blue-200" : "bg-slate-200 text-slate-400 pointer-events-none"}`}>
@@ -351,6 +348,7 @@ export default function StaffPage() {
                   <thead className="bg-slate-100 text-slate-600 text-sm">
                       <tr>
                           <th className="p-2 rounded-l">เมนู</th>
+                          <th className="p-2 text-center">สถานะ</th>
                           <th className="p-2 text-center">จำนวน</th>
                           <th className="p-2 text-right">รวม</th>
                           <th className="p-2 text-center rounded-r">จัดการ</th>
@@ -358,9 +356,9 @@ export default function StaffPage() {
                   </thead>
                   <tbody className="divide-y">
                     {tableDetails.map((item, idx) => {
-                      const { label, color } = getStatusDisplay(item.status);
                       const isCancelled = item.status === 'CANCELLED';
                       const isNewItem = newOrderIds.includes(item.orderId);
+                      const statusColor = getStatusColor(item.status);
                       
                       return (
                         <tr key={`${item.id}-${idx}`} className={`${isCancelled ? "bg-slate-50 opacity-60" : isNewItem ? "bg-blue-50" : ""}`}>
@@ -375,9 +373,6 @@ export default function StaffPage() {
                                                 *{item.note}
                                             </div>
                                         )}
-                                        <div className={`text-xs mt-0.5 ${color}`}>
-                                            {label}
-                                        </div>
                                     </div>
                                     {isNewItem && !isCancelled && (
                                         <span className="shrink-0 bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5 animate-pulse">
@@ -385,6 +380,22 @@ export default function StaffPage() {
                                         </span>
                                     )}
                                 </div>
+                            </td>
+                            <td className="p-2 text-center">
+                                {!isCancelled ? (
+                                    <select 
+                                        value={item.status}
+                                        onChange={(e) => handleChangeStatus(item.id, e.target.value)}
+                                        className={`text-xs border rounded p-1 font-bold outline-none cursor-pointer ${statusColor}`}
+                                    >
+                                        <option value="PENDING">🕒 รอคิว</option>
+                                        <option value="COOKING">🍳 กำลังทำ</option>
+                                        <option value="READY">✨ พร้อมเสิร์ฟ</option>
+                                        <option value="SERVED">✅ เสิร์ฟแล้ว</option>
+                                    </select>
+                                ) : (
+                                    <span className="text-xs text-red-500 font-bold border border-red-200 bg-red-50 px-2 py-1 rounded">ยกเลิกแล้ว</span>
+                                )}
                             </td>
                             <td className="p-2 text-center text-slate-600">x{item.quantity}</td>
                             <td className="p-2 text-right font-bold text-slate-900">
