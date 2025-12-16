@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link"; 
 import { io } from "socket.io-client"; 
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
-import { Pencil, Trash2, Plus, X, Check, Eye, UtensilsCrossed, Bell, ChefHat, Ban, ShoppingBag, Sparkles } from "lucide-react"; 
+import { Pencil, Trash2, Plus, X, Check, Eye, UtensilsCrossed, Bell, ChefHat, Ban, ShoppingBag, Sparkles, Receipt, Coins } from "lucide-react"; 
 
 interface TableStatus {
   id: number;
@@ -36,6 +36,7 @@ export default function StaffPage() {
   const [newTableName, setNewTableName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
+  const [activeModal, setActiveModal] = useState<'details' | 'receipt' | null>(null);
   const [selectedTableId, setSelectedTableId] = useState<number | null>(null);
   const [tableDetails, setTableDetails] = useState<OrderDetailItem[]>([]);
   const [loadingDetails, setLoadingDetails] = useState(false);
@@ -115,6 +116,19 @@ export default function StaffPage() {
   const handleViewDetails = async (id: number) => {
     setNewOrderAlerts((prev) => prev.filter((tableId) => tableId !== id));
     setSelectedTableId(id);
+    setActiveModal('details');
+    setLoadingDetails(true);
+    try {
+      const res = await fetch(`http://localhost:3000/api/staff/tables/${id}`);
+      const data = await res.json();
+      if (data.status === 'success') setTableDetails(data.data.items);
+    } catch (error) { console.error(error); } 
+    finally { setLoadingDetails(false); }
+  };
+
+  const handleCheckBill = async (id: number) => {
+    setSelectedTableId(id);
+    setActiveModal('receipt');
     setLoadingDetails(true);
     try {
       const res = await fetch(`http://localhost:3000/api/staff/tables/${id}`);
@@ -125,32 +139,33 @@ export default function StaffPage() {
   };
 
   const closeModal = () => { 
-      if (tableDetails.length > 0) {
+      if (activeModal === 'details' && tableDetails.length > 0) {
           const viewedOrderIds = tableDetails.map(item => item.orderId);
           setNewOrderIds(prev => prev.filter(id => !viewedOrderIds.includes(id)));
       }
       setSelectedTableId(null); 
+      setActiveModal(null);
       setTableDetails([]); 
   };
 
-  const handleCloseTable = async (tableId: number, tableName: string) => {
-    if (!confirm(`ยืนยันการเช็คบิลและปิดโต๊ะ ${tableName}?`)) return;
+  const handleConfirmPayment = async () => {
+    if (!selectedTableId) return;
+    const tableName = tables.find(t => t.id === selectedTableId)?.name || "";
+    if (!confirm(`ยืนยันรับเงินและปิดโต๊ะ ${tableName}?`)) return;
+
     try {
-      const res = await fetch(`http://localhost:3000/api/tables/${tableId}/close`, { 
+      const res = await fetch(`http://localhost:3000/api/tables/${selectedTableId}/close`, { 
         method: 'POST' 
       });
       const data = await res.json();
+      
       if (res.ok) {
         alert(`💰 ปิดโต๊ะ ${tableName} เรียบร้อย!`); 
-        setNewOrderAlerts((prev) => prev.filter((tid) => tid !== tableId));
+        setNewOrderAlerts((prev) => prev.filter((tid) => tid !== selectedTableId));
         fetchTables(); 
         closeModal(); 
       } else {
-        if (data.error && data.error.includes("Some items are not yet SERVED")) {
-             alert("⚠️ ไม่สามารถเช็คบิลได้!\n\nยังมีรายการอาหารที่ยังทำไม่เสร็จ หรือยังไม่ได้เสิร์ฟ\nกรุณาจัดการให้เรียบร้อยก่อนครับ 👨‍🍳");
-         } else {
-             alert("เกิดข้อผิดพลาดในการปิดโต๊ะ: " + data.error);
-         }
+        alert("เกิดข้อผิดพลาด: " + data.error);
       }
     } catch (error) { console.error(error); alert("เชื่อมต่อ Server ไม่ได้"); }
   };
@@ -199,20 +214,12 @@ export default function StaffPage() {
   const handleChangeStatus = async (itemId: number, newStatus: string) => {
       try {
           const res = await fetch(`http://localhost:3000/api/orders/items/${itemId}/status`, {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
+              method: 'PATCH', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ status: newStatus })
           });
-          
-          if (res.ok) {
-              refreshDetailsIfOpen();
-          } else {
-              alert("แก้ไขสถานะไม่สำเร็จ");
-          }
-      } catch (error) {
-          console.error(error);
-          alert("เชื่อมต่อ Server ไม่ได้");
-      }
+          if (res.ok) refreshDetailsIfOpen();
+          else alert("แก้ไขสถานะไม่สำเร็จ");
+      } catch (error) { console.error(error); alert("เชื่อมต่อ Server ไม่ได้"); }
   };
 
   const getStatusColor = (status: string) => {
@@ -226,6 +233,10 @@ export default function StaffPage() {
         default: return 'text-slate-500';
     }
   };
+
+  const validItems = tableDetails.filter(i => i.status !== 'CANCELLED');
+  const totalAmount = validItems.reduce((sum, i) => sum + i.total, 0);
+  const unservedCount = validItems.filter(i => !['SERVED', 'COMPLETED'].includes(i.status)).length;
 
   return (
     <main className="min-h-screen bg-slate-100 p-6 relative">
@@ -291,17 +302,18 @@ export default function StaffPage() {
                       <CardTitle className={`text-2xl font-bold ${!table.isAvailable ? 'text-slate-400' : 'text-slate-800'}`}>{table.name}</CardTitle>
                       
                       {!isEditingMode ? (
-                          <div className="flex items-center gap-2">
-                              <button onClick={() => handleToggleTable(table.id, table.isAvailable, table.isOccupied)} className={`w-10 h-6 rounded-full p-1 transition-colors duration-300 ${table.isAvailable ? (table.isOccupied ? 'bg-green-500/50 cursor-not-allowed' : 'bg-green-500') : 'bg-slate-300'}`}>
-                                  <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ${table.isAvailable ? 'translate-x-4' : 'translate-x-0'}`} />
-                              </button>
-                          </div>
+                        <div className="flex items-center gap-2">
+                           <button onClick={() => handleToggleTable(table.id, table.isAvailable, table.isOccupied)} className={`w-10 h-6 rounded-full p-1 transition-colors duration-300 ${table.isAvailable ? (table.isOccupied ? 'bg-green-500/50 cursor-not-allowed' : 'bg-green-500') : 'bg-slate-300'}`}>
+                               <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ${table.isAvailable ? 'translate-x-4' : 'translate-x-0'}`} />
+                           </button>
+                        </div>
                       ) : (
-                          <div className="flex gap-1">
-                              <button onClick={() => handleUpdateTableName(table.id, table.name)} className="p-1 bg-slate-100 rounded text-blue-600"><Pencil size={16} /></button>
-                              <button onClick={() => handleDeleteTable(table.id)} className="p-1 bg-slate-100 rounded text-red-600"><Trash2 size={16} /></button>
-                          </div>
+                        <div className="flex gap-1">
+                            <button onClick={() => handleUpdateTableName(table.id, table.name)} className="p-1 bg-slate-100 rounded text-blue-600"><Pencil size={16} /></button>
+                            <button onClick={() => handleDeleteTable(table.id)} className="p-1 bg-slate-100 rounded text-red-600"><Trash2 size={16} /></button>
+                        </div>
                       )}
+
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -322,7 +334,7 @@ export default function StaffPage() {
                         <Link href={`/?tableId=${table.id}`} target="_blank" className={`flex-1 py-2 rounded-lg font-bold text-center text-sm flex items-center justify-center gap-1 transition-colors ${table.isAvailable ? "bg-blue-100 text-blue-700 hover:bg-blue-200" : "bg-slate-200 text-slate-400 pointer-events-none"}`}>
                             <UtensilsCrossed size={16} /> สั่ง
                         </Link>
-                        <button onClick={() => handleCloseTable(table.id, table.name)} disabled={!table.isAvailable || !table.isOccupied} className={`flex-1 py-2 rounded-lg font-bold text-sm transition-colors ${table.isAvailable && table.isOccupied ? "bg-slate-900 text-white hover:bg-slate-700 shadow-md" : "bg-slate-200 text-slate-400 cursor-not-allowed"}`}>
+                        <button onClick={() => handleCheckBill(table.id)} disabled={!table.isAvailable || !table.isOccupied} className={`flex-1 py-2 rounded-lg font-bold text-sm transition-colors ${table.isAvailable && table.isOccupied ? "bg-slate-900 text-white hover:bg-slate-700 shadow-md" : "bg-slate-200 text-slate-400 cursor-not-allowed"}`}>
                             💰 เช็คบิล
                         </button>
                     </CardFooter>
@@ -333,15 +345,14 @@ export default function StaffPage() {
         </div>
       )}
 
-      {/* Modal Details */}
-      {selectedTableId !== null && (
+      {/* Modal 1: Details */}
+      {selectedTableId !== null && activeModal === 'details' && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
             <div className="p-4 bg-slate-900 text-white flex justify-between items-center">
               <h2 className="text-xl font-bold flex items-center gap-2"><UtensilsCrossed size={20} /> รายการอาหารโต๊ะ {tables.find(t => t.id === selectedTableId)?.name}</h2>
               <button onClick={closeModal} className="text-slate-300 hover:text-white"><X size={24} /></button>
             </div>
-            
             <div className="p-4 overflow-y-auto flex-1">
               {loadingDetails ? <p className="text-center text-slate-500 py-10">กำลังโหลดรายการ...</p> : tableDetails.length === 0 ? <div className="text-center py-10 text-slate-500">ยังไม่มีรายการอาหาร</div> : (
                 <table className="w-full text-left">
@@ -350,7 +361,7 @@ export default function StaffPage() {
                           <th className="p-2 rounded-l">เมนู</th>
                           <th className="p-2 text-center">สถานะ</th>
                           <th className="p-2 text-center">จำนวน</th>
-                          <th className="p-2 text-right">รวม</th>
+                          <th className="p-2 text-right rounded-r">รวม</th>
                           <th className="p-2 text-center rounded-r">จัดการ</th>
                       </tr>
                   </thead>
@@ -359,7 +370,6 @@ export default function StaffPage() {
                       const isCancelled = item.status === 'CANCELLED';
                       const isNewItem = newOrderIds.includes(item.orderId);
                       const statusColor = getStatusColor(item.status);
-                      
                       return (
                         <tr key={`${item.id}-${idx}`} className={`${isCancelled ? "bg-slate-50 opacity-60" : isNewItem ? "bg-blue-50" : ""}`}>
                             <td className="p-2 max-w-[150px]">
@@ -368,51 +378,27 @@ export default function StaffPage() {
                                         <span className={`font-medium block truncate ${isCancelled ? "line-through text-slate-500" : "text-slate-800"}`}>
                                             {item.menuName}
                                         </span>
-                                        {item.note && (
-                                            <div className="text-xs text-red-500 italic break-words mt-0.5">
-                                                *{item.note}
-                                            </div>
-                                        )}
+                                        {item.note && <div className="text-xs text-red-500 italic break-words mt-0.5">*{item.note}</div>}
                                     </div>
-                                    {isNewItem && !isCancelled && (
-                                        <span className="shrink-0 bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5 animate-pulse">
-                                            <Sparkles size={10} /> NEW
-                                        </span>
-                                    )}
+                                    {isNewItem && !isCancelled && <span className="shrink-0 bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5 animate-pulse"><Sparkles size={10} /> NEW</span>}
                                 </div>
                             </td>
                             <td className="p-2 text-center">
                                 {!isCancelled ? (
-                                    <select 
-                                        value={item.status}
-                                        onChange={(e) => handleChangeStatus(item.id, e.target.value)}
-                                        className={`text-xs border rounded p-1 font-bold outline-none cursor-pointer ${statusColor}`}
-                                    >
+                                    <select value={item.status} onChange={(e) => handleChangeStatus(item.id, e.target.value)} className={`text-xs border rounded p-1 font-bold outline-none cursor-pointer ${statusColor}`}>
                                         <option value="PENDING">🕒 รอคิว</option>
                                         <option value="COOKING">🍳 กำลังทำ</option>
                                         <option value="READY">✨ พร้อมเสิร์ฟ</option>
                                         <option value="SERVED">✅ เสิร์ฟแล้ว</option>
                                     </select>
-                                ) : (
-                                    <span className="text-xs text-red-500 font-bold border border-red-200 bg-red-50 px-2 py-1 rounded">ยกเลิกแล้ว</span>
-                                )}
+                                ) : <span className="text-xs text-red-500 font-bold border border-red-200 bg-red-50 px-2 py-1 rounded">ยกเลิกแล้ว</span>}
                             </td>
                             <td className="p-2 text-center text-slate-600">x{item.quantity}</td>
-                            <td className="p-2 text-right font-bold text-slate-900">
-                                {isCancelled ? <span className="line-through text-slate-400">฿{item.total}</span> : `฿${item.total}`}
-                            </td>
+                            <td className="p-2 text-right font-bold text-slate-900">{isCancelled ? <span className="line-through text-slate-400">฿{item.total}</span> : `฿${item.total}`}</td>
                             <td className="p-2 text-center">
                                 {!isCancelled ? (
-                                    <button 
-                                        onClick={() => handleCancelOrder(item.id, item.menuName)}
-                                        className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
-                                        title="ยกเลิกรายการนี้"
-                                    >
-                                        <Ban size={16} />
-                                    </button>
-                                ) : (
-                                    <span className="text-slate-300">-</span>
-                                )}
+                                    <button onClick={() => handleCancelOrder(item.id, item.menuName)} className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors" title="ยกเลิก"><Ban size={16} /></button>
+                                ) : <span className="text-slate-300">-</span>}
                             </td>
                         </tr>
                       );
@@ -421,22 +407,81 @@ export default function StaffPage() {
                 </table>
               )}
             </div>
-            
             <div className="p-4 bg-slate-50 border-t">
                  <div className="flex justify-between items-center mb-4">
                     <span className="font-bold text-slate-600">ยอดรวมสุทธิ</span>
-                    <span className="text-2xl font-bold text-slate-900">
-                        ฿{tableDetails
-                            .filter(i => i.status !== 'CANCELLED')
-                            .reduce((sum, i) => sum + i.total, 0)
-                            .toLocaleString()}
-                    </span>
+                    <span className="text-2xl font-bold text-slate-900">฿{totalAmount.toLocaleString()}</span>
                  </div>
-                <button onClick={() => closeModal()} className="w-full bg-slate-200 text-slate-600 py-3 rounded-lg font-bold">ปิดหน้าต่าง (รับทราบ)</button>
+                <button onClick={closeModal} className="w-full bg-slate-200 text-slate-600 py-3 rounded-lg font-bold">ปิดหน้าต่าง (รับทราบ)</button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Modal 2: Receipt */}
+      {selectedTableId !== null && activeModal === 'receipt' && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
+            <div className="p-6 bg-slate-900 text-white text-center relative">
+               <Receipt className="mx-auto mb-2 opacity-80" size={40} />
+               <h2 className="text-2xl font-bold">ใบเสร็จสรุปยอด</h2>
+               <p className="text-slate-400">โต๊ะ {tables.find(t => t.id === selectedTableId)?.name}</p>
+               <button onClick={closeModal} className="absolute top-4 right-4 text-slate-400 hover:text-white"><X size={24} /></button>
+            </div>
+
+            <div className="p-6 flex-1 overflow-y-auto max-h-[60vh]">
+               {loadingDetails ? <p className="text-center text-slate-500">กำลังคำนวณ...</p> : (
+                 <div className="space-y-4">
+                    <div className="space-y-2">
+                        {validItems.map((item, idx) => (
+                           <div key={idx} className="flex justify-between text-sm border-b border-dashed border-slate-200 pb-2">
+                              <div className="flex-1">
+                                  <span className="text-slate-800 font-medium">{item.menuName}</span>
+                                  <div className="text-xs text-slate-500">x{item.quantity} @ ฿{item.price}</div>
+                              </div>
+                              <span className="font-bold text-slate-900">฿{item.total}</span>
+                           </div>
+                        ))}
+                    </div>
+
+                    <div className="bg-slate-50 p-4 rounded-lg space-y-2">
+                        <div className="flex justify-between text-slate-600">
+                            <span>รายการอาหาร ({validItems.length})</span>
+                            <span>฿{totalAmount.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between text-xl font-bold text-slate-900 pt-2 border-t">
+                            <span>ยอดสุทธิ</span>
+                            <span>฿{totalAmount.toLocaleString()}</span>
+                        </div>
+                    </div>
+
+                    {unservedCount > 0 && (
+                        <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-lg text-sm flex gap-2 items-start">
+                             <Ban size={18} className="shrink-0 mt-0.5" />
+                             <div>
+                                 <span className="font-bold block">ไม่สามารถปิดโต๊ะได้</span>
+                                 มี {unservedCount} รายการที่ยังไม่เสิร์ฟ กรุณาตรวจสอบ
+                             </div>
+                        </div>
+                    )}
+                 </div>
+               )}
+            </div>
+
+            <div className="p-4 bg-white border-t flex gap-3">
+                <button onClick={closeModal} className="flex-1 py-3 rounded-lg border-2 border-slate-200 font-bold text-slate-600 hover:bg-slate-50">ยกเลิก</button>
+                <button 
+                    onClick={handleConfirmPayment} 
+                    disabled={unservedCount > 0 || loadingDetails}
+                    className={`flex-1 py-3 rounded-lg font-bold text-white flex justify-center items-center gap-2 ${unservedCount > 0 ? "bg-slate-300 cursor-not-allowed" : "bg-green-600 hover:bg-green-700 shadow-lg"}`}
+                >
+                    <Coins size={20} /> รับเงินสด
+                </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </main>
   );
 }
