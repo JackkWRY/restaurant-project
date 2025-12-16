@@ -2,9 +2,10 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link"; 
+import { useRouter } from "next/navigation";
 import { io } from "socket.io-client"; 
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
-import { Pencil, Trash2, Plus, X, Check, Eye, UtensilsCrossed, Bell, ChefHat, Ban, ShoppingBag, Sparkles, Receipt, Coins } from "lucide-react"; 
+import { Pencil, Trash2, Plus, X, Check, Eye, UtensilsCrossed, Bell, ChefHat, Ban, ShoppingBag, Sparkles, Receipt, Coins, LogOut } from "lucide-react";
 
 interface TableStatus {
   id: number;
@@ -29,6 +30,7 @@ interface OrderDetailItem {
 }
 
 export default function StaffPage() {
+  const router = useRouter();
   const [tables, setTables] = useState<TableStatus[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -43,6 +45,21 @@ export default function StaffPage() {
 
   const [newOrderAlerts, setNewOrderAlerts] = useState<number[]>([]);
   const [newOrderIds, setNewOrderIds] = useState<number[]>([]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login"); 
+    }
+  }, [router]);
+
+  const handleLogout = () => {
+    if (confirm("ต้องการออกจากระบบใช่หรือไม่?")) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      router.push("/login");
+    }
+  };
 
   const refreshDetailsIfOpen = useCallback(() => {
     if (selectedTableId) {
@@ -69,6 +86,8 @@ export default function StaffPage() {
   };
 
   useEffect(() => {
+    if (!localStorage.getItem("token")) return;
+
     fetchTables();
     
     const socket = io("http://localhost:3000");
@@ -254,6 +273,10 @@ export default function StaffPage() {
                 {isEditingMode ? <><Check size={18} /> เสร็จสิ้น</> : <><Pencil size={18} /> แก้ไขผัง</>}
             </button>
              <button onClick={() => fetchTables()} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">🔄</button>
+             
+             <button onClick={handleLogout} className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm ml-2">
+                <LogOut size={18} /> <span className="hidden md:inline">ออก</span>
+             </button>
         </div>
       </header>
 

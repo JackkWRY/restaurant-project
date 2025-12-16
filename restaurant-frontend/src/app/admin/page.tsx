@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image"; 
-import { useRouter } from "next/navigation"; // ✅ 1. เพิ่ม useRouter
-import { Plus, Pencil, Trash2, List, Utensils, X, Image as ImageIcon, Save, Settings, Eye, EyeOff, LogOut } from "lucide-react"; // ✅ 2. เพิ่ม LogOut
+import { useRouter } from "next/navigation";
+import { Plus, Pencil, Trash2, List, Utensils, X, Image as ImageIcon, Save, Settings, Eye, EyeOff, LogOut } from "lucide-react";
 
 // --- Types ---
 interface Category {
@@ -26,10 +26,9 @@ interface Menu {
 }
 
 export default function AdminPage() {
-  const router = useRouter(); // ✅ 3. เรียกใช้ Router
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'categories' | 'menus' | 'settings'>('categories');
 
-  // ✅ 4. เพิ่มระบบตรวจสอบ Login (Auth Guard)
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -37,7 +36,6 @@ export default function AdminPage() {
     }
   }, [router]);
 
-  // ✅ 5. ฟังก์ชัน Logout
   const handleLogout = () => {
     if (confirm("ต้องการออกจากระบบใช่หรือไม่?")) {
         localStorage.removeItem("token");
@@ -59,7 +57,6 @@ export default function AdminPage() {
             <Link href="/staff" className="text-sm font-medium text-slate-500 hover:text-slate-900">
                 ไปหน้า Staff →
             </Link>
-            {/* ✅ 6. ปุ่ม Logout */}
             <button onClick={handleLogout} className="text-sm font-medium text-red-500 hover:text-red-700 flex items-center gap-1 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors">
                 <LogOut size={16} /> ออกจากระบบ
             </button>
@@ -110,7 +107,7 @@ export default function AdminPage() {
 }
 
 // ==========================================
-// 🟢 Component: Settings Manager (เหมือนเดิม)
+// 🟢 Component: Settings Manager
 // ==========================================
 function SettingsManager() {
     const [restaurantName, setRestaurantName] = useState("");
@@ -174,7 +171,7 @@ function SettingsManager() {
 }
 
 // ==========================================
-// 🟢 Component: Category Manager (เหมือนเดิม)
+// 🟢 Component: Category Manager
 // ==========================================
 function CategoryManager() {
     const [categories, setCategories] = useState<Category[]>([]);
@@ -284,13 +281,12 @@ function CategoryManager() {
 }
 
 // ==========================================
-// 🟡 Component: Menu Manager (เหมือนเดิม)
+// 🟡 Component: Menu Manager
 // ==========================================
 function MenuManager() {
     const [menus, setMenus] = useState<Menu[]>([]); 
     const [categories, setCategories] = useState<Category[]>([]);
     
-    // Form States
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     
@@ -302,7 +298,6 @@ function MenuManager() {
     const [isAvailable, setIsAvailable] = useState(true);
     const [isVisible, setIsVisible] = useState(true);
 
-    // 1. สร้างฟังก์ชันกลางเพื่อดึงข้อมูล
     const refreshData = async () => {
         try {
             const [resMenus, resCats] = await Promise.all([
@@ -318,7 +313,6 @@ function MenuManager() {
         } catch (error) { console.error(error); }
     };
 
-    // 2. เรียกใช้ใน useEffect
     useEffect(() => {
         refreshData();
         // eslint-disable-next-line react-hooks/exhaustive-deps
