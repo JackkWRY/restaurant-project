@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { io } from "socket.io-client";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { Clock, ChefHat, BellRing, RefreshCw } from "lucide-react";
+import { Clock, ChefHat, BellRing, RefreshCw, LogOut } from "lucide-react";
 
 // --- Types ---
 type ItemStatus = 'PENDING' | 'COOKING' | 'READY' | 'SERVED' | 'COMPLETED' | 'CANCELLED';
@@ -39,8 +40,24 @@ interface KitchenItem {
 }
 
 export default function KitchenPage() {
+  const router = useRouter();
   const [items, setItems] = useState<KitchenItem[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login"); 
+    }
+  }, [router]);
+
+  const handleLogout = () => {
+    if (confirm("ต้องการออกจากระบบใช่หรือไม่?")) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      router.push("/login");
+    }
+  };
 
   const flattenOrders = (orders: RawOrder[]): KitchenItem[] => {
     return orders.flatMap((order) => 
@@ -75,6 +92,8 @@ export default function KitchenPage() {
   }, []);
 
   useEffect(() => {
+    if (!localStorage.getItem("token")) return;
+
     fetchActiveItems();
     const socket = io("http://localhost:3000");
 
@@ -138,13 +157,19 @@ export default function KitchenPage() {
       {/* Header */}
       <header className="shrink-0 flex justify-between items-center mb-4">
         <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-3">
-            👨‍🍳 Kitchen Display (Item View)
+            👨‍🍳 Kitchen Display
             <span className="text-xs font-normal bg-green-600 px-3 py-1 rounded-full animate-pulse">Live</span>
         </h1>
-        <button onClick={fetchActiveItems} className="bg-slate-800 p-2 rounded-full hover:bg-slate-700"><RefreshCw size={20} /></button>
+        <div className="flex gap-2">
+            <button onClick={fetchActiveItems} className="bg-slate-800 p-2 rounded-full hover:bg-slate-700 transition-colors" title="Refresh">
+                <RefreshCw size={20} />
+            </button>
+            <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 p-2 rounded-full transition-colors" title="Logout">
+                <LogOut size={20} />
+            </button>
+        </div>
       </header>
 
-      {/* Grid Container (ยืดเต็มพื้นที่ที่เหลือ) */}
       <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 min-h-0">
         
         {/* Column 1: PENDING */}
