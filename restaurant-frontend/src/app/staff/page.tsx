@@ -2,11 +2,10 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link"; 
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation"; 
 import { io } from "socket.io-client"; 
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
-import { Pencil, Trash2, Plus, X, Check, Eye, UtensilsCrossed, Bell, ChefHat, Ban, ShoppingBag, Sparkles, Receipt, Coins, LogOut } from "lucide-react";
-
+import { Pencil, Trash2, Plus, X, Check, Eye, UtensilsCrossed, Bell, ChefHat, Ban, ShoppingBag, Sparkles, Receipt, Coins, LogOut, LayoutDashboard } from "lucide-react";
 interface TableStatus {
   id: number;
   name: string;
@@ -46,10 +45,17 @@ export default function StaffPage() {
   const [newOrderAlerts, setNewOrderAlerts] = useState<number[]>([]);
   const [newOrderIds, setNewOrderIds] = useState<number[]>([]);
 
+  const [userRole, setUserRole] = useState("");
+
   useEffect(() => {
     const token = localStorage.getItem("token");
+    const userStr = localStorage.getItem("user");
+
     if (!token) {
       router.push("/login"); 
+    } else if (userStr) {
+        const user = JSON.parse(userStr);
+        setUserRole(user.role);
     }
   }, [router]);
 
@@ -269,6 +275,13 @@ export default function StaffPage() {
             <p className="text-slate-500 text-sm mt-1">{isEditingMode ? "🔧 โหมดแก้ไข" : "👋 พร้อมให้บริการ"}</p>
         </div>
         <div className="flex gap-2">
+            
+             {userRole === 'ADMIN' && (
+                <Link href="/admin" className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm mr-2 transition-colors">
+                    <LayoutDashboard size={18} /> <span className="hidden md:inline">Dashboard</span>
+                </Link>
+             )}
+
             <button onClick={() => setIsEditingMode(!isEditingMode)} className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 ${isEditingMode ? "bg-slate-800 text-white" : "bg-white border-2 border-slate-200 text-slate-600"}`}>
                 {isEditingMode ? <><Check size={18} /> เสร็จสิ้น</> : <><Pencil size={18} /> แก้ไขผัง</>}
             </button>

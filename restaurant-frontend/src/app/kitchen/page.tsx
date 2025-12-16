@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link"; 
+import { useRouter } from "next/navigation"; 
 import { io } from "socket.io-client";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { Clock, ChefHat, BellRing, RefreshCw, LogOut } from "lucide-react";
+import { Clock, ChefHat, BellRing, RefreshCw, LogOut, LayoutDashboard } from "lucide-react";
 
 // --- Types ---
 type ItemStatus = 'PENDING' | 'COOKING' | 'READY' | 'SERVED' | 'COMPLETED' | 'CANCELLED';
@@ -40,14 +41,21 @@ interface KitchenItem {
 }
 
 export default function KitchenPage() {
-  const router = useRouter();
+  const router = useRouter(); 
   const [items, setItems] = useState<KitchenItem[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [userRole, setUserRole] = useState("");
+
   useEffect(() => {
     const token = localStorage.getItem("token");
+    const userStr = localStorage.getItem("user");
+
     if (!token) {
       router.push("/login"); 
+    } else if (userStr) {
+        const user = JSON.parse(userStr);
+        setUserRole(user.role);
     }
   }, [router]);
 
@@ -161,6 +169,13 @@ export default function KitchenPage() {
             <span className="text-xs font-normal bg-green-600 px-3 py-1 rounded-full animate-pulse">Live</span>
         </h1>
         <div className="flex gap-2">
+            
+            {userRole === 'ADMIN' && (
+                <Link href="/admin" className="bg-purple-600 hover:bg-purple-700 p-2 rounded-full transition-colors" title="กลับไปหน้า Admin">
+                    <LayoutDashboard size={20} />
+                </Link>
+             )}
+
             <button onClick={fetchActiveItems} className="bg-slate-800 p-2 rounded-full hover:bg-slate-700 transition-colors" title="Refresh">
                 <RefreshCw size={20} />
             </button>
@@ -170,6 +185,7 @@ export default function KitchenPage() {
         </div>
       </header>
 
+      {/* Grid Container */}
       <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 min-h-0">
         
         {/* Column 1: PENDING */}
