@@ -31,7 +31,10 @@ export const getTablesStatus = async (req: Request, res: Response) => {
         return orderSum + itemsTotal;
       }, 0);
       
-      const readyCount = table.orders.filter(order => order.status === 'READY').length;
+      const readyCount = table.orders.reduce((count, order) => {
+        const readyItemsInOrder = order.items.filter(item => item.status === 'READY').length;
+        return count + readyItemsInOrder;
+      }, 0);
 
       return {
         id: table.id,
