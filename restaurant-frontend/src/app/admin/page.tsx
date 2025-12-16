@@ -57,6 +57,11 @@ export default function AdminPage() {
             <Link href="/staff" className="text-sm font-medium text-slate-500 hover:text-slate-900">
                 ไปหน้า Staff →
             </Link>
+
+            <Link href="/kitchen" className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">
+                ไปหน้าครัว →
+            </Link>
+            
             <button onClick={handleLogout} className="text-sm font-medium text-red-500 hover:text-red-700 flex items-center gap-1 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors">
                 <LogOut size={16} /> ออกจากระบบ
             </button>
