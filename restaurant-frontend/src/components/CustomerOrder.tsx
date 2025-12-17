@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState, Suspense, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useState, useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { io } from "socket.io-client"; 
-import { QrCode, Lock, Bell, History, X, ChevronDown, ChevronUp } from "lucide-react";
+import { QrCode, Lock, Bell, History, X, ChevronDown, ChevronUp, Globe } from "lucide-react";
 import MenuItem from "@/components/MenuItem"; 
 import FloatingCart from "@/components/FloatingCart"; 
 import TableDetector from "@/components/TableDetector"; 
 import { useCartStore } from "@/store/useCartStore";
+import type { Dictionary } from "@/locales/en"; 
 
 // --- Types ---
 interface Menu {
@@ -39,16 +40,14 @@ interface TableInfo {
     isCallingStaff: boolean;
 }
 
-// --- Main Component ---
-export default function Home() {
-  return (
-    <Suspense fallback={null}>
-      <HomeContent />
-    </Suspense>
-  );
+interface CustomerOrderProps {
+  dict: Dictionary;
+  lang: string;
 }
 
-function HomeContent() {
+// --- Main Component ---
+export default function CustomerOrder({ dict, lang }: CustomerOrderProps) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const tableIdParam = searchParams.get("tableId");
   
@@ -57,11 +56,18 @@ function HomeContent() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [tableInfo, setTableInfo] = useState<TableInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  const [restaurantName, setRestaurantName] = useState("ร้านอาหาร 🍳");
+  const [restaurantName, setRestaurantName] = useState(dict.common.loading); 
 
   const [showHistory, setShowHistory] = useState(false);
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
   const [isCalling, setIsCalling] = useState(false);
+
+  // ฟังก์ชันเปลี่ยนภาษา
+  const handleSwitchLang = () => {
+    const newLang = lang === 'en' ? 'th' : 'en';
+    const currentQuery = searchParams.toString(); 
+    router.push(`/${newLang}/order?${currentQuery}`);
+  };
 
   const handleViewHistory = useCallback(async () => {
     if (!tableIdParam) return;
@@ -132,23 +138,23 @@ function HomeContent() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ isCalling: newStatus })
         });
-        if (newStatus) alert("🔔 เรียกพนักงานแล้ว กรุณารอสักครู่");
-        else alert("🔕 ยกเลิกการเรียกแล้ว");
+        if (newStatus) alert(dict.customer.alertCallStaff);
+        else alert(dict.customer.alertCancelCall);
     } catch (error) {
         console.error(error);
-        alert("ส่งคำขอไม่สำเร็จ");
+        alert(dict.customer.alertFailed); 
         setIsCalling(!newStatus); 
     }
   };
 
   const getStatusDisplay = (status: string) => {
     switch (status) {
-        case 'PENDING': return { label: '🕒 รอคิว', color: 'text-yellow-600' };
-        case 'COOKING': return { label: '🍳 กำลังทำ', color: 'text-orange-600' };
-        case 'READY': return { label: '✨ พร้อมเสิร์ฟ', color: 'text-green-600 animate-pulse font-bold' };
-        case 'SERVED': return { label: '✅ เสิร์ฟแล้ว', color: 'text-green-700 font-bold' };
-        case 'COMPLETED': return { label: '💰 จ่ายแล้ว', color: 'text-slate-500' };
-        case 'CANCELLED': return { label: '❌ ยกเลิกแล้ว', color: 'text-red-500 font-bold' };
+        case 'PENDING': return { label: `🕒 ${dict.kitchen.pending}`, color: 'text-yellow-600' };
+        case 'COOKING': return { label: `🍳 ${dict.kitchen.cooking}`, color: 'text-orange-600' };
+        case 'READY': return { label: `✨ ${dict.kitchen.ready}`, color: 'text-green-600 animate-pulse font-bold' };
+        case 'SERVED': return { label: `✅ ${dict.kitchen.served}`, color: 'text-green-700 font-bold' };
+        case 'COMPLETED': return { label: `💰 ${dict.customer.statusCompleted}`, color: 'text-slate-500' };
+        case 'CANCELLED': return { label: `❌ ${dict.staff.statusCancelled}`, color: 'text-red-500 font-bold' };
         default: return { label: status, color: 'text-slate-500' };
     }
   };
@@ -160,8 +166,8 @@ function HomeContent() {
           <div className="bg-slate-100 p-4 rounded-full mb-6">
             <QrCode size={64} className="text-slate-800" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">กรุณาสแกน QR Code</h1>
-          <p className="text-slate-500 mb-6">เพื่อระบุโต๊ะและเริ่มสั่งอาหาร</p>
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">{dict.customer.scanQr}</h1>
+          <p className="text-slate-500 mb-6">{dict.customer.scanQrDesc}</p>
         </div>
       </div>
     );
@@ -174,8 +180,8 @@ function HomeContent() {
                 <div className="bg-red-50 p-4 rounded-full mb-6">
                     <Lock size={64} className="text-red-500" />
                 </div>
-                <h1 className="text-2xl font-bold text-slate-900 mb-2">โต๊ะนี้ปิดให้บริการ</h1>
-                <p className="text-slate-500 mb-6">กรุณาติดต่อพนักงาน</p>
+                <h1 className="text-2xl font-bold text-slate-900 mb-2">{dict.customer.tableClosed}</h1>
+                <p className="text-slate-500 mb-6">{dict.customer.contactStaff}</p>
             </div>
         </div>
       );
@@ -183,17 +189,24 @@ function HomeContent() {
 
   return (
     <main className="container mx-auto p-4 max-w-md min-h-screen bg-white pb-24 relative">
-      <TableDetector />
+      <TableDetector dict={dict} />
 
       <header className="mb-6 mt-4 flex justify-between items-center sticky top-0 bg-white/95 backdrop-blur-sm z-10 py-3 border-b">
         <div>
             <h1 className="text-xl font-bold text-slate-900 line-clamp-1">{restaurantName}</h1>
             <p className="text-slate-500 text-xs">
-            โต๊ะ: <span className="font-bold text-green-600">{tableInfo?.name || tableIdParam}</span>
+            {dict.customer.table}: <span className="font-bold text-green-600">{tableInfo?.name || tableIdParam}</span>
             </p>
         </div>
         
         <div className="flex gap-2 shrink-0">
+            <button 
+                onClick={handleSwitchLang}
+                className="p-2 rounded-full bg-white text-slate-600 shadow-sm border border-slate-200 flex items-center gap-1 text-xs font-bold px-3 hover:bg-slate-50"
+            >
+                <Globe size={16} /> {lang.toUpperCase()}
+            </button>
+
             <button 
                 onClick={handleCallStaff}
                 className={`p-2 rounded-full shadow-sm border transition-all ${
@@ -213,30 +226,30 @@ function HomeContent() {
       
       {categories.length === 0 && !loading ? (
         <div className="text-center p-10 bg-slate-50 rounded-lg border border-dashed">
-          <p className="text-red-500 font-medium">ไม่พบเมนูอาหาร</p>
+          <p className="text-red-500 font-medium">{dict.admin.noMenu}</p>
         </div>
       ) : (
         <div className="space-y-4">
           {categories.map((cat) => (
-            <CategoryAccordion key={cat.id} category={cat} />
+            <CategoryAccordion key={cat.id} category={cat} dict={dict} />
           ))}
         </div>
       )}
 
-      {totalItems() > 0 && <FloatingCart />}
+      {totalItems() > 0 && <FloatingCart dict={dict} />}
 
       {/* Modal History */}
       {showHistory && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in">
             <div className="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
                 <div className="bg-slate-900 p-4 text-white flex justify-between items-center">
-                    <h3 className="font-bold flex items-center gap-2"><History size={18}/> ประวัติการสั่ง</h3>
+                    <h3 className="font-bold flex items-center gap-2"><History size={18}/> {dict.customer.orderHistory}</h3>
                     <button onClick={() => setShowHistory(false)}><X size={24}/></button>
                 </div>
                 
                 <div className="flex-1 overflow-y-auto p-4">
                     {historyItems.length === 0 ? (
-                        <p className="text-center text-slate-500 py-8">ยังไม่มีรายการที่สั่ง</p>
+                        <p className="text-center text-slate-500 py-8">{dict.customer.noHistory}</p>
                     ) : (
                         <div className="space-y-3">
                             {historyItems.map((item, idx) => {
@@ -262,7 +275,7 @@ function HomeContent() {
                                         <div className="text-right shrink-0 pl-2">
                                             <div className="text-sm text-slate-500">x{item.quantity}</div>
                                             <div className={`font-bold ${isCancelled ? 'line-through text-slate-400' : 'text-slate-900'}`}>
-                                                ฿{item.total}
+                                                {dict.common.currency}{item.total}
                                             </div>
                                         </div>
                                     </div>
@@ -274,9 +287,9 @@ function HomeContent() {
 
                 <div className="p-4 bg-slate-50 border-t">
                      <div className="flex justify-between text-lg font-bold text-slate-900">
-                        <span>ยอดรวม</span>
+                        <span>{dict.staff.total}</span>
                         <span>
-                            ฿{historyItems
+                            {dict.common.currency}{historyItems
                                 .filter(i => i.status !== 'CANCELLED')
                                 .reduce((sum, i) => sum + i.total, 0)
                                 .toLocaleString()}
@@ -290,7 +303,7 @@ function HomeContent() {
   );
 }
 
-function CategoryAccordion({ category }: { category: Category }) {
+function CategoryAccordion({ category, dict }: { category: Category, dict: Dictionary }) {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
@@ -320,10 +333,11 @@ function CategoryAccordion({ category }: { category: Category }) {
                                 imageUrl={menu.imageUrl}
                                 isRecommended={menu.isRecommended}
                                 isAvailable={menu.isAvailable}
+                                dict={dict}
                             />
                         ))}
                         {category.menus.length === 0 && (
-                            <p className="text-center text-slate-400 text-sm py-4">ไม่มีรายการอาหารในหมวดนี้</p>
+                            <p className="text-center text-slate-400 text-sm py-4">{dict.customer.noMenuInCategory}</p>
                         )}
                     </div>
                 </div>

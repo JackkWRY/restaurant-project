@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link"; 
 import { useRouter } from "next/navigation"; 
-import { io } from "socket.io-client";
+import { io, type Socket } from "socket.io-client"; 
+import useSWR from "swr"; 
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { Clock, ChefHat, BellRing, RefreshCw, LogOut, LayoutDashboard } from "lucide-react";
+import { Clock, ChefHat, BellRing, LogOut, LayoutDashboard, Globe } from "lucide-react"; 
+import type { Dictionary } from "@/locales/en"; 
 
 // --- Types ---
 type ItemStatus = 'PENDING' | 'COOKING' | 'READY' | 'SERVED' | 'COMPLETED' | 'CANCELLED';
@@ -40,34 +42,30 @@ interface KitchenItem {
   createdAt: string;   
 }
 
-export default function KitchenPage() {
+interface KitchenDashboardProps {
+  dict: Dictionary;
+  lang: string;
+}
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+export default function KitchenDashboard({ dict, lang }: KitchenDashboardProps) {
   const router = useRouter(); 
-  const [items, setItems] = useState<KitchenItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
   const [userRole, setUserRole] = useState("");
+  const socketRef = useRef<Socket | null>(null);
+  const toggleLang = lang === 'en' ? 'th' : 'en';
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const userStr = localStorage.getItem("user");
+  // 1. Data Fetching
+  const { data: swrData, error, isLoading, mutate } = useSWR('http://localhost:3000/api/orders/active', fetcher, {
+    refreshInterval: 5000,
+    revalidateOnFocus: true,
+  });
 
-    if (!token) {
-      router.push("/login"); 
-    } else if (userStr) {
-        const user = JSON.parse(userStr);
-        setUserRole(user.role);
-    }
-  }, [router]);
+  // 2. Derived State
+  const items: KitchenItem[] = useMemo(() => {
+    if (!swrData || swrData.status !== 'success') return [];
 
-  const handleLogout = () => {
-    if (confirm("ต้องการออกจากระบบใช่หรือไม่?")) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      router.push("/login");
-    }
-  };
-
-  const flattenOrders = (orders: RawOrder[]): KitchenItem[] => {
+    const orders: RawOrder[] = swrData.data;
     return orders.flatMap((order) => 
       order.items
         .filter((item) => item.status !== 'CANCELLED' && item.status !== 'SERVED' && item.status !== 'COMPLETED')
@@ -82,74 +80,73 @@ export default function KitchenPage() {
           createdAt: order.createdAt
         }))
     );
+  }, [swrData]);
+
+  // 3. Auth Logic
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const userStr = localStorage.getItem("user");
+
+    if (!token) {
+      router.push(`/${lang}/login`); 
+    } else if (userStr) {
+        try {
+            const user = JSON.parse(userStr);
+            setUserRole(user.role);
+        } catch (e) {
+            console.error("Error parsing user data", e);
+        }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); 
+
+  const handleLogout = () => {
+    if (confirm(dict.common.logoutConfirm)) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      router.push(`/${lang}/login`);
+    }
   };
 
-  const fetchActiveItems = useCallback(async () => {
-    try {
-      const res = await fetch('http://localhost:3000/api/orders/active');
-      const data = await res.json();
-      if (data.status === 'success') {
-        const flatItems = flattenOrders(data.data);
-        setItems(flatItems);
-      }
-    } catch (error) {
-      console.error("Failed to fetch orders:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
+  // 4. Socket Integration
   useEffect(() => {
     if (!localStorage.getItem("token")) return;
 
-    fetchActiveItems();
-    const socket = io("http://localhost:3000");
+    if (!socketRef.current) {
+        socketRef.current = io("http://localhost:3000");
+        
+        socketRef.current.on("new_order", () => {
+            mutate();
+        });
+        
+        socketRef.current.on("item_status_updated", () => {
+           mutate();
+        });
 
-    socket.on("new_order", (newOrder: RawOrder) => {
-        const newItems = newOrder.items.map((item) => ({
-            id: item.id,
-            orderId: newOrder.id,
-            tableName: newOrder.table.name,
-            menuName: item.menu.nameTH,
-            quantity: item.quantity,
-            note: item.note,
-            status: item.status,
-            createdAt: newOrder.createdAt
-        }));
-        setItems(prev => [...prev, ...newItems]); 
-    });
-    
-    socket.on("item_status_updated", (updatedItem: KitchenItem) => {
-       setItems(prev => {
-           if (['SERVED', 'COMPLETED', 'CANCELLED'].includes(updatedItem.status)) {
-               return prev.filter(i => i.id !== updatedItem.id);
-           }
-           return prev.map(i => i.id === updatedItem.id ? { ...i, status: updatedItem.status } : i);
-       });
-    });
+        socketRef.current.on("order_status_updated", () => {
+            mutate();
+        });
+    }
 
-    socket.on("order_status_updated", () => {
-        fetchActiveItems();
-    });
+    return () => { 
+        if (socketRef.current) {
+            socketRef.current.disconnect();
+            socketRef.current = null;
+        }
+    };
+  }, [mutate]); 
 
-    return () => { socket.disconnect(); };
-  }, [fetchActiveItems]);
-
+  // 5. Action Handler
   const handleUpdateStatus = async (itemId: number, newStatus: ItemStatus) => {
-    setItems(prev => {
-        if (newStatus === 'SERVED') return prev.filter(i => i.id !== itemId);
-        return prev.map(i => i.id === itemId ? { ...i, status: newStatus } : i);
-    });
-
     try {
       await fetch(`http://localhost:3000/api/orders/items/${itemId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       });
+      mutate();
     } catch (error) { 
         console.error(error); 
-        fetchActiveItems(); 
     }
   };
 
@@ -157,29 +154,35 @@ export default function KitchenPage() {
   const cookingItems = items.filter(i => i.status === 'COOKING');
   const readyItems = items.filter(i => i.status === 'READY');
 
-  if (loading) return <div className="min-h-screen bg-slate-900 text-white flex justify-center items-center">Loading...</div>;
+  if (isLoading) return <div className="min-h-screen bg-slate-900 text-white flex justify-center items-center">{dict.common.loading}</div>;
+  
+  if (error) return <div className="min-h-screen bg-slate-900 text-white flex justify-center items-center">{dict.common.error}</div>;
 
   return (
     <main className="h-screen flex flex-col p-4 bg-slate-900 text-white overflow-hidden">
       
       {/* Header */}
-      <header className="shrink-0 flex justify-between items-center mb-4">
+      <header className="shrink-0 flex justify-between items-center mb-4 flex-wrap gap-4">
         <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-3">
-            👨‍🍳 Kitchen Display
-            <span className="text-xs font-normal bg-green-600 px-3 py-1 rounded-full animate-pulse">Live</span>
+            👨‍🍳 {dict.kitchen.title}
+            <span className="text-xs font-normal bg-green-600 px-3 py-1 rounded-full animate-pulse">{dict.kitchen.live}</span>
         </h1>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
             
             {userRole === 'ADMIN' && (
-                <Link href="/admin" className="bg-purple-600 hover:bg-purple-700 p-2 rounded-full transition-colors" title="กลับไปหน้า Admin">
+                <Link href={`/${lang}/admin`} className="bg-purple-600 hover:bg-purple-700 p-2 rounded-full transition-colors" title={dict.admin.title}>
                     <LayoutDashboard size={20} />
                 </Link>
              )}
+            
+            <Link 
+                href={`/${toggleLang}/kitchen`}
+                className="flex items-center gap-1 text-sm font-bold text-slate-300 hover:text-white px-3 py-1 bg-slate-800 rounded-full border border-slate-700 hover:bg-slate-700 transition-all"
+            >
+                <Globe size={16} /> {lang.toUpperCase()}
+            </Link>
 
-            <button onClick={fetchActiveItems} className="bg-slate-800 p-2 rounded-full hover:bg-slate-700 transition-colors" title="Refresh">
-                <RefreshCw size={20} />
-            </button>
-            <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 p-2 rounded-full transition-colors" title="Logout">
+            <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 p-2 rounded-full transition-colors" title={dict.common.logout}>
                 <LogOut size={20} />
             </button>
         </div>
@@ -191,13 +194,13 @@ export default function KitchenPage() {
         {/* Column 1: PENDING */}
         <div className="flex flex-col h-full bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
             <h2 className="shrink-0 font-bold text-lg text-yellow-400 flex items-center gap-2 p-4 pb-2 border-b border-slate-700 bg-slate-800/80 backdrop-blur-sm z-10">
-                <Clock /> รอคิว (Pending) 
+                <Clock /> {dict.kitchen.pending} 
                 <span className="ml-auto bg-slate-700 px-2 rounded text-white text-sm">{pendingItems.length}</span>
             </h2>
             <div className="flex-1 overflow-y-auto p-4 pt-2 space-y-3 custom-scrollbar">
                 {pendingItems.map(item => (
                     <KitchenCard key={item.id} item={item} 
-                        btnLabel="🔥 เริ่มทำ" 
+                        btnLabel={`🔥 ${dict.kitchen.startCook}`} 
                         btnColor="bg-yellow-600 hover:bg-yellow-700" 
                         onAction={() => handleUpdateStatus(item.id, 'COOKING')} 
                     />
@@ -208,13 +211,13 @@ export default function KitchenPage() {
         {/* Column 2: COOKING */}
         <div className="flex flex-col h-full bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
             <h2 className="shrink-0 font-bold text-lg text-orange-400 flex items-center gap-2 p-4 pb-2 border-b border-slate-700 bg-slate-800/80 backdrop-blur-sm z-10">
-                <ChefHat /> กำลังปรุง (Cooking) 
+                <ChefHat /> {dict.kitchen.cooking} 
                 <span className="ml-auto bg-slate-700 px-2 rounded text-white text-sm">{cookingItems.length}</span>
             </h2>
             <div className="flex-1 overflow-y-auto p-4 pt-2 space-y-3 custom-scrollbar">
                 {cookingItems.map(item => (
                     <KitchenCard key={item.id} item={item} 
-                        btnLabel="✅ เสร็จแล้ว" 
+                        btnLabel={`✅ ${dict.kitchen.finishCook}`} 
                         btnColor="bg-orange-600 hover:bg-orange-700" 
                         onAction={() => handleUpdateStatus(item.id, 'READY')} 
                     />
@@ -225,13 +228,13 @@ export default function KitchenPage() {
         {/* Column 3: READY */}
         <div className="flex flex-col h-full bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
             <h2 className="shrink-0 font-bold text-lg text-green-400 flex items-center gap-2 p-4 pb-2 border-b border-slate-700 bg-slate-800/80 backdrop-blur-sm z-10">
-                <BellRing /> รอเสิร์ฟ (Ready) 
+                <BellRing /> {dict.kitchen.ready} 
                 <span className="ml-auto bg-slate-700 px-2 rounded text-white text-sm">{readyItems.length}</span>
             </h2>
             <div className="flex-1 overflow-y-auto p-4 pt-2 space-y-3 custom-scrollbar">
                 {readyItems.map(item => (
                     <KitchenCard key={item.id} item={item} 
-                        btnLabel="🚀 เสิร์ฟแล้ว" 
+                        btnLabel={`🚀 ${dict.kitchen.served}`} 
                         btnColor="bg-green-600 hover:bg-green-700 shadow-green-900/20" 
                         onAction={() => handleUpdateStatus(item.id, 'SERVED')} 
                     />

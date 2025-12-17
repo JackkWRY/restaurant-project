@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Card, CardTitle } from "@/components/ui/card";
 import { useCartStore } from "@/store/useCartStore"; 
 import { Plus, Minus, Trash2 } from "lucide-react";
+import type { Dictionary } from "@/locales/en";
 
 interface MenuItemProps {
   id: number;
@@ -12,9 +13,10 @@ interface MenuItemProps {
   imageUrl: string | null;
   isRecommended: boolean;
   isAvailable?: boolean;
+  dict: Dictionary;
 }
 
-export default function MenuItem({ id, nameTH, price, imageUrl, isRecommended, isAvailable = true }: MenuItemProps) {
+export default function MenuItem({ id, nameTH, price, imageUrl, isRecommended, isAvailable = true, dict }: MenuItemProps) {
   const { addItem, items, increaseQuantity, decreaseQuantity, removeItem } = useCartStore();
   
   const currentItem = items.find((item) => item.id === id);
@@ -45,7 +47,7 @@ export default function MenuItem({ id, nameTH, price, imageUrl, isRecommended, i
         {!isAvailable && (
              <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
                  <span className="text-white font-bold border-2 border-white px-2 py-1 transform -rotate-12 rounded">
-                    หมด
+                    {dict.admin.outOfStock}
                  </span>
              </div>
         )}
@@ -59,12 +61,12 @@ export default function MenuItem({ id, nameTH, price, imageUrl, isRecommended, i
           </CardTitle>
           
           {isRecommended && (
-            <p className="text-xs text-orange-500 font-bold mt-0.5">★ เมนูแนะนำ</p>
+            <p className="text-xs text-orange-500 font-bold mt-0.5">★ {dict.menu.recommend}</p>
           )}
         </div>
 
         <div className="flex justify-between items-center">
-          <span className="font-bold text-lg text-green-600">฿{price}</span>
+          <span className="font-bold text-lg text-green-600">{dict.common.currency}{price}</span>
 
           {/* ส่วนควบคุมปุ่ม */}
           {isAvailable && (
@@ -106,12 +108,12 @@ export default function MenuItem({ id, nameTH, price, imageUrl, isRecommended, i
                 })}
                 className="bg-slate-100 text-slate-700 text-xs font-bold px-4 py-2 rounded-full hover:bg-slate-200 transition-colors"
                 >
-                ใส่ตะกร้า
+                {dict.customer.addToCart}
                 </button>
             )
           )}
 
-          {!isAvailable && <span className="text-xs text-red-500 font-bold">สินค้าหมด</span>}
+          {!isAvailable && <span className="text-xs text-red-500 font-bold">{dict.customer.soldOut}</span>}
 
         </div>
       </div>

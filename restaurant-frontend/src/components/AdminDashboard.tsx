@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image"; 
 import { useRouter } from "next/navigation";
-import { Plus, Pencil, Trash2, List, Utensils, X, Image as ImageIcon, Save, Settings, Eye, EyeOff, LogOut } from "lucide-react";
+import { Plus, Pencil, Trash2, List, Utensils, X, Image as ImageIcon, Save, Settings, Eye, EyeOff, LogOut, Globe } from "lucide-react";
+import type { Dictionary } from "@/locales/en"; 
 
 // --- Types ---
 interface Category {
@@ -25,22 +26,28 @@ interface Menu {
   isVisible?: boolean;
 }
 
-export default function AdminPage() {
+interface AdminDashboardProps {
+  dict: Dictionary;
+  lang: string;
+}
+
+export default function AdminDashboard({ dict, lang }: AdminDashboardProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'categories' | 'menus' | 'settings'>('categories');
+  const toggleLang = lang === 'en' ? 'th' : 'en';
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      router.push("/login");
+      router.push(`/${lang}/login`);
     }
-  }, [router]);
+  }, [router, lang]);
 
   const handleLogout = () => {
-    if (confirm("ต้องการออกจากระบบใช่หรือไม่?")) {
+    if (confirm(dict.common.logoutConfirm)) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        router.push("/login");
+        router.push(`/${lang}/login`);
     }
   };
 
@@ -50,20 +57,27 @@ export default function AdminPage() {
       <header className="bg-white border-b shadow-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-             <h1 className="text-2xl font-bold text-slate-900">Admin Dashboard 🛠️</h1>
+             <h1 className="text-2xl font-bold text-slate-900">{dict.admin.title}</h1>
           </div>
           
-          <div className="flex items-center gap-6">
-            <Link href="/staff" className="text-sm font-medium text-slate-500 hover:text-slate-900">
-                ไปหน้า Staff →
+          <div className="flex items-center gap-4">
+            <Link href={`/${lang}/staff`} className="text-sm font-medium text-slate-500 hover:text-slate-900">
+                {dict.admin.toStaff}
             </Link>
 
-            <Link href="/kitchen" className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">
-                ไปหน้าครัว →
+            <Link href={`/${lang}/kitchen`} className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">
+                {dict.admin.toKitchen}
+            </Link>
+
+             <Link 
+                href={`/${toggleLang}/admin`}
+                className="flex items-center gap-1 text-sm font-bold text-slate-600 hover:text-slate-900 px-3 py-1 bg-slate-100 rounded-full border border-slate-200 hover:bg-slate-200 transition-all"
+            >
+                <Globe size={14} /> {lang.toUpperCase()}
             </Link>
             
             <button onClick={handleLogout} className="text-sm font-medium text-red-500 hover:text-red-700 flex items-center gap-1 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors">
-                <LogOut size={16} /> ออกจากระบบ
+                <LogOut size={16} /> {dict.common.logout}
             </button>
           </div>
         </div>
@@ -79,7 +93,7 @@ export default function AdminPage() {
                     activeTab === 'categories' ? 'bg-purple-600 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100'
                 }`}
               >
-                 <List size={20} /> จัดการหมวดหมู่
+                 <List size={20} /> {dict.admin.manageCategories}
               </button>
               <button 
                 onClick={() => setActiveTab('menus')}
@@ -87,7 +101,7 @@ export default function AdminPage() {
                     activeTab === 'menus' ? 'bg-purple-600 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100'
                 }`}
               >
-                 <Utensils size={20} /> จัดการเมนูอาหาร
+                 <Utensils size={20} /> {dict.admin.manageMenus}
               </button>
               <button 
                 onClick={() => setActiveTab('settings')}
@@ -95,26 +109,23 @@ export default function AdminPage() {
                     activeTab === 'settings' ? 'bg-purple-600 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100'
                 }`}
               >
-                 <Settings size={20} /> ตั้งค่าร้าน
+                 <Settings size={20} /> {dict.admin.shopSettings}
               </button>
            </nav>
         </aside>
 
         {/* Content Area */}
         <section className="flex-1 bg-white rounded-2xl shadow-sm border p-6 min-h-[500px]">
-            {activeTab === 'categories' && <CategoryManager />}
-            {activeTab === 'menus' && <MenuManager />}
-            {activeTab === 'settings' && <SettingsManager />}
+            {activeTab === 'categories' && <CategoryManager dict={dict} />}
+            {activeTab === 'menus' && <MenuManager dict={dict} />}
+            {activeTab === 'settings' && <SettingsManager dict={dict} />}
         </section>
       </div>
     </main>
   );
 }
 
-// ==========================================
-// 🟢 Component: Settings Manager
-// ==========================================
-function SettingsManager() {
+function SettingsManager({ dict }: { dict: Dictionary }) {
     const [restaurantName, setRestaurantName] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -138,28 +149,28 @@ function SettingsManager() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: restaurantName })
             });
-            if (res.ok) alert("บันทึกชื่อร้านเรียบร้อยแล้ว ✅");
-            else alert("บันทึกไม่สำเร็จ");
-        } catch (error) { console.error(error); alert("เกิดข้อผิดพลาด"); }
+            if (res.ok) alert(dict.admin.alertSaved);
+            else alert(dict.admin.alertFailed);
+        } catch (error) { console.error(error); alert(dict.common.error); }
         finally { setLoading(false); }
     };
 
     return (
         <div className="max-w-lg">
             <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-                <Settings className="text-purple-600"/> ตั้งค่าร้าน
+                <Settings className="text-purple-600"/> {dict.admin.shopSettings}
             </h2>
             
             <form onSubmit={handleSave} className="space-y-4">
                 <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1">ชื่อร้านอาหาร (ที่แสดงในหน้าลูกค้า)</label>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">{dict.admin.name}</label>
                     <input 
                         type="text" 
                         required 
                         className="w-full border p-3 rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-purple-200 outline-none transition-all"
                         value={restaurantName}
                         onChange={(e) => setRestaurantName(e.target.value)}
-                        placeholder="เช่น ร้านเจ๊ไฝ ประตูผี"
+                        placeholder={dict.admin.placeholderName}
                     />
                 </div>
                 
@@ -168,17 +179,14 @@ function SettingsManager() {
                     disabled={loading}
                     className="bg-purple-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-purple-700 flex items-center gap-2 disabled:bg-slate-400"
                 >
-                    {loading ? "กำลังบันทึก..." : <><Save size={20} /> บันทึกการเปลี่ยนแปลง</>}
+                    {loading ? dict.common.loading : <><Save size={20} /> {dict.admin.save}</>}
                 </button>
             </form>
         </div>
     );
 }
 
-// ==========================================
-// 🟢 Component: Category Manager
-// ==========================================
-function CategoryManager() {
+function CategoryManager({ dict }: { dict: Dictionary }) {
     const [categories, setCategories] = useState<Category[]>([]);
     const [newCategoryName, setNewCategoryName] = useState("");
     const [loading, setLoading] = useState(true);
@@ -221,17 +229,15 @@ function CategoryManager() {
     };
 
     const handleDelete = async (id: number) => {
-        if (!confirm("ยืนยันลบหมวดหมู่นี้?")) return;
+        if (!confirm(dict.admin.confirmDelete)) return;
         try {
             const res = await fetch(`http://localhost:3000/api/categories/${id}`, { method: 'DELETE' });
-            const data = await res.json();
             if (res.ok) refreshCategories();
-            else alert(data.error);
         } catch (error) { console.error(error); }
     };
 
     const handleUpdate = async (id: number, oldName: string) => {
-        const newName = prompt("แก้ไขชื่อหมวดหมู่:", oldName);
+        const newName = prompt(dict.admin.promptEdit, oldName);
         if (!newName || newName === oldName) return;
         try {
             await fetch(`http://localhost:3000/api/categories/${id}`, {
@@ -246,30 +252,30 @@ function CategoryManager() {
     return (
         <div>
             <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-                <List className="text-purple-600"/> รายการหมวดหมู่
+                <List className="text-purple-600"/> {dict.admin.manageCategories}
             </h2>
 
             <div className="flex gap-2 mb-6">
                 <input 
                     type="text" 
-                    placeholder="ชื่อหมวดหมู่ใหม่..." 
+                    placeholder={dict.admin.placeholderCategory}
                     className="flex-1 border p-3 rounded-lg bg-slate-50 focus:bg-white transition-colors"
                     value={newCategoryName}
                     onChange={(e) => setNewCategoryName(e.target.value)}
                 />
                 <button onClick={handleCreate} className="bg-purple-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-purple-700 flex items-center gap-2">
-                    <Plus size={20} /> เพิ่ม
+                    <Plus size={20} /> {dict.admin.add}
                 </button>
             </div>
 
-            {loading ? <p className="text-slate-500">กำลังโหลด...</p> : (
+            {loading ? <p className="text-slate-500">{dict.common.loading}</p> : (
                 <div className="space-y-3">
                     {categories.map((cat) => (
                         <div key={cat.id} className="flex justify-between items-center bg-white border p-4 rounded-xl hover:shadow-md transition-shadow group">
                             <div>
                                 <span className="font-bold text-lg text-slate-800">{cat.name}</span>
                                 <span className="ml-3 text-sm text-slate-400 bg-slate-100 px-2 py-1 rounded-full">
-                                    {cat._count?.menus || 0} เมนู
+                                    {cat._count?.menus || 0} {dict.admin.menuCount}
                                 </span>
                             </div>
                             <div className="flex gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
@@ -278,17 +284,14 @@ function CategoryManager() {
                             </div>
                         </div>
                     ))}
-                    {categories.length === 0 && <p className="text-center text-slate-400 py-10">ยังไม่มีหมวดหมู่</p>}
+                    {categories.length === 0 && <p className="text-center text-slate-400 py-10">{dict.admin.noCategory}</p>}
                 </div>
             )}
         </div>
     );
 }
 
-// ==========================================
-// 🟡 Component: Menu Manager
-// ==========================================
-function MenuManager() {
+function MenuManager({ dict }: { dict: Dictionary }) {
     const [menus, setMenus] = useState<Menu[]>([]); 
     const [categories, setCategories] = useState<Category[]>([]);
     
@@ -380,17 +383,17 @@ function MenuManager() {
             }
 
             if (res.ok) {
-                alert(editingId ? "แก้ไขเมนูสำเร็จ!" : "เพิ่มเมนูสำเร็จ!");
+                alert(dict.admin.alertSaved);
                 resetForm();
                 refreshData(); 
             } else {
-                alert("เกิดข้อผิดพลาด กรุณาตรวจสอบข้อมูล");
+                alert(dict.admin.alertFailed);
             }
-        } catch (error) { console.error(error); alert("เกิดข้อผิดพลาดในการเชื่อมต่อ"); }
+        } catch (error) { console.error(error); alert(dict.common.error); }
     };
 
     const handleDelete = async (id: number) => {
-        if (!confirm("ยืนยันลบเมนูนี้?")) return;
+        if (!confirm(dict.admin.confirmDelete)) return;
         try {
             await fetch(`http://localhost:3000/api/menus/${id}`, { method: 'DELETE' });
             refreshData(); 
@@ -413,7 +416,7 @@ function MenuManager() {
         <div>
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                    <Utensils className="text-purple-600"/> รายการอาหาร ({menus.length})
+                    <Utensils className="text-purple-600"/> {dict.admin.manageMenus} ({menus.length})
                 </h2>
                 <button 
                     onClick={() => isFormOpen ? resetForm() : setIsFormOpen(true)}
@@ -421,41 +424,41 @@ function MenuManager() {
                         isFormOpen ? "bg-slate-200 text-slate-600" : "bg-purple-600 text-white hover:bg-purple-700"
                     }`}
                 >
-                    {isFormOpen ? <><X size={18}/> ยกเลิก</> : <><Plus size={18}/> เพิ่มเมนูใหม่</>}
+                    {isFormOpen ? <><X size={18}/> {dict.admin.cancel}</> : <><Plus size={18}/> {dict.admin.add}</>}
                 </button>
             </div>
 
             {isFormOpen && (
                 <form onSubmit={handleSubmit} className="bg-slate-50 p-6 rounded-xl border mb-6 animate-in fade-in slide-in-from-top-4 relative">
                     <div className={`absolute top-4 right-4 text-xs font-bold px-2 py-1 rounded ${editingId ? "bg-blue-100 text-blue-600" : "bg-green-100 text-green-600"}`}>
-                        {editingId ? "โหมดแก้ไข" : "โหมดสร้างใหม่"}
+                        {editingId ? dict.admin.modeEdit : dict.admin.modeCreate}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-1">ชื่อเมนู</label>
+                            <label className="block text-sm font-bold text-slate-700 mb-1">{dict.admin.name}</label>
                             <input required type="text" className="w-full border p-2 rounded focus:ring-2 focus:ring-purple-200 outline-none" value={newName} onChange={e => setNewName(e.target.value)} />
                         </div>
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-1">ราคา (บาท)</label>
+                            <label className="block text-sm font-bold text-slate-700 mb-1">{dict.admin.price}</label>
                             <input required type="number" className="w-full border p-2 rounded focus:ring-2 focus:ring-purple-200 outline-none" value={newPrice} onChange={e => setNewPrice(e.target.value)} />
                         </div>
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-1">หมวดหมู่</label>
+                            <label className="block text-sm font-bold text-slate-700 mb-1">{dict.admin.category}</label>
                             <select 
                                 required 
                                 className="w-full border p-2 rounded bg-white focus:ring-2 focus:ring-purple-200 outline-none"
                                 value={newCategoryId}
                                 onChange={e => setNewCategoryId(e.target.value)}
                             >
-                                <option value="">-- เลือกหมวดหมู่ --</option>
+                                <option value="">-- {dict.admin.category} --</option>
                                 {categories.map(cat => (
                                     <option key={cat.id} value={cat.id}>{cat.name}</option>
                                 ))}
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-1">รูปภาพ URL</label>
+                            <label className="block text-sm font-bold text-slate-700 mb-1">{dict.admin.image}</label>
                             <input type="text" placeholder="https://..." className="w-full border p-2 rounded focus:ring-2 focus:ring-purple-200 outline-none" value={newImage} onChange={e => setNewImage(e.target.value)} />
                         </div>
                     </div>
@@ -463,25 +466,25 @@ function MenuManager() {
                     <div className="mt-4 flex flex-wrap gap-6 border-t pt-4 border-slate-200">
                         <div className="flex items-center gap-2">
                             <input type="checkbox" id="isRecommended" checked={isRecommended} onChange={(e) => setIsRecommended(e.target.checked)} className="w-5 h-5 accent-orange-500 cursor-pointer"/>
-                            <label htmlFor="isRecommended" className="text-slate-700 font-bold cursor-pointer select-none">เมนูแนะนำ ★</label>
+                            <label htmlFor="isRecommended" className="text-slate-700 font-bold cursor-pointer select-none">{dict.admin.recommend} ★</label>
                         </div>
                         <div className="flex items-center gap-2">
                             <input type="checkbox" id="isAvailable" checked={isAvailable} onChange={(e) => setIsAvailable(e.target.checked)} className="w-5 h-5 accent-green-600 cursor-pointer"/>
-                            <label htmlFor="isAvailable" className="text-slate-700 font-bold cursor-pointer select-none">มีของ (Available)</label>
+                            <label htmlFor="isAvailable" className="text-slate-700 font-bold cursor-pointer select-none">{dict.admin.available}</label>
                         </div>
                         <div className="flex items-center gap-2">
                             <input type="checkbox" id="isVisible" checked={isVisible} onChange={(e) => setIsVisible(e.target.checked)} className="w-5 h-5 accent-blue-600 cursor-pointer"/>
-                            <label htmlFor="isVisible" className="text-slate-700 font-bold cursor-pointer select-none">แสดงในเมนู (Visible)</label>
+                            <label htmlFor="isVisible" className="text-slate-700 font-bold cursor-pointer select-none">{dict.admin.visible}</label>
                         </div>
                     </div>
                     
                     <div className="mt-6 flex gap-2">
                         <button type="submit" className={`px-6 py-2 rounded-lg font-bold text-white flex items-center gap-2 ${editingId ? "bg-blue-600 hover:bg-blue-700" : "bg-green-600 hover:bg-green-700"}`}>
-                            <Save size={18} /> {editingId ? "บันทึกการแก้ไข" : "สร้างเมนูใหม่"}
+                            <Save size={18} /> {editingId ? dict.admin.save : dict.admin.add}
                         </button>
                         {editingId && (
                             <button type="button" onClick={resetForm} className="px-6 py-2 rounded-lg font-bold bg-slate-200 text-slate-600 hover:bg-slate-300">
-                                ยกเลิก
+                                {dict.admin.cancel}
                             </button>
                         )}
                     </div>
@@ -492,12 +495,12 @@ function MenuManager() {
                 <table className="w-full text-left">
                     <thead className="bg-slate-100 text-slate-600 font-bold text-sm">
                         <tr>
-                            <th className="p-4">รูป</th>
-                            <th className="p-4">ชื่อเมนู</th>
-                            <th className="p-4">ราคา</th>
-                            <th className="p-4 text-center">สถานะของ</th>
-                            <th className="p-4 text-center">การแสดงผล</th>
-                            <th className="p-4 text-right">จัดการ</th>
+                            <th className="p-4">{dict.admin.image}</th>
+                            <th className="p-4">{dict.admin.name}</th>
+                            <th className="p-4">{dict.admin.price}</th>
+                            <th className="p-4 text-center">{dict.admin.status}</th>
+                            <th className="p-4 text-center">{dict.admin.visibility}</th>
+                            <th className="p-4 text-right">{dict.admin.action}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -513,9 +516,9 @@ function MenuManager() {
                                 <td className="p-4">
                                     <div className="font-bold text-slate-800">{menu.nameTH}</div>
                                     <div className="text-xs text-slate-500">{menu.category?.name || '-'}</div>
-                                    {menu.isRecommended && <span className="text-[10px] bg-orange-100 text-orange-600 px-1 py-0.5 rounded font-bold">★ แนะนำ</span>}
+                                    {menu.isRecommended && <span className="text-[10px] bg-orange-100 text-orange-600 px-1 py-0.5 rounded font-bold">★ {dict.admin.recommend}</span>}
                                 </td>
-                                <td className="p-4 font-bold text-slate-900">฿{menu.price}</td>
+                                <td className="p-4 font-bold text-slate-900">{dict.common.currency}{menu.price}</td> 
                                 
                                 <td className="p-4 text-center">
                                     <button 
@@ -526,7 +529,7 @@ function MenuManager() {
                                             : "bg-red-100 text-red-700 border-red-200 hover:bg-red-200"
                                         }`}
                                     >
-                                        {menu.isAvailable ? "🟢 มีของ" : "🔴 หมด"}
+                                        {menu.isAvailable ? `🟢 ${dict.admin.available}` : `🔴 ${dict.admin.outOfStock}`}
                                     </button>
                                 </td>
 
@@ -539,21 +542,21 @@ function MenuManager() {
                                             : "bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200"
                                         }`}
                                     >
-                                        {menu.isVisible ? <><Eye size={12}/> แสดง</> : <><EyeOff size={12}/> ซ่อน</>}
+                                        {menu.isVisible ? <><Eye size={12}/> {dict.admin.visible}</> : <><EyeOff size={12}/> {dict.admin.hidden}</>}
                                     </button>
                                 </td>
 
                                 <td className="p-4 text-right">
                                     <div className="flex justify-end gap-1">
-                                        <button onClick={() => handleStartEdit(menu)} className="p-2 text-blue-500 hover:bg-blue-100 rounded-lg transition-colors" title="แก้ไข"><Pencil size={18} /></button>
-                                        <button onClick={() => handleDelete(menu.id)} className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-colors" title="ลบ"><Trash2 size={18} /></button>
+                                        <button onClick={() => handleStartEdit(menu)} className="p-2 text-blue-500 hover:bg-blue-100 rounded-lg transition-colors" title={dict.admin.edit}><Pencil size={18} /></button>
+                                        <button onClick={() => handleDelete(menu.id)} className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-colors" title={dict.admin.delete}><Trash2 size={18} /></button>
                                     </div>
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
-                {menus.length === 0 && <div className="text-center py-10 text-slate-400">ยังไม่มีเมนูอาหาร</div>}
+                {menus.length === 0 && <div className="text-center py-10 text-slate-400">{dict.admin.noMenu}</div>}
             </div>
         </div>
     );
