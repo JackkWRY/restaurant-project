@@ -121,10 +121,26 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
                 return [...prev, newOrder.tableId];
             });
             setNewOrderIds((prev) => [...prev, newOrder.id]); 
+
+            try {
+                const audio = new Audio("/sounds/notification.mp3"); 
+                audio.play().catch((err) => console.log("Audio play blocked:", err));
+            } catch (error) {
+                console.error("Error playing sound:", error);
+            }
         });
 
-        socketRef.current.on("table_updated", () => {
+        socketRef.current.on("table_updated", (updatedTable: TableStatus) => {
             mutateTables();
+
+            if (updatedTable && updatedTable.isCallingStaff) {
+                try {
+                    const audio = new Audio("/sounds/bell_1.mp3");
+                    audio.play().catch((err) => console.log("Audio play blocked (User must interact first):", err));
+                } catch (error) {
+                    console.error("Error playing sound:", error);
+                }
+            }
         });
 
         socketRef.current.on("order_status_updated", () => {
@@ -132,9 +148,18 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
             mutateDetails(); 
         });
 
-        socketRef.current.on("item_status_updated", () => {
+        socketRef.current.on("item_status_updated", (item: { status: string }) => {
             mutateTables();
-            mutateDetails();
+            mutateDetails(); 
+
+            if (item && item.status === 'READY') {
+                try {
+                    const audio = new Audio("/sounds/bell_2.mp3"); 
+                    audio.play().catch((err) => console.log("Audio play blocked:", err));
+                } catch (error) {
+                    console.error("Error playing sound:", error);
+                }
+            }
         });
     }
 

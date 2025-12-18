@@ -117,6 +117,12 @@ export default function KitchenDashboard({ dict, lang }: KitchenDashboardProps) 
         
         socketRef.current.on("new_order", () => {
             mutate();
+            try {
+                const audio = new Audio("/sounds/notification.mp3");
+                audio.play().catch((err) => console.log("Audio play blocked (User must interact first):", err));
+            } catch (error) {
+                console.error("Error playing sound:", error);
+            }
         });
         
         socketRef.current.on("item_status_updated", () => {
