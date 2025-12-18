@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import Link from "next/link";
 import Image from "next/image"; 
 import { useRouter } from "next/navigation";
@@ -291,6 +291,8 @@ function MenuManager({ dict }: { dict: Dictionary }) {
     const [isAvailable, setIsAvailable] = useState(true);
     const [isVisible, setIsVisible] = useState(true);
 
+    const [uploading, setUploading] = useState(false);
+
     const resetForm = () => {
         setNewName("");
         setNewPrice("");
@@ -301,6 +303,7 @@ function MenuManager({ dict }: { dict: Dictionary }) {
         setIsVisible(true);
         setEditingId(null);
         setIsFormOpen(false);
+        setUploading(false);
     };
 
     const handleStartEdit = (menu: Menu) => {
@@ -315,6 +318,34 @@ function MenuManager({ dict }: { dict: Dictionary }) {
         setEditingId(menu.id);
         setIsFormOpen(true);
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploading(true);
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            const res = await fetch("http://localhost:3000/api/upload", {
+                method: "POST",
+                body: formData,
+            });
+            const data = await res.json();
+
+            if (data.status === "success") {
+                setNewImage(data.url);
+            } else {
+                alert("Upload failed: " + data.message);
+            }
+        } catch (error) {
+            console.error("Upload Error:", error);
+            alert("Upload error");
+        } finally {
+            setUploading(false);
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -422,9 +453,31 @@ function MenuManager({ dict }: { dict: Dictionary }) {
                                 ))}
                             </select>
                         </div>
+                        
                         <div>
                             <label className="block text-sm font-bold text-slate-700 mb-1">{dict.admin.image}</label>
-                            <input type="text" placeholder="https://..." className="w-full border p-2 rounded focus:ring-2 focus:ring-purple-200 outline-none" value={newImage} onChange={e => setNewImage(e.target.value)} />
+                            <div className="flex gap-2 items-center">
+                                <input 
+                                    type="text" 
+                                    placeholder="https://..." 
+                                    className="flex-1 border p-2 rounded focus:ring-2 focus:ring-purple-200 outline-none text-sm text-slate-500 bg-slate-100" 
+                                    value={newImage} 
+                                    onChange={e => setNewImage(e.target.value)} 
+                                    readOnly 
+                                />
+                                
+                                <label className={`cursor-pointer bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
+                                    <ImageIcon size={18} />
+                                    <span className="text-sm font-bold">{uploading ? "Uploading..." : "Upload"}</span>
+                                    <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={uploading} />
+                                </label>
+                            </div>
+                            
+                            {newImage && (
+                                <div className="mt-2 relative w-full h-32 bg-slate-200 rounded-lg overflow-hidden border">
+                                    <Image src={newImage} alt="Preview" fill className="object-cover" unoptimized />
+                                </div>
+                            )}
                         </div>
                     </div>
                     
@@ -444,7 +497,7 @@ function MenuManager({ dict }: { dict: Dictionary }) {
                     </div>
                     
                     <div className="mt-6 flex gap-2">
-                        <button type="submit" className={`px-6 py-2 rounded-lg font-bold text-white flex items-center gap-2 ${editingId ? "bg-blue-600 hover:bg-blue-700" : "bg-green-600 hover:bg-green-700"}`}>
+                        <button type="submit" disabled={uploading} className={`px-6 py-2 rounded-lg font-bold text-white flex items-center gap-2 ${editingId ? "bg-blue-600 hover:bg-blue-700" : "bg-green-600 hover:bg-green-700"} ${uploading ? "opacity-50" : ""}`}>
                             <Save size={18} /> {editingId ? dict.admin.save : dict.admin.add}
                         </button>
                         {editingId && (

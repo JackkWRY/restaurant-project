@@ -12,6 +12,7 @@ import orderRoutes from './routes/orderRoutes.js';
 import staffRoutes from './routes/staffRoutes.js';
 import tableRoutes from './routes/tableRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
+import uploadRoutes from './routes/upload.js';
 
 dotenv.config();
 
@@ -49,6 +50,7 @@ app.use('/api', orderRoutes);
 app.use('/api', staffRoutes);
 app.use('/api', tableRoutes);
 app.use('/api', categoryRoutes);
+app.use('/api/upload', uploadRoutes); 
 
 // Home Route
 app.get('/', (req: Request, res: Response) => {
