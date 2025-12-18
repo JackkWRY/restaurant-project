@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { io } from "socket.io-client"; 
+import useSWR from "swr";
 import { QrCode, Lock, Bell, History, X, ChevronDown, ChevronUp, Globe } from "lucide-react";
 import MenuItem from "@/components/MenuItem"; 
 import FloatingCart from "@/components/FloatingCart"; 
@@ -45,6 +46,8 @@ interface CustomerOrderProps {
   lang: string;
 }
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
 // --- Main Component ---
 export default function CustomerOrder({ dict, lang }: CustomerOrderProps) {
   const router = useRouter();
@@ -52,98 +55,87 @@ export default function CustomerOrder({ dict, lang }: CustomerOrderProps) {
   const tableIdParam = searchParams.get("tableId");
   
   const { totalItems } = useCartStore(); 
-
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [tableInfo, setTableInfo] = useState<TableInfo | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [restaurantName, setRestaurantName] = useState(dict.common.loading); 
-
   const [showHistory, setShowHistory] = useState(false);
-  const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
-  const [isCalling, setIsCalling] = useState(false);
+  
+  const { data: menuData } = useSWR('http://localhost:3000/api/menus', fetcher, { 
+      refreshInterval: 60000 
+  });
+  const categories: Category[] = menuData?.status === 'success' ? menuData.data : [];
 
-  // ฟังก์ชันเปลี่ยนภาษา
+  const { data: tableData, mutate: mutateTable } = useSWR(
+      tableIdParam ? `http://localhost:3000/api/tables/${tableIdParam}` : null, 
+      fetcher,
+      { refreshInterval: 5000 }
+  );
+  const tableInfo: TableInfo | null = tableData?.status === 'success' ? tableData.data : null;
+
+  const { data: settingsData } = useSWR('http://localhost:3000/api/settings/name', fetcher);
+  const restaurantName = settingsData?.status === 'success' ? settingsData.data : dict.common.loading;
+
+  const { data: historyData, mutate: mutateHistory } = useSWR(
+      showHistory && tableIdParam ? `http://localhost:3000/api/tables/${tableIdParam}/orders` : null,
+      fetcher,
+      { refreshInterval: 5000 }
+  );
+  const historyItems: HistoryItem[] = historyData?.status === 'success' ? historyData.data : [];
+
+  useEffect(() => {
+    if (!tableIdParam) return;
+
+    const socket = io("http://localhost:3000");
+    
+    socket.on("connect", () => { console.log("✅ Customer connected to socket"); });
+    
+    socket.on("table_updated", (updatedTable: TableInfo) => {
+        if (String(updatedTable.id) === String(tableIdParam)) {
+            mutateTable();
+        }
+    });
+
+    socket.on("order_status_updated", () => {
+        if (showHistory) mutateHistory();
+    });
+
+    socket.on("item_status_updated", () => {
+        if (showHistory) mutateHistory();
+    });
+
+    return () => { socket.disconnect(); };
+  }, [tableIdParam, showHistory, mutateTable, mutateHistory]);
+
+  // --- Handlers ---
+
   const handleSwitchLang = () => {
     const newLang = lang === 'en' ? 'th' : 'en';
     const currentQuery = searchParams.toString(); 
     router.push(`/${newLang}/order?${currentQuery}`);
   };
 
-  const handleViewHistory = useCallback(async () => {
-    if (!tableIdParam) return;
-    setShowHistory(true);
-    try {
-        const res = await fetch(`http://localhost:3000/api/tables/${tableIdParam}/orders`);
-        const data = await res.json();
-
-        if (data.status === 'success') setHistoryItems(data.data);
-    } catch (error) { console.error(error); }
-  }, [tableIdParam]);
-
-  useEffect(() => {
-    if (!tableIdParam) {
-        setLoading(false);
-        return;
-    }
-
-    const initData = async () => {
-        try {
-            const resMenu = await fetch('http://localhost:3000/api/menus');
-            const dataMenu = await resMenu.json();
-            if (dataMenu.status === 'success') setCategories(dataMenu.data);
-
-            const resTable = await fetch(`http://localhost:3000/api/tables/${tableIdParam}`);
-            const dataTable = await resTable.json();
-            if (dataTable.status === 'success') {
-                setTableInfo(dataTable.data);
-                setIsCalling(dataTable.data.isCallingStaff);
-            }
-
-            const resName = await fetch('http://localhost:3000/api/settings/name');
-            const dataName = await resName.json();
-            if (dataName.status === 'success') setRestaurantName(dataName.data);
-
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    initData();
-
-    const socket = io("http://localhost:3000");
-    socket.on("connect", () => { console.log("✅ Customer connected to socket"); });
-    socket.on("table_updated", (updatedTable: TableInfo) => {
-        if (String(updatedTable.id) === String(tableIdParam)) {
-            setIsCalling(updatedTable.isCallingStaff);
-            setTableInfo(prev => prev ? { ...prev, ...updatedTable } : null);
-        }
-    });
-
-    socket.on("order_status_updated", () => {
-        if (showHistory) handleViewHistory(); 
-    });
-
-    return () => { socket.disconnect(); };
-  }, [tableIdParam, showHistory, handleViewHistory]);
-
   const handleCallStaff = async () => {
-    if (!tableIdParam) return;
-    const newStatus = !isCalling;
-    setIsCalling(newStatus); 
+    if (!tableIdParam || !tableInfo) return;
+    
+    const newStatus = !tableInfo.isCallingStaff;
+    
+    mutateTable({
+        ...tableData,
+        data: { ...tableInfo, isCallingStaff: newStatus }
+    }, false);
+
     try {
         await fetch(`http://localhost:3000/api/tables/${tableIdParam}/call`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ isCalling: newStatus })
         });
+        
         if (newStatus) alert(dict.customer.alertCallStaff);
         else alert(dict.customer.alertCancelCall);
+        
+        mutateTable();
     } catch (error) {
         console.error(error);
         alert(dict.customer.alertFailed); 
-        setIsCalling(!newStatus); 
+        mutateTable();
     }
   };
 
@@ -159,7 +151,9 @@ export default function CustomerOrder({ dict, lang }: CustomerOrderProps) {
     }
   };
 
-  if (!loading && !tableIdParam) {
+  // --- Render ---
+
+  if (!tableIdParam) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-slate-50 text-center">
         <div className="bg-white p-8 rounded-2xl shadow-xl flex flex-col items-center max-w-sm w-full">
@@ -173,7 +167,11 @@ export default function CustomerOrder({ dict, lang }: CustomerOrderProps) {
     );
   }
 
-  if (!loading && tableInfo && !tableInfo.isAvailable) {
+  if (!tableData && !menuData) {
+      return <div className="min-h-screen flex justify-center items-center bg-white">{dict.common.loading}</div>;
+  }
+
+  if (tableInfo && !tableInfo.isAvailable) {
       return (
         <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-slate-50 text-center">
             <div className="bg-white p-8 rounded-2xl shadow-xl flex flex-col items-center max-w-sm w-full border-t-4 border-red-500">
@@ -210,21 +208,21 @@ export default function CustomerOrder({ dict, lang }: CustomerOrderProps) {
             <button 
                 onClick={handleCallStaff}
                 className={`p-2 rounded-full shadow-sm border transition-all ${
-                    isCalling ? "bg-red-100 text-red-600 border-red-200 animate-pulse" : "bg-white text-slate-600 border-slate-200"
+                    tableInfo?.isCallingStaff ? "bg-red-100 text-red-600 border-red-200 animate-pulse" : "bg-white text-slate-600 border-slate-200"
                 }`}
             >
-                <Bell size={20} className={isCalling ? "fill-current" : ""} />
+                <Bell size={20} className={tableInfo?.isCallingStaff ? "fill-current" : ""} />
             </button>
             <button 
-                onClick={handleViewHistory}
-                className="p-2 rounded-full bg-white text-slate-600 shadow-sm border border-slate-200"
+                onClick={() => setShowHistory(true)}
+                className="p-2 rounded-full bg-white text-slate-600 shadow-sm border border-slate-200 relative"
             >
                 <History size={20} />
             </button>
         </div>
       </header>
       
-      {categories.length === 0 && !loading ? (
+      {categories.length === 0 ? (
         <div className="text-center p-10 bg-slate-50 rounded-lg border border-dashed">
           <p className="text-red-500 font-medium">{dict.admin.noMenu}</p>
         </div>

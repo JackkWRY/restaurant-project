@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image"; 
 import { useRouter } from "next/navigation";
 import { Plus, Pencil, Trash2, List, Utensils, X, Image as ImageIcon, Save, Settings, Eye, EyeOff, LogOut, Globe } from "lucide-react";
+import useSWR from "swr";
 import type { Dictionary } from "@/locales/en"; 
 
 // --- Types ---
@@ -30,6 +31,8 @@ interface AdminDashboardProps {
   dict: Dictionary;
   lang: string;
 }
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function AdminDashboard({ dict, lang }: AdminDashboardProps) {
   const router = useRouter();
@@ -187,33 +190,11 @@ function SettingsManager({ dict }: { dict: Dictionary }) {
 }
 
 function CategoryManager({ dict }: { dict: Dictionary }) {
-    const [categories, setCategories] = useState<Category[]>([]);
     const [newCategoryName, setNewCategoryName] = useState("");
-    const [loading, setLoading] = useState(true);
-
-    const refreshCategories = async () => {
-        try {
-            const res = await fetch('http://localhost:3000/api/categories');
-            const data = await res.json();
-            if (data.status === 'success') setCategories(data.data);
-        } catch (error) { console.error(error); }
-    };
-
-    useEffect(() => {
-        let isMounted = true; 
-        const initFetch = async () => {
-            try {
-                const res = await fetch('http://localhost:3000/api/categories');
-                const data = await res.json();
-                if (isMounted && data.status === 'success') {
-                    setCategories(data.data);
-                }
-            } catch (error) { console.error(error); } 
-            finally { if (isMounted) setLoading(false); }
-        };
-        initFetch();
-        return () => { isMounted = false; };
-    }, []);
+    
+    const { data: catData, mutate } = useSWR('http://localhost:3000/api/categories', fetcher);
+    const categories: Category[] = catData?.status === 'success' ? catData.data : [];
+    const isLoading = !catData;
 
     const handleCreate = async () => {
         if (!newCategoryName.trim()) return;
@@ -224,7 +205,7 @@ function CategoryManager({ dict }: { dict: Dictionary }) {
                 body: JSON.stringify({ name: newCategoryName })
             });
             setNewCategoryName("");
-            refreshCategories();
+            mutate();
         } catch (error) { console.error(error); }
     };
 
@@ -232,7 +213,7 @@ function CategoryManager({ dict }: { dict: Dictionary }) {
         if (!confirm(dict.admin.confirmDelete)) return;
         try {
             const res = await fetch(`http://localhost:3000/api/categories/${id}`, { method: 'DELETE' });
-            if (res.ok) refreshCategories();
+            if (res.ok) mutate();
         } catch (error) { console.error(error); }
     };
 
@@ -245,7 +226,7 @@ function CategoryManager({ dict }: { dict: Dictionary }) {
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ name: newName })
             });
-            refreshCategories();
+            mutate();
         } catch (error) { console.error(error); }
     };
 
@@ -268,7 +249,7 @@ function CategoryManager({ dict }: { dict: Dictionary }) {
                 </button>
             </div>
 
-            {loading ? <p className="text-slate-500">{dict.common.loading}</p> : (
+            {isLoading ? <p className="text-slate-500">{dict.common.loading}</p> : (
                 <div className="space-y-3">
                     {categories.map((cat) => (
                         <div key={cat.id} className="flex justify-between items-center bg-white border p-4 rounded-xl hover:shadow-md transition-shadow group">
@@ -292,12 +273,16 @@ function CategoryManager({ dict }: { dict: Dictionary }) {
 }
 
 function MenuManager({ dict }: { dict: Dictionary }) {
-    const [menus, setMenus] = useState<Menu[]>([]); 
-    const [categories, setCategories] = useState<Category[]>([]);
+    const { data: menusData, mutate: mutateMenus } = useSWR('http://localhost:3000/api/menus/all', fetcher);
+    const { data: catsData } = useSWR('http://localhost:3000/api/categories', fetcher);
+
+    const menus: Menu[] = menusData?.status === 'success' ? menusData.data : [];
+    const categories: Category[] = catsData?.status === 'success' ? catsData.data : [];
     
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     
+    // Form States
     const [newName, setNewName] = useState("");
     const [newPrice, setNewPrice] = useState("");
     const [newCategoryId, setNewCategoryId] = useState("");
@@ -305,26 +290,6 @@ function MenuManager({ dict }: { dict: Dictionary }) {
     const [isRecommended, setIsRecommended] = useState(false);
     const [isAvailable, setIsAvailable] = useState(true);
     const [isVisible, setIsVisible] = useState(true);
-
-    const refreshData = async () => {
-        try {
-            const [resMenus, resCats] = await Promise.all([
-                fetch('http://localhost:3000/api/menus/all'),
-                fetch('http://localhost:3000/api/categories')
-            ]);
-            
-            const dataMenus = await resMenus.json();
-            const dataCats = await resCats.json();
-            
-            if (dataMenus.status === 'success') setMenus(dataMenus.data);
-            if (dataCats.status === 'success') setCategories(dataCats.data);
-        } catch (error) { console.error(error); }
-    };
-
-    useEffect(() => {
-        refreshData();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
     const resetForm = () => {
         setNewName("");
@@ -385,7 +350,7 @@ function MenuManager({ dict }: { dict: Dictionary }) {
             if (res.ok) {
                 alert(dict.admin.alertSaved);
                 resetForm();
-                refreshData(); 
+                mutateMenus();
             } else {
                 alert(dict.admin.alertFailed);
             }
@@ -396,7 +361,7 @@ function MenuManager({ dict }: { dict: Dictionary }) {
         if (!confirm(dict.admin.confirmDelete)) return;
         try {
             await fetch(`http://localhost:3000/api/menus/${id}`, { method: 'DELETE' });
-            refreshData(); 
+            mutateMenus();
         } catch (error) { console.error(error); }
     };
 
@@ -408,7 +373,7 @@ function MenuManager({ dict }: { dict: Dictionary }) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ [field]: newValue }) 
             });
-            if (res.ok) refreshData();
+            if (res.ok) mutateMenus();
         } catch (error) { console.error(error); }
     };
 
