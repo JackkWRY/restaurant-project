@@ -136,5 +136,17 @@ export const th: Dictionary = {
     subtitle: "ระบบสั่งอาหารอัจฉริยะ กรุณาสแกน QR Code ที่โต๊ะของท่านเพื่อเริ่มต้นสั่งอาหาร",
     scanToOrder: "สแกนเพื่อสั่งอาหาร",
     poweredBy: "Powered by Restaurant OS",
+  },
+  dashboard: {
+    title: "ภาพรวมร้านอาหาร",
+    todaySales: "ยอดขายวันนี้",
+    todayOrders: "จำนวนออเดอร์วันนี้",
+    bills: "บิล",
+    salesTrend: "แนวโน้มยอดขาย (7 วันล่าสุด)",
+    bestSellers: "เมนูขายดี (5 อันดับแรก)",
+    noData: "ไม่มีข้อมูลการขาย",
+    total: "รวม",
+    loading: "กำลังโหลดข้อมูล...",
+    error: "โหลดข้อมูลไม่สำเร็จ"
   }
 };

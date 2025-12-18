@@ -134,6 +134,18 @@ export const en = {
     subtitle: "Smart Restaurant System. Please scan QR Code at your table to start ordering.",
     scanToOrder: "Scan to Order",
     poweredBy: "Powered by Restaurant OS",
+  },
+  dashboard: {
+    title: "Restaurant Overview",
+    todaySales: "Today's Sales",
+    todayOrders: "Today's Orders",
+    bills: "Bills",
+    salesTrend: "Sales Trend (Last 7 Days)",
+    bestSellers: "Best Sellers (Top 5)",
+    noData: "No sales data available",
+    total: "Total",
+    loading: "Loading dashboard...",
+    error: "Failed to load analytics data."
   }
 };
 

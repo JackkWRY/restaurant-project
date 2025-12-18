@@ -13,6 +13,7 @@ import staffRoutes from './routes/staffRoutes.js';
 import tableRoutes from './routes/tableRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
 import uploadRoutes from './routes/upload.js';
+import analyticsRoutes from './routes/analyticsRoutes.js';
 
 dotenv.config();
 
@@ -50,7 +51,8 @@ app.use('/api', orderRoutes);
 app.use('/api', staffRoutes);
 app.use('/api', tableRoutes);
 app.use('/api', categoryRoutes);
-app.use('/api/upload', uploadRoutes); 
+app.use('/api/upload', uploadRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Home Route
 app.get('/', (req: Request, res: Response) => {
