@@ -2,9 +2,9 @@
 
 import { useParams } from "next/navigation";
 import LandingPage from "@/components/LandingPage";
-import { en } from "@/locales/en";
-import { th } from "@/locales/th";
-import type { Dictionary } from "@/locales/en";
+import en from "@/locales/en";
+import th from "@/locales/th";
+import type { Dictionary } from "@/locales/dictionary";
 
 export default function Page() {
   const params = useParams();

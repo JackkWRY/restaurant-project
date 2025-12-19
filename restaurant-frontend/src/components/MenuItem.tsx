@@ -4,7 +4,7 @@ import Image from "next/image";
 import { Card, CardTitle } from "@/components/ui/card";
 import { useCartStore } from "@/store/useCartStore"; 
 import { Plus, Minus, Trash2 } from "lucide-react";
-import type { Dictionary } from "@/locales/en";
+import type { Dictionary } from "@/locales/dictionary";
 
 interface MenuItemProps {
   id: number;

@@ -7,7 +7,7 @@ import { io, type Socket } from "socket.io-client";
 import useSWR from "swr"; 
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Clock, ChefHat, BellRing, LogOut, LayoutDashboard, Globe } from "lucide-react"; 
-import type { Dictionary } from "@/locales/en"; 
+import type { Dictionary } from "@/locales/dictionary";
 
 // --- Types ---
 type ItemStatus = 'PENDING' | 'COOKING' | 'READY' | 'SERVED' | 'COMPLETED' | 'CANCELLED';

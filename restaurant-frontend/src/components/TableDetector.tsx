@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useCartStore } from "@/store/useCartStore";
-import type { Dictionary } from "@/locales/en";
+import type { Dictionary } from "@/locales/dictionary";
 
 interface TableDetectorProps {
   dict: Dictionary;

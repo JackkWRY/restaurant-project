@@ -9,7 +9,7 @@ import MenuItem from "@/components/MenuItem";
 import FloatingCart from "@/components/FloatingCart"; 
 import TableDetector from "@/components/TableDetector"; 
 import { useCartStore } from "@/store/useCartStore";
-import type { Dictionary } from "@/locales/en"; 
+import type { Dictionary } from "@/locales/dictionary";
 
 // --- Types ---
 interface Menu {

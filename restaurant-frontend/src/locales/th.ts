@@ -1,6 +1,4 @@
-import { Dictionary } from "./en";
-
-export const th: Dictionary = {
+const th = {
   common: {
     confirm: "ยืนยัน",
     cancel: "ยกเลิก",
@@ -160,5 +158,22 @@ export const th: Dictionary = {
     unitPrice: "ราคาต่อหน่วย",
     quantity: "จำนวน",
     subtotal: "รวม"
+  },
+  history: {
+    title: "ประวัติการขาย",
+    subtitle: "ดูรายการย้อนหลังและสรุปยอดขาย",
+    startDate: "วันที่เริ่มต้น",
+    endDate: "วันที่สิ้นสุด",
+    search: "ค้นหา",
+    totalRevenue: "ยอดขายรวม",
+    totalBills: "จำนวนบิล",
+    date: "วัน/เวลา",
+    table: "โต๊ะ",
+    items: "รายการ",
+    total: "ยอดรวม",
+    loading: "กำลังโหลดข้อมูล...",
+    noData: "ไม่พบข้อมูลในช่วงเวลานี้"
   }
 };
+
+export default th;

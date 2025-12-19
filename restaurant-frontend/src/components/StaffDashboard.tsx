@@ -7,7 +7,7 @@ import { io, type Socket } from "socket.io-client";
 import useSWR from "swr"; 
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Pencil, Trash2, Plus, X, Check, Eye, UtensilsCrossed, Bell, Ban, ShoppingBag, Sparkles, Receipt, Coins, LogOut, LayoutDashboard, Globe, ChefHat } from "lucide-react";
-import type { Dictionary } from "@/locales/en"; 
+import type { Dictionary } from "@/locales/dictionary";
 
 // --- Types ---
 interface TableStatus {

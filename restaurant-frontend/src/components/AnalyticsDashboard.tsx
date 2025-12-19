@@ -7,7 +7,7 @@ import {
   PieChart, Pie, Cell 
 } from 'recharts';
 import { DollarSign, ShoppingBag, TrendingUp, Award, Clock, Receipt, Eye, X, MessageSquareText } from 'lucide-react';
-import type { Dictionary } from '@/locales/en';
+import type { Dictionary } from "@/locales/dictionary";
 
 // --- Types ---
 interface TopItem {

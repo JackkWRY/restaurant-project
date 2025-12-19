@@ -1,4 +1,4 @@
-export const en = {
+const en = {
   common: {
     confirm: "Confirm",
     cancel: "Cancel",
@@ -158,7 +158,22 @@ export const en = {
     unitPrice: "Unit Price",
     quantity: "Qty",
     subtotal: "Subtotal"
+  },
+  history: {
+    title: "Sales History",
+    subtitle: "View past transactions and reports",
+    startDate: "Start Date",
+    endDate: "End Date",
+    search: "Search",
+    totalRevenue: "Total Revenue",
+    totalBills: "Total Bills",
+    date: "Date/Time",
+    table: "Table",
+    items: "Items",
+    total: "Total",
+    loading: "Loading data...",
+    noData: "No records found for this period."
   }
 };
 
-export type Dictionary = typeof en;
+export default en;

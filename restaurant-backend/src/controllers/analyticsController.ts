@@ -148,3 +148,73 @@ export const getDailyBills = async (req: Request, res: Response): Promise<void> 
         res.status(500).json({ error: 'Failed to fetch daily bills' });
     }
 };
+
+export const getBillHistory = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { startDate, endDate } = req.query;
+
+        let start = startDate ? dayjs(startDate as string).startOf('day').toDate() : dayjs().startOf('month').toDate();
+        let end = endDate ? dayjs(endDate as string).endOf('day').toDate() : dayjs().endOf('day').toDate();
+
+        const bills = await prisma.bill.findMany({
+            where: {
+                status: 'PAID',
+                closedAt: {
+                    gte: start,
+                    lte: end
+                }
+            },
+            include: {
+                table: true,
+                orders: {
+                    include: {
+                        items: {
+                            include: { menu: true }
+                        }
+                    }
+                }
+            },
+            orderBy: {
+                closedAt: 'desc'
+            }
+        });
+
+        const totalSales = bills.reduce((sum, bill) => sum + Number(bill.totalPrice), 0);
+
+        const formattedBills = bills.map((bill: any) => ({
+            id: bill.id,
+            date: bill.closedAt,
+            tableName: bill.table.name,
+            total: Number(bill.totalPrice),
+            paymentMethod: bill.paymentMethod,
+            itemsCount: bill.orders.reduce((sum: number, o: any) => sum + o.items.length, 0),
+            
+            items: bill.orders.flatMap((order: any) => 
+                order.items.map((item: any) => ({
+                    id: item.id,
+                    name: item.menu.nameTH,
+                    price: Number(item.menu.price),
+                    quantity: item.quantity,
+                    subtotal: item.status === 'CANCELLED' ? 0 : (Number(item.menu.price) * item.quantity),
+                    status: item.status,
+                    note: item.note
+                }))
+            )
+        }));
+
+        res.json({
+            status: 'success',
+            data: {
+                summary: {
+                    totalSales,
+                    billCount: bills.length
+                },
+                bills: formattedBills
+            }
+        });
+
+    } catch (error) {
+        console.error("History Error:", error);
+        res.status(500).json({ error: 'Failed to fetch bill history' });
+    }
+};

@@ -4,10 +4,11 @@ import { useEffect, useState, type ChangeEvent } from "react";
 import Link from "next/link";
 import Image from "next/image"; 
 import { useRouter } from "next/navigation";
-import { Plus, Pencil, Trash2, List, Utensils, X, Image as ImageIcon, Save, Settings, Eye, EyeOff, LogOut, Globe, BarChart3 } from "lucide-react";
+import { Plus, Pencil, Trash2, List, Utensils, X, Image as ImageIcon, Save, Settings, Eye, EyeOff, LogOut, Globe, BarChart3, History } from "lucide-react";
 import useSWR from "swr";
-import type { Dictionary } from "@/locales/en"; 
+import type { Dictionary } from "@/locales/dictionary";
 import AnalyticsDashboard from "./AnalyticsDashboard";
+import HistoryDashboard from "./HistoryDashboard";
 
 // --- Types ---
 interface Category {
@@ -37,7 +38,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function AdminDashboard({ dict, lang }: AdminDashboardProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'analytics' | 'categories' | 'menus' | 'settings'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'history' | 'categories' | 'menus' | 'settings'>('analytics');
   const toggleLang = lang === 'en' ? 'th' : 'en';
 
   useEffect(() => {
@@ -101,6 +102,15 @@ export default function AdminDashboard({ dict, lang }: AdminDashboardProps) {
               </button>
 
               <button 
+                onClick={() => setActiveTab('history')}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg font-bold text-left transition-colors ${
+                    activeTab === 'history' ? 'bg-purple-600 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                 <History size={20} /> {dict.history?.title || "History"}
+              </button>
+
+              <button 
                 onClick={() => setActiveTab('categories')}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg font-bold text-left transition-colors ${
                     activeTab === 'categories' ? 'bg-purple-600 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100'
@@ -128,8 +138,15 @@ export default function AdminDashboard({ dict, lang }: AdminDashboardProps) {
         </aside>
 
         {/* Content Area */}
-        <section className="flex-1 bg-white rounded-2xl shadow-sm border p-6 min-h-[500px]">
+        <section className="flex-1 bg-white rounded-2xl shadow-sm border p-6 min-h-[500px] overflow-hidden">
             {activeTab === 'analytics' && <AnalyticsDashboard dict={dict} />}
+            
+            {activeTab === 'history' && (
+                <div className="-m-6 h-full">
+                    <HistoryDashboard dict={dict} />
+                </div>
+            )}
+            
             {activeTab === 'categories' && <CategoryManager dict={dict} />}
             {activeTab === 'menus' && <MenuManager dict={dict} />}
             {activeTab === 'settings' && <SettingsManager dict={dict} />}

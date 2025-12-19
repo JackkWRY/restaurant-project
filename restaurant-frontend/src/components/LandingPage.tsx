@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { QrCode, UtensilsCrossed } from "lucide-react";
-import type { Dictionary } from "@/locales/en";
+import type { Dictionary } from "@/locales/dictionary";
 
 interface LandingPageProps {
   dict: Dictionary;

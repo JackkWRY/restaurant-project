@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, User, LogIn, UtensilsCrossed, Globe } from "lucide-react";
-import type { Dictionary } from "@/locales/en";
+import type { Dictionary } from "@/locales/dictionary";
 import Link from "next/link";
 
 export default function LoginForm({ 

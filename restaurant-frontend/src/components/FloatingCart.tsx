@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ShoppingCart, X, Plus, Minus, Trash2, Utensils, MessageSquare } from "lucide-react"; 
 import { useCartStore } from "@/store/useCartStore";
-import type { Dictionary } from "@/locales/en"; 
+import type { Dictionary } from "@/locales/dictionary";
 
 interface FloatingCartProps {
   dict: Dictionary;
