@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs'; // ✅ 1. เพิ่มการ import bcrypt
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 

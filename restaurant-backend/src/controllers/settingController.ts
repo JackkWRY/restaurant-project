@@ -1,7 +1,6 @@
 import type { Request, Response } from 'express';
 import prisma from '../prisma.js';
 
-// 1. ดึงชื่อร้าน (ถ้าไม่มีให้คืนค่า Default)
 export const getRestaurantName = async (req: Request, res: Response) => {
   try {
     const setting = await prisma.setting.findUnique({
@@ -10,14 +9,13 @@ export const getRestaurantName = async (req: Request, res: Response) => {
     
     res.json({ 
       status: 'success', 
-      data: setting ? setting.value : 'ร้านอาหาร 🍳' // Default value
+      data: setting ? setting.value : 'ร้านอาหาร 🍳'
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch settings' });
   }
 };
 
-// 2. บันทึกชื่อร้าน
 export const updateRestaurantName = async (req: Request, res: Response) => {
   try {
     const { name } = req.body;

@@ -89,7 +89,7 @@ export const toggleAvailability = async (req: Request, res: Response) => {
   }
 };
 
-// 5. ดึงข้อมูลโต๊ะเดี่ยว (เพื่อให้ลูกค้าเช็คสถานะตอนสแกน)
+// 5. ดึงข้อมูลโต๊ะเดี่ยว
 export const getTableById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -106,7 +106,7 @@ export const getTableById = async (req: Request, res: Response) => {
   }
 };
 
-// 6. ลูกค้ากดเรียกพนักงาน (หรือพนักงานกดปิดเสียงเรียก)
+// 6. ลูกค้ากดเรียกพนักงาน
 export const updateCallStaff = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -137,7 +137,7 @@ export const updateCallStaff = async (req: Request, res: Response) => {
   }
 };
 
-// 7. ดึงประวัติการสั่งอาหาร (สำหรับลูกค้าดูเอง)
+// 7. ดึงประวัติการสั่งอาหาร
 export const getCustomerOrders = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -192,7 +192,6 @@ export const closeTable = async (req: Request, res: Response) => {
     });
 
     if (unservedItems) {
-      console.log("Blocked by item:", unservedItems);
       res.status(400).json({ 
         status: 'error', 
         error: 'Cannot close table. Some items are not yet SERVED or COMPLETED.' 
@@ -200,6 +199,42 @@ export const closeTable = async (req: Request, res: Response) => {
       return; 
     }
 
+    const activeBill = await prisma.bill.findFirst({
+        where: {
+            tableId: Number(id),
+            status: 'OPEN'
+        },
+        include: {
+            orders: {
+                include: { items: { include: { menu: true } } }
+            }
+        }
+    });
+
+    if (activeBill) {
+        let finalTotal = 0;
+        
+        activeBill.orders.forEach(order => {
+            order.items.forEach(item => {
+                if (item.status !== 'CANCELLED') {
+                    finalTotal += Number(item.menu.price) * item.quantity;
+                }
+            });
+        });
+
+        await prisma.bill.update({
+            where: { id: activeBill.id },
+            data: {
+                status: 'PAID',
+                closedAt: new Date(),
+                totalPrice: finalTotal,
+                paymentMethod: 'CASH'
+            }
+        });
+        
+        console.log(`✅ Bill ${activeBill.id} closed successfully. Total: ${finalTotal}`);
+    }
+    
     await prisma.orderItem.updateMany({
       where: {
         order: { 
@@ -223,14 +258,15 @@ export const closeTable = async (req: Request, res: Response) => {
       where: { id: Number(id) },
       data: { 
         isOccupied: false,
-        isCallingStaff: false
+        isCallingStaff: false,
+        isAvailable: false
       }
     });
 
     const io = req.app.get('io');
     io.emit('table_updated', { id: Number(id) }); 
 
-    res.json({ status: 'success', message: 'Table closed successfully' });
+    res.json({ status: 'success', message: 'Table and Bill closed successfully' });
 
   } catch (error) {
     console.error("Close Table Error:", error);

@@ -14,17 +14,45 @@ export const createOrder = async (req: Request, res: Response) => {
     if (!table) { res.status(404).json({ error: 'Table not found' }); return; }
     if (!table.isAvailable) { res.status(400).json({ error: 'Table closed' }); return; }
 
-    let totalPrice = 0;
+    let currentOrderTotal = 0;
     for (const item of items) {
       const menu = await prisma.menu.findUnique({ where: { id: Number(item.menuId) } });
-      if (menu) totalPrice += Number(menu.price) * item.quantity;
+      if (menu) currentOrderTotal += Number(menu.price) * item.quantity;
     }
+
+    let activeBill = await prisma.bill.findFirst({
+        where: {
+            tableId: Number(tableId),
+            status: 'OPEN'
+        }
+    });
+
+    if (!activeBill) {
+        activeBill = await prisma.bill.create({
+            data: {
+                tableId: Number(tableId),
+                status: 'OPEN',
+                totalPrice: 0
+            }
+        });
+        console.log(`✨ Created new Bill ID: ${activeBill.id} for Table ${tableId}`);
+    } else {
+        console.log(`🔗 Linking to existing Bill ID: ${activeBill.id}`);
+    }
+
+    await prisma.bill.update({
+        where: { id: activeBill.id },
+        data: {
+            totalPrice: { increment: currentOrderTotal }
+        }
+    });
 
     const newOrder = await prisma.order.create({
       data: {
         tableId: Number(tableId),
-        totalPrice: totalPrice,
+        totalPrice: currentOrderTotal,
         status: 'PENDING',
+        billId: activeBill.id,
         items: {
           create: items.map((item: any) => ({
             menuId: Number(item.menuId), 

@@ -510,15 +510,33 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
                {loadingDetails ? <p className="text-center text-slate-500">{dict.common.loading}</p> : (
                  <div className="space-y-4">
                     <div className="space-y-2">
-                        {validItems.map((item, idx) => (
-                           <div key={idx} className="flex justify-between text-sm border-b border-dashed border-slate-200 pb-2">
-                              <div className="flex-1">
-                                  <span className="text-slate-800 font-medium">{item.menuName}</span>
-                                  <div className="text-xs text-slate-500">x{item.quantity} @ {dict.common.currency}{item.price}</div>
-                              </div>
-                              <span className="font-bold text-slate-900">{dict.common.currency}{item.total}</span>
-                           </div>
-                        ))}
+                        {tableDetails.map((item, idx) => {
+                           const isCancelled = item.status === 'CANCELLED';
+                           return (
+                             <div key={idx} className={`flex justify-between text-sm border-b border-dashed border-slate-200 pb-2 ${isCancelled ? 'bg-slate-50' : ''}`}>
+                                <div className="flex-1">
+                                    <span className={`font-medium block ${isCancelled ? 'text-red-500 line-through' : 'text-slate-800'}`}>
+                                        {item.menuName}
+                                    </span>
+                                    
+                                    {item.note && (
+                                        <div className="text-xs text-slate-500 italic flex items-center gap-1">
+                                            📝 {item.note}
+                                        </div>
+                                    )}
+
+                                    <div className="text-xs text-slate-500 mt-0.5">
+                                        x{item.quantity} @ {dict.common.currency}{item.price}
+                                        {isCancelled && <span className="text-red-500 font-bold ml-2">({dict.staff.statusCancelled})</span>}
+                                    </div>
+                                </div>
+                                
+                                <span className={`font-bold ${isCancelled ? 'text-slate-300 line-through' : 'text-slate-900'}`}>
+                                    {dict.common.currency}{item.total}
+                                </span>
+                             </div>
+                           );
+                        })}
                     </div>
 
                     <div className="bg-slate-50 p-4 rounded-lg space-y-2">

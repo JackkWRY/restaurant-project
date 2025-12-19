@@ -145,7 +145,19 @@ export const en = {
     noData: "No sales data available",
     total: "Total",
     loading: "Loading dashboard...",
-    error: "Failed to load analytics data."
+    error: "Failed to load analytics data.",
+    recentOrders: "Recent Orders",
+    time: "Time",
+    table: "Table",
+    items: "Items",
+    totalPrice: "Total",
+    status: "Status",
+    view: "View",
+    orderDetail: "Order Detail",
+    close: "Close",
+    unitPrice: "Unit Price",
+    quantity: "Qty",
+    subtotal: "Subtotal"
   }
 };
 

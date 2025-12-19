@@ -147,6 +147,18 @@ export const th: Dictionary = {
     noData: "ไม่มีข้อมูลการขาย",
     total: "รวม",
     loading: "กำลังโหลดข้อมูล...",
-    error: "โหลดข้อมูลไม่สำเร็จ"
+    error: "โหลดข้อมูลไม่สำเร็จ",
+    recentOrders: "รายการบิลล่าสุด",
+    time: "เวลา",
+    table: "โต๊ะ",
+    items: "รายการ",
+    totalPrice: "ยอดรวม",
+    status: "สถานะ",
+    view: "ดู",
+    orderDetail: "รายละเอียดบิล",
+    close: "ปิด",
+    unitPrice: "ราคาต่อหน่วย",
+    quantity: "จำนวน",
+    subtotal: "รวม"
   }
 };

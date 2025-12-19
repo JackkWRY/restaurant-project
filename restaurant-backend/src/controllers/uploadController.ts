@@ -1,8 +1,5 @@
-import { Router, Request, Response } from 'express';
-import multer from 'multer';
+import { Request, Response } from 'express';
 import { v2 as cloudinary } from 'cloudinary';
-
-const router = Router();
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -10,10 +7,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
-
-router.post('/', upload.single('file'), async (req: Request, res: Response): Promise<any> => {
+export const uploadImage = async (req: Request, res: Response): Promise<any> => {
   try {
     if (!req.file) {
       return res.status(400).json({ status: 'error', message: 'No file provided' });
@@ -36,6 +30,4 @@ router.post('/', upload.single('file'), async (req: Request, res: Response): Pro
     console.error("Upload Error:", error);
     return res.status(500).json({ status: 'error', message: 'Upload failed' });
   }
-});
-
-export default router;
+};
