@@ -1,5 +1,6 @@
 "use client";
 
+import { API_URL } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Calendar, Search, FileText, DollarSign, Eye, X, Receipt, StickyNote } from "lucide-react"; 
 import dayjs from "dayjs";
@@ -49,7 +50,7 @@ export default function HistoryDashboard({ dict }: HistoryDashboardProps) {
   const fetchHistory = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:3000/api/analytics/history?startDate=${startDate}&endDate=${endDate}`);
+      const res = await fetch(`${API_URL}/api/analytics/history?startDate=${startDate}&endDate=${endDate}`);
       const json = await res.json();
       if (json.status === 'success') {
         setData(json.data);

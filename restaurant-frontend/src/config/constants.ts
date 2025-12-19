@@ -1,0 +1,9 @@
+export const APP_CONFIG = {
+  CURRENCY: "฿",
+  SOUNDS: {
+    NOTIFICATION: "/sounds/notification.mp3",
+    BELL_1: "/sounds/bell_1.mp3",
+    BELL_2: "/sounds/bell_2.mp3",
+  },
+  CHART_COLORS: ['#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'],
+};

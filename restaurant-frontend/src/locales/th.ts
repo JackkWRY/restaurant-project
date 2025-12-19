@@ -1,3 +1,5 @@
+import { APP_CONFIG } from "@/config/constants";
+
 const th = {
   common: {
     confirm: "ยืนยัน",
@@ -11,7 +13,7 @@ const th = {
     error: "เกิดข้อผิดพลาด",
     dashboard: "แดชบอร์ด",
     switchLang: "English",
-    currency: "฿",
+    currency: APP_CONFIG.CURRENCY,
   },
   auth: {
     title: "เข้าสู่ระบบพนักงาน",

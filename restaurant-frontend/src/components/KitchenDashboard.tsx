@@ -1,5 +1,7 @@
 "use client";
 
+import { API_URL } from "@/lib/utils";
+import { APP_CONFIG } from "@/config/constants";
 import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link"; 
 import { useRouter } from "next/navigation"; 
@@ -56,7 +58,7 @@ export default function KitchenDashboard({ dict, lang }: KitchenDashboardProps) 
   const toggleLang = lang === 'en' ? 'th' : 'en';
 
   // 1. Data Fetching
-  const { data: swrData, error, isLoading, mutate } = useSWR('http://localhost:3000/api/orders/active', fetcher, {
+  const { data: swrData, error, isLoading, mutate } = useSWR(`${API_URL}/api/orders/active`, fetcher, {
     refreshInterval: 5000,
     revalidateOnFocus: true,
   });
@@ -113,12 +115,12 @@ export default function KitchenDashboard({ dict, lang }: KitchenDashboardProps) 
     if (!localStorage.getItem("token")) return;
 
     if (!socketRef.current) {
-        socketRef.current = io("http://localhost:3000");
+        socketRef.current = io(API_URL);
         
         socketRef.current.on("new_order", () => {
             mutate();
             try {
-                const audio = new Audio("/sounds/notification.mp3");
+                const audio = new Audio(APP_CONFIG.SOUNDS.NOTIFICATION);
                 audio.play().catch((err) => console.log("Audio play blocked (User must interact first):", err));
             } catch (error) {
                 console.error("Error playing sound:", error);
@@ -145,7 +147,7 @@ export default function KitchenDashboard({ dict, lang }: KitchenDashboardProps) 
   // 5. Action Handler
   const handleUpdateStatus = async (itemId: number, newStatus: ItemStatus) => {
     try {
-      await fetch(`http://localhost:3000/api/orders/items/${itemId}/status`, {
+      await fetch(`${API_URL}/api/orders/items/${itemId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),

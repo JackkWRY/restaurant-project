@@ -1,5 +1,6 @@
 "use client";
 
+import { API_URL } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { io } from "socket.io-client"; 
@@ -57,23 +58,23 @@ export default function CustomerOrder({ dict, lang }: CustomerOrderProps) {
   const { totalItems } = useCartStore(); 
   const [showHistory, setShowHistory] = useState(false);
   
-  const { data: menuData } = useSWR('http://localhost:3000/api/menus', fetcher, { 
+  const { data: menuData } = useSWR(`${API_URL}/api/menus`, fetcher, { 
       refreshInterval: 60000 
   });
   const categories: Category[] = menuData?.status === 'success' ? menuData.data : [];
 
   const { data: tableData, mutate: mutateTable } = useSWR(
-      tableIdParam ? `http://localhost:3000/api/tables/${tableIdParam}` : null, 
+      tableIdParam ? `${API_URL}/api/tables/${tableIdParam}` : null, 
       fetcher,
       { refreshInterval: 5000 }
   );
   const tableInfo: TableInfo | null = tableData?.status === 'success' ? tableData.data : null;
 
-  const { data: settingsData } = useSWR('http://localhost:3000/api/settings/name', fetcher);
+  const { data: settingsData } = useSWR(`${API_URL}/api/settings/name`, fetcher);
   const restaurantName = settingsData?.status === 'success' ? settingsData.data : dict.common.loading;
 
   const { data: historyData, mutate: mutateHistory } = useSWR(
-      showHistory && tableIdParam ? `http://localhost:3000/api/tables/${tableIdParam}/orders` : null,
+      showHistory && tableIdParam ? `${API_URL}/api/tables/${tableIdParam}/orders` : null,
       fetcher,
       { refreshInterval: 5000 }
   );
@@ -82,7 +83,7 @@ export default function CustomerOrder({ dict, lang }: CustomerOrderProps) {
   useEffect(() => {
     if (!tableIdParam) return;
 
-    const socket = io("http://localhost:3000");
+    const socket = io(API_URL);
     
     socket.on("connect", () => { console.log("✅ Customer connected to socket"); });
     
@@ -122,7 +123,7 @@ export default function CustomerOrder({ dict, lang }: CustomerOrderProps) {
     }, false);
 
     try {
-        await fetch(`http://localhost:3000/api/tables/${tableIdParam}/call`, {
+        await fetch(`${API_URL}/api/tables/${tableIdParam}/call`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ isCalling: newStatus })

@@ -1,5 +1,6 @@
 "use client";
 
+import { API_URL } from "@/lib/utils";
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ShoppingCart, X, Plus, Minus, Trash2, Utensils, MessageSquare } from "lucide-react"; 
@@ -25,7 +26,7 @@ export default function FloatingCart({ dict }: FloatingCartProps) {
     if (!confirm(dict.customer.confirmOrderQuestion)) return;
 
     try {
-        const res = await fetch('http://localhost:3000/api/orders', {
+        const res = await fetch(`${API_URL}/api/orders`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

@@ -1,5 +1,6 @@
 "use client";
 
+import { API_URL } from "@/lib/utils";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, User, LogIn, UtensilsCrossed, Globe } from "lucide-react";
@@ -27,7 +28,7 @@ export default function LoginForm({
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:3000/api/login", {
+      const res = await fetch(`${API_URL}/api/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),

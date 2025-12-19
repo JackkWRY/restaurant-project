@@ -1,5 +1,7 @@
 "use client";
 
+import { API_URL } from "@/lib/utils";
+import { APP_CONFIG } from "@/config/constants";
 import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link"; 
 import { useRouter } from "next/navigation"; 
@@ -61,7 +63,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
   const toggleLang = lang === 'en' ? 'th' : 'en';
 
   // --- 1. Main SWR: Fetch All Tables ---
-  const { data: tablesData, mutate: mutateTables, isLoading: loadingTables } = useSWR('http://localhost:3000/api/staff/tables', fetcher, {
+  const { data: tablesData, mutate: mutateTables, isLoading: loadingTables } = useSWR(`${API_URL}/api/staff/tables`, fetcher, {
     refreshInterval: 5000,
     revalidateOnFocus: true,
   });
@@ -72,7 +74,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
 
   // --- 2. Details SWR: Fetch Specific Table Details ---
   const { data: detailsData, mutate: mutateDetails, isLoading: loadingDetails } = useSWR(
-    selectedTableId ? `http://localhost:3000/api/staff/tables/${selectedTableId}` : null,
+    selectedTableId ? `${API_URL}/api/staff/tables/${selectedTableId}` : null,
     fetcher,
     { refreshInterval: 5000 }
   );
@@ -112,7 +114,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
     if (!localStorage.getItem("token")) return;
 
     if (!socketRef.current) {
-        socketRef.current = io("http://localhost:3000");
+        socketRef.current = io(API_URL);
         
         socketRef.current.on("new_order", (newOrder: NewOrderPayload) => {
             mutateTables(); 
@@ -123,7 +125,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
             setNewOrderIds((prev) => [...prev, newOrder.id]); 
 
             try {
-                const audio = new Audio("/sounds/notification.mp3"); 
+                const audio = new Audio(APP_CONFIG.SOUNDS.NOTIFICATION); 
                 audio.play().catch((err) => console.log("Audio play blocked:", err));
             } catch (error) {
                 console.error("Error playing sound:", error);
@@ -135,7 +137,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
 
             if (updatedTable && updatedTable.isCallingStaff) {
                 try {
-                    const audio = new Audio("/sounds/bell_1.mp3");
+                    const audio = new Audio(APP_CONFIG.SOUNDS.BELL_1);
                     audio.play().catch((err) => console.log("Audio play blocked (User must interact first):", err));
                 } catch (error) {
                     console.error("Error playing sound:", error);
@@ -154,7 +156,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
 
             if (item && item.status === 'READY') {
                 try {
-                    const audio = new Audio("/sounds/bell_2.mp3"); 
+                    const audio = new Audio(APP_CONFIG.SOUNDS.BELL_2); 
                     audio.play().catch((err) => console.log("Audio play blocked:", err));
                 } catch (error) {
                     console.error("Error playing sound:", error);
@@ -175,7 +177,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
 
   const handleAcknowledgeCall = async (tableId: number) => {
     try {
-        await fetch(`http://localhost:3000/api/tables/${tableId}/call`, {
+        await fetch(`${API_URL}/api/tables/${tableId}/call`, {
             method: 'PATCH', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ isCalling: false })
         });
@@ -209,7 +211,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
     if (!confirm(`${dict.common.confirm} ${tableName}?`)) return;
 
     try {
-      const res = await fetch(`http://localhost:3000/api/tables/${selectedTableId}/close`, { 
+      const res = await fetch(`${API_URL}/api/tables/${selectedTableId}/close`, { 
         method: 'POST' 
       });
       const data = await res.json();
@@ -228,7 +230,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
   const handleToggleTable = async (tableId: number, currentStatus: boolean, isOccupied: boolean) => {
     if (currentStatus === true && isOccupied) { alert(dict.staff.alertCannotClose); return; }
     try {
-      await fetch(`http://localhost:3000/api/tables/${tableId}/availability`, {
+      await fetch(`${API_URL}/api/tables/${tableId}/availability`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isAvailable: !currentStatus })
       });
@@ -239,7 +241,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
   const handleCreateTable = async () => {
     if (!newTableName.trim()) return;
     try {
-      const res = await fetch(`http://localhost:3000/api/tables`, {
+      const res = await fetch(`${API_URL}/api/tables`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newTableName })
       });
@@ -249,19 +251,19 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
 
   const handleDeleteTable = async (id: number) => {
     if (!confirm(dict.staff.alertConfirmDelete)) return;
-    try { await fetch(`http://localhost:3000/api/tables/${id}`, { method: 'DELETE' }); mutateTables(); } catch (error) { console.error(error); }
+    try { await fetch(`${API_URL}/api/tables/${id}`, { method: 'DELETE' }); mutateTables(); } catch (error) { console.error(error); }
   };
 
   const handleUpdateTableName = async (id: number, oldName: string) => {
     const newName = prompt(dict.staff.promptEditTable, oldName);
     if (!newName || newName === oldName) return;
-    try { await fetch(`http://localhost:3000/api/tables/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newName }) }); mutateTables(); } catch (error) { console.error(error); }
+    try { await fetch(`${API_URL}/api/tables/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newName }) }); mutateTables(); } catch (error) { console.error(error); }
   };
 
   const handleCancelOrder = async (itemId: number, menuName: string) => {
     if(!confirm(`${dict.common.confirm} ${dict.staff.order} "${menuName}" ?`)) return;
     try {
-        const res = await fetch(`http://localhost:3000/api/staff/items/${itemId}/cancel`, { method: 'PATCH' });
+        const res = await fetch(`${API_URL}/api/staff/items/${itemId}/cancel`, { method: 'PATCH' });
         if (res.ok) { mutateDetails(); mutateTables(); }
     } catch (error) { console.error(error); alert(dict.common.error); }
   };
@@ -272,7 +274,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
           return;
       }
       try {
-          const res = await fetch(`http://localhost:3000/api/orders/items/${itemId}/status`, {
+          const res = await fetch(`${API_URL}/api/orders/items/${itemId}/status`, {
               method: 'PATCH', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ status: newStatus })
           });

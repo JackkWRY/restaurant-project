@@ -1,5 +1,6 @@
 "use client";
 
+import { API_URL } from "@/lib/utils";
 import { useEffect, useState, type ChangeEvent } from "react";
 import Link from "next/link";
 import Image from "next/image"; 
@@ -163,7 +164,7 @@ function SettingsManager({ dict }: { dict: Dictionary }) {
     useEffect(() => {
         const fetchSettings = async () => {
             try {
-                const res = await fetch('http://localhost:3000/api/settings/name');
+                const res = await fetch(`${API_URL}/api/settings/name`);
                 const data = await res.json();
                 if (data.status === 'success') setRestaurantName(data.data);
             } catch (error) { console.error(error); }
@@ -175,7 +176,7 @@ function SettingsManager({ dict }: { dict: Dictionary }) {
         e.preventDefault();
         setLoading(true);
         try {
-            const res = await fetch('http://localhost:3000/api/settings/name', {
+            const res = await fetch(`${API_URL}/api/settings/name`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: restaurantName })
@@ -220,14 +221,14 @@ function SettingsManager({ dict }: { dict: Dictionary }) {
 function CategoryManager({ dict }: { dict: Dictionary }) {
     const [newCategoryName, setNewCategoryName] = useState("");
     
-    const { data: catData, mutate } = useSWR('http://localhost:3000/api/categories', fetcher);
+    const { data: catData, mutate } = useSWR(`${API_URL}/api/categories`, fetcher);
     const categories: Category[] = catData?.status === 'success' ? catData.data : [];
     const isLoading = !catData;
 
     const handleCreate = async () => {
         if (!newCategoryName.trim()) return;
         try {
-            await fetch('http://localhost:3000/api/categories', {
+            await fetch(`${API_URL}/api/categories`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ name: newCategoryName })
@@ -240,7 +241,7 @@ function CategoryManager({ dict }: { dict: Dictionary }) {
     const handleDelete = async (id: number) => {
         if (!confirm(dict.admin.confirmDelete)) return;
         try {
-            const res = await fetch(`http://localhost:3000/api/categories/${id}`, { method: 'DELETE' });
+            const res = await fetch(`${API_URL}/api/categories/${id}`, { method: 'DELETE' });
             if (res.ok) mutate();
         } catch (error) { console.error(error); }
     };
@@ -249,7 +250,7 @@ function CategoryManager({ dict }: { dict: Dictionary }) {
         const newName = prompt(dict.admin.promptEdit, oldName);
         if (!newName || newName === oldName) return;
         try {
-            await fetch(`http://localhost:3000/api/categories/${id}`, {
+            await fetch(`${API_URL}/api/categories/${id}`, {
                 method: 'PUT',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ name: newName })
@@ -301,8 +302,8 @@ function CategoryManager({ dict }: { dict: Dictionary }) {
 }
 
 function MenuManager({ dict }: { dict: Dictionary }) {
-    const { data: menusData, mutate: mutateMenus } = useSWR('http://localhost:3000/api/menus/all', fetcher);
-    const { data: catsData } = useSWR('http://localhost:3000/api/categories', fetcher);
+    const { data: menusData, mutate: mutateMenus } = useSWR(`${API_URL}/api/menus/all`, fetcher);
+    const { data: catsData } = useSWR(`${API_URL}/api/categories`, fetcher);
 
     const menus: Menu[] = menusData?.status === 'success' ? menusData.data : [];
     const categories: Category[] = catsData?.status === 'success' ? catsData.data : [];
@@ -357,7 +358,7 @@ function MenuManager({ dict }: { dict: Dictionary }) {
         formData.append("file", file);
 
         try {
-            const res = await fetch("http://localhost:3000/api/upload", {
+            const res = await fetch(`${API_URL}/api/upload`, {
                 method: "POST",
                 body: formData,
             });
@@ -393,13 +394,13 @@ function MenuManager({ dict }: { dict: Dictionary }) {
         try {
             let res;
             if (editingId) {
-                res = await fetch(`http://localhost:3000/api/menus/${editingId}`, {
+                res = await fetch(`${API_URL}/api/menus/${editingId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
             } else {
-                res = await fetch('http://localhost:3000/api/menus', {
+                res = await fetch(`${API_URL}/api/menus`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -419,7 +420,7 @@ function MenuManager({ dict }: { dict: Dictionary }) {
     const handleDelete = async (id: number) => {
         if (!confirm(dict.admin.confirmDelete)) return;
         try {
-            await fetch(`http://localhost:3000/api/menus/${id}`, { method: 'DELETE' });
+            await fetch(`${API_URL}/api/menus/${id}`, { method: 'DELETE' });
             mutateMenus();
         } catch (error) { console.error(error); }
     };
@@ -427,7 +428,7 @@ function MenuManager({ dict }: { dict: Dictionary }) {
     const handleQuickToggle = async (id: number, field: 'isAvailable' | 'isVisible', currentValue: boolean | undefined) => {
         try {
             const newValue = !currentValue;
-            const res = await fetch(`http://localhost:3000/api/menus/${id}`, {
+            const res = await fetch(`${API_URL}/api/menus/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ [field]: newValue }) 

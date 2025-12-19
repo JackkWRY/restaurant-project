@@ -1,3 +1,5 @@
+import { APP_CONFIG } from "@/config/constants";
+
 const en = {
   common: {
     confirm: "Confirm",
@@ -11,7 +13,7 @@ const en = {
     error: "Error",
     dashboard: "Dashboard",
     switchLang: "ภาษาไทย",
-    currency: "฿",
+    currency: APP_CONFIG.CURRENCY,
   },
   auth: {
     title: "Staff Login",
