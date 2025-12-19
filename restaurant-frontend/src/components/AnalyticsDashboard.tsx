@@ -182,16 +182,17 @@ export default function AnalyticsDashboard({ dict }: AnalyticsDashboardProps) {
                         <Receipt size={20} className="text-purple-600"/> {dict.dashboard.recentOrders}
                     </h3>
                 </div>
-                <div className="overflow-x-auto">
+                
+                <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
                     <table className="w-full text-left">
-                        <thead className="bg-slate-50 text-slate-500 text-sm font-semibold">
+                        <thead className="bg-slate-50 text-slate-500 text-sm font-semibold sticky top-0 z-10 shadow-sm">
                             <tr>
-                                <th className="p-4">{dict.dashboard.time}</th>
-                                <th className="p-4">{dict.dashboard.table}</th>
-                                <th className="p-4">{dict.dashboard.items}</th>
-                                <th className="p-4">{dict.dashboard.totalPrice}</th>
-                                <th className="p-4 text-center">{dict.dashboard.status}</th>
-                                <th className="p-4 text-right">{dict.dashboard.view}</th>
+                                <th className="p-4 bg-slate-50">{dict.dashboard.time}</th>
+                                <th className="p-4 bg-slate-50">{dict.dashboard.table}</th>
+                                <th className="p-4 bg-slate-50">{dict.dashboard.items}</th>
+                                <th className="p-4 bg-slate-50">{dict.dashboard.totalPrice}</th>
+                                <th className="p-4 text-center bg-slate-50">{dict.dashboard.status}</th>
+                                <th className="p-4 text-right bg-slate-50">{dict.dashboard.view}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -231,6 +232,8 @@ export default function AnalyticsDashboard({ dict }: AnalyticsDashboardProps) {
                                                 <span className={`px-2 py-1 rounded-full text-xs font-bold border ${
                                                     order.status === 'COMPLETED' 
                                                     ? 'bg-green-100 text-green-700 border-green-200' 
+                                                    : order.status === 'PAID'
+                                                    ? 'bg-blue-100 text-blue-700 border-blue-200'
                                                     : order.status === 'PENDING'
                                                     ? 'bg-yellow-100 text-yellow-700 border-yellow-200'
                                                     : 'bg-slate-100 text-slate-600 border-slate-200'
