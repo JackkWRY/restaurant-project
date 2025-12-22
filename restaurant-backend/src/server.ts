@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { createServer } from 'node:http';
 import { Server } from 'socket.io';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 
 import prisma from './prisma.js';
 import authRoutes from './routes/authRoutes.js';
@@ -23,15 +25,46 @@ const PORT = Number(process.env.PORT) || 3000;
 
 const httpServer = createServer(app);
 
+const allowedOrigins = [
+  'http://localhost:3001',
+  process.env.CLIENT_URL || ''
+];
+
 const io = new Server(httpServer, {
   cors: {
-    origin: "*",
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: ["GET", "POST"]
   }
 });
 
-// Middleware
-app.use(cors());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  message: 'Too many requests from this IP, please try again later.'
+});
+app.use(limiter);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
+
 app.use(express.json());
 
 app.set('io', io);
@@ -58,11 +91,11 @@ app.use('/api', billRoutes);
 
 // Home Route
 app.get('/', (req: Request, res: Response) => {
-  res.send('<h1>Restaurant API is running! (TypeScript + Socket.io 🚀)</h1>');
+  res.send('<h1>Restaurant API is running! (TypeScript + Socket.io 🚀) [Secured]</h1>');
 });
 
 // Test DB Route
-app.get('/api/tables', async (req: Request, res: Response) => {
+app.get('/api/tables-test', async (req: Request, res: Response) => {
   try {
     const tables = await prisma.table.findMany();
     res.json({ status: 'success', data: tables });
@@ -72,6 +105,7 @@ app.get('/api/tables', async (req: Request, res: Response) => {
   }
 });
 
+// Start Server
 httpServer.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server is running on http://localhost:${PORT}`);
 });

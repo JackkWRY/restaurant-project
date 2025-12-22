@@ -2,14 +2,23 @@
 
 import { API_URL } from "@/lib/utils";
 import { useEffect, useState, type ChangeEvent } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import Image from "next/image"; 
 import { useRouter } from "next/navigation";
 import { Plus, Pencil, Trash2, List, Utensils, X, Image as ImageIcon, Save, Settings, Eye, EyeOff, LogOut, Globe, BarChart3, History } from "lucide-react";
 import useSWR from "swr";
 import type { Dictionary } from "@/locales/dictionary";
-import AnalyticsDashboard from "./AnalyticsDashboard";
 import HistoryDashboard from "./HistoryDashboard";
+
+const AnalyticsDashboard = dynamic(() => import("./AnalyticsDashboard"), {
+  loading: () => (
+    <div className="h-[400px] flex items-center justify-center text-slate-400 bg-slate-50 rounded-xl border border-dashed animate-pulse">
+      Loading Charts...
+    </div>
+  ),
+  ssr: false
+});
 
 // --- Types ---
 interface Category {

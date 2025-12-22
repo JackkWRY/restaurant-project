@@ -48,6 +48,9 @@ model Menu {
   categoryId    Int
   category      Category    @relation(fields: [categoryId], references: [id])
   orderItems    OrderItem[]
+
+  @@index([categoryId])
+  @@index([isRecommended])
 }
 
 // --------------------------------------------------------
@@ -60,8 +63,8 @@ model Table {
   isOccupied     Boolean @default(false)
   isAvailable    Boolean @default(true)
   isCallingStaff Boolean @default(false)
-  orders Order[]
-  bills  Bill[]
+  orders         Order[]
+  bills          Bill[]
 }
 
 // --------------------------------------------------------
@@ -78,6 +81,10 @@ model Bill {
   tableId       Int
   table         Table      @relation(fields: [tableId], references: [id])
   orders        Order[]
+
+  @@index([status])
+  @@index([closedAt])
+  @@index([tableId])
 }
 
 // --------------------------------------------------------
@@ -91,8 +98,13 @@ model Order {
   tableId    Int
   table      Table       @relation(fields: [tableId], references: [id])
   items      OrderItem[]
-  billId     String?     
+  billId     String?
   bill       Bill?       @relation(fields: [billId], references: [id])
+
+  @@index([status])
+  @@index([tableId])
+  @@index([billId])
+  @@index([createdAt])
 }
 
 // --------------------------------------------------------
@@ -104,11 +116,14 @@ model OrderItem {
   note     String?
   status   OrderStatus @default(PENDING)
 
-  menuId   Int
-  menu     Menu        @relation(fields: [menuId], references: [id])
+  menuId Int
+  menu   Menu @relation(fields: [menuId], references: [id])
 
-  orderId  Int
-  order    Order       @relation(fields: [orderId], references: [id])
+  orderId Int
+  order   Order @relation(fields: [orderId], references: [id])
+
+  @@index([menuId])
+  @@index([status])
 }
 
 // --------------------------------------------------------
