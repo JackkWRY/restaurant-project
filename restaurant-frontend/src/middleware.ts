@@ -4,6 +4,8 @@ import type { NextRequest } from "next/server";
 const locales = ["en", "th"];
 const defaultLocale = "en";
 
+const protectedPaths = ["/admin", "/staff", "/kitchen"];
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -19,12 +21,25 @@ export function middleware(request: NextRequest) {
     (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
   );
 
-  if (pathnameHasLocale) return;
-
-  const locale = defaultLocale;
-  request.nextUrl.pathname = `/${locale}${pathname}`;
+  let locale = defaultLocale;
   
-  return NextResponse.redirect(request.nextUrl);
+  if (pathnameHasLocale) {
+    locale = pathname.split('/')[1];
+  } else {
+    request.nextUrl.pathname = `/${locale}${pathname}`;
+    return NextResponse.redirect(request.nextUrl);
+  }
+
+  const isProtected = protectedPaths.some((path) => pathname.includes(path));
+  
+  const token = request.cookies.get("token");
+
+  if (isProtected && !token) {
+    const loginUrl = new URL(`/${locale}/login`, request.url);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  return;
 }
 
 export const config = {

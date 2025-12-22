@@ -40,6 +40,8 @@ export default function LoginForm({
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
         
+        document.cookie = `token=${data.token}; path=/; max-age=86400; SameSite=Lax`;
+
         if (data.user.role === 'ADMIN') {
             router.push(`/${lang}/admin`);
         } else if (data.user.role === 'KITCHEN') {
