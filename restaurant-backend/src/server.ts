@@ -94,17 +94,6 @@ app.get('/', (req: Request, res: Response) => {
   res.send('<h1>Restaurant API is running! (TypeScript + Socket.io 🚀) [Secured]</h1>');
 });
 
-// Test DB Route
-app.get('/api/tables-test', async (req: Request, res: Response) => {
-  try {
-    const tables = await prisma.table.findMany();
-    res.json({ status: 'success', data: tables });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Database connection failed' });
-  }
-});
-
 // Start Server
 httpServer.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server is running on http://localhost:${PORT}`);
