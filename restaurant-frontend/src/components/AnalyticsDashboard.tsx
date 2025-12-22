@@ -2,6 +2,7 @@
 
 import { API_URL, fetcher } from "@/lib/utils";
 import { APP_CONFIG } from "@/config/constants";
+import { ORDER_STATUS, BILL_STATUS } from "@/config/enums"; 
 import { useState } from 'react';
 import useSWR from 'swr';
 import { 
@@ -219,7 +220,7 @@ export default function AnalyticsDashboard({ dict }: AnalyticsDashboardProps) {
                                             <td className="p-4">
                                                 <div className="text-sm text-slate-600">
                                                     {order.items.slice(0, 2).map((item, idx) => (
-                                                        <div key={idx} className={item.status === 'CANCELLED' ? 'line-through opacity-50 text-red-400' : ''}>
+                                                        <div key={idx} className={item.status === ORDER_STATUS.CANCELLED ? 'line-through opacity-50 text-red-400' : ''}>
                                                             {item.quantity}x {item.menuName}
                                                         </div>
                                                     ))}
@@ -231,11 +232,11 @@ export default function AnalyticsDashboard({ dict }: AnalyticsDashboardProps) {
                                             </td>
                                             <td className="p-4 text-center">
                                                 <span className={`px-2 py-1 rounded-full text-xs font-bold border ${
-                                                    order.status === 'COMPLETED' 
+                                                    order.status === ORDER_STATUS.COMPLETED 
                                                     ? 'bg-green-100 text-green-700 border-green-200' 
-                                                    : order.status === 'PAID'
+                                                    : order.status === BILL_STATUS.PAID
                                                     ? 'bg-blue-100 text-blue-700 border-blue-200'
-                                                    : order.status === 'PENDING'
+                                                    : order.status === ORDER_STATUS.PENDING
                                                     ? 'bg-yellow-100 text-yellow-700 border-yellow-200'
                                                     : 'bg-slate-100 text-slate-600 border-slate-200'
                                                 }`}>
@@ -296,9 +297,9 @@ export default function AnalyticsDashboard({ dict }: AnalyticsDashboardProps) {
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {selectedOrder.items.map((item, idx) => (
-                                        <tr key={idx} className={item.status === 'CANCELLED' ? 'bg-red-50/50' : ''}>
+                                        <tr key={idx} className={item.status === ORDER_STATUS.CANCELLED ? 'bg-red-50/50' : ''}>
                                             <td className="py-3">
-                                                <div className={`font-medium ${item.status === 'CANCELLED' ? 'text-red-400 line-through' : 'text-slate-800'}`}>
+                                                <div className={`font-medium ${item.status === ORDER_STATUS.CANCELLED ? 'text-red-400 line-through' : 'text-slate-800'}`}>
                                                     {item.menuName}
                                                 </div>
                                                 
@@ -308,17 +309,17 @@ export default function AnalyticsDashboard({ dict }: AnalyticsDashboardProps) {
                                                     </div>
                                                 )}
 
-                                                {item.status === 'CANCELLED' && (
+                                                {item.status === ORDER_STATUS.CANCELLED && (
                                                     <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-bold mt-1 inline-block">
                                                         Cancelled
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className={`py-3 text-center ${item.status === 'CANCELLED' ? 'text-red-300' : 'text-slate-600'}`}>
+                                            <td className={`py-3 text-center ${item.status === ORDER_STATUS.CANCELLED ? 'text-red-300' : 'text-slate-600'}`}>
                                                 x{item.quantity}
                                             </td>
                                             <td className="py-3 text-right font-bold">
-                                                {item.status === 'CANCELLED' ? (
+                                                {item.status === ORDER_STATUS.CANCELLED ? (
                                                     <span className="text-slate-300 line-through">฿{(item.price * item.quantity).toLocaleString()}</span>
                                                 ) : (
                                                     <span className="text-slate-800">฿{(item.price * item.quantity).toLocaleString()}</span>

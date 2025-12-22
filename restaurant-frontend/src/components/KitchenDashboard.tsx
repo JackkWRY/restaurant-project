@@ -2,7 +2,7 @@
 
 import { API_URL, fetcher } from "@/lib/utils";
 import { APP_CONFIG } from "@/config/constants";
-import { ORDER_STATUS } from "@/config/enums";
+import { ORDER_STATUS, ROLE } from "@/config/enums";
 import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link"; 
 import { useRouter } from "next/navigation"; 
@@ -69,7 +69,11 @@ export default function KitchenDashboard({ dict, lang }: KitchenDashboardProps) 
     const orders: RawOrder[] = swrData.data;
     return orders.flatMap((order) => 
       order.items
-        .filter((item) => item.status !== 'CANCELLED' && item.status !== 'SERVED' && item.status !== 'COMPLETED')
+        .filter((item) => 
+            item.status !== ORDER_STATUS.CANCELLED && 
+            item.status !== ORDER_STATUS.SERVED && 
+            item.status !== ORDER_STATUS.COMPLETED
+        )
         .map((item) => ({
           id: item.id,
           orderId: order.id,
@@ -176,7 +180,7 @@ export default function KitchenDashboard({ dict, lang }: KitchenDashboardProps) 
         </h1>
         <div className="flex items-center gap-2">
             
-            {userRole === 'ADMIN' && (
+            {userRole === ROLE.ADMIN && (
                 <Link href={`/${lang}/admin`} className="bg-purple-600 hover:bg-purple-700 p-2 rounded-full transition-colors" title={dict.admin.title}>
                     <LayoutDashboard size={20} />
                 </Link>

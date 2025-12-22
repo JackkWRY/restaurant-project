@@ -6,14 +6,15 @@ export const createOrder = async (req: Request, res: Response) => {
     try {
     const { tableId, items } = req.body;
 
-    if (!tableId || !items || items.length === 0) {
-      res.status(400).json({ error: 'Missing tableId or items' });
-      return;
-    }
-
     const table = await prisma.table.findUnique({ where: { id: Number(tableId) } });
-    if (!table) { res.status(404).json({ error: 'Table not found' }); return; }
-    if (!table.isAvailable) { res.status(400).json({ error: 'Table closed' }); return; }
+    if (!table) { 
+        res.status(404).json({ error: 'Table not found' }); 
+        return; 
+    }
+    if (!table.isAvailable) { 
+        res.status(400).json({ error: 'Table closed' }); 
+        return; 
+    }
 
     let currentOrderTotal = 0;
     for (const item of items) {
@@ -59,7 +60,7 @@ export const createOrder = async (req: Request, res: Response) => {
             menuId: Number(item.menuId), 
             quantity: item.quantity,
             note: item.note || '',
-            status: OrderStatus.PENDING 
+            status: OrderStatus.PENDING
           })),
         },
       },
@@ -84,7 +85,7 @@ export const createOrder = async (req: Request, res: Response) => {
 export const updateOrderStatus = async (req: Request, res: Response) => {
   try {
     const { id } = req.params; 
-    const { status } = req.body; 
+    const { status } = req.body;
 
     const updatedOrder = await prisma.order.update({
       where: { id: Number(id) },

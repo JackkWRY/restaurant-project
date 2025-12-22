@@ -4,6 +4,7 @@ import { API_URL } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Calendar, Search, FileText, DollarSign, Eye, X, Receipt, StickyNote } from "lucide-react"; 
 import dayjs from "dayjs";
+import { ORDER_STATUS } from "@/config/enums";
 import type { Dictionary } from "@/locales/dictionary";
 
 interface BillItem {
@@ -220,9 +221,9 @@ export default function HistoryDashboard({ dict }: HistoryDashboardProps) {
                           </thead>
                           <tbody className="divide-y divide-slate-100">
                               {selectedBill.items.map((item, index) => (
-                                  <tr key={index} className={`group ${item.status === 'CANCELLED' ? 'opacity-50' : ''}`}>
+                                  <tr key={index} className={`group ${item.status === ORDER_STATUS.CANCELLED ? 'opacity-50' : ''}`}>
                                       <td className="py-3 pr-2">
-                                          <div className={`font-bold ${item.status === 'CANCELLED' ? 'text-red-500 line-through' : 'text-slate-700'}`}>
+                                          <div className={`font-bold ${item.status === ORDER_STATUS.CANCELLED ? 'text-red-500 line-through' : 'text-slate-700'}`}>
                                             {item.name}
                                           </div>
                                           
@@ -232,7 +233,7 @@ export default function HistoryDashboard({ dict }: HistoryDashboardProps) {
                                             </div>
                                           )}
 
-                                          {item.status === 'CANCELLED' && (
+                                          {item.status === ORDER_STATUS.CANCELLED && (
                                             <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-bold mt-1 inline-block">
                                                 CANCELLED
                                             </span>
@@ -242,12 +243,12 @@ export default function HistoryDashboard({ dict }: HistoryDashboardProps) {
                                       </td>
                                       
                                       <td className="py-3 text-center">
-                                          <span className={`font-bold rounded-lg px-2 py-1 ${item.status === 'CANCELLED' ? 'bg-red-50 text-red-400 line-through' : 'bg-slate-50 text-slate-600'}`}>
+                                          <span className={`font-bold rounded-lg px-2 py-1 ${item.status === ORDER_STATUS.CANCELLED ? 'bg-red-50 text-red-400 line-through' : 'bg-slate-50 text-slate-600'}`}>
                                             x{item.quantity}
                                           </span>
                                       </td>
                                       
-                                      <td className={`py-3 text-right font-bold ${item.status === 'CANCELLED' ? 'text-slate-300 line-through' : 'text-slate-800'}`}>
+                                      <td className={`py-3 text-right font-bold ${item.status === ORDER_STATUS.CANCELLED ? 'text-slate-300 line-through' : 'text-slate-800'}`}>
                                           {dict.common?.currency}{item.subtotal.toLocaleString()}
                                       </td>
                                   </tr>

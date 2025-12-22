@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import prisma from '../prisma.js';
+import { BillStatus, OrderStatus } from '../config/enums.js';
 
 export const getTableBill = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -8,7 +9,7 @@ export const getTableBill = async (req: Request, res: Response): Promise<void> =
         const activeBill = await prisma.bill.findFirst({
             where: {
                 tableId: Number(tableId),
-                status: 'OPEN'
+                status: BillStatus.OPEN
             },
             include: {
                 orders: {
@@ -38,7 +39,7 @@ export const getTableBill = async (req: Request, res: Response): Promise<void> =
         );
 
         const totalAmount = allItems.reduce((sum, item) => {
-            return item.status === 'CANCELLED' ? sum : sum + item.total;
+            return item.status === OrderStatus.CANCELLED ? sum : sum + item.total;
         }, 0);
 
         res.json({
@@ -64,7 +65,7 @@ export const checkoutTable = async (req: Request, res: Response): Promise<void> 
         const activeBill = await prisma.bill.findFirst({
             where: {
                 tableId: Number(tableId),
-                status: 'OPEN'
+                status: BillStatus.OPEN
             },
             include: { orders: { include: { items: { include: { menu: true } } } } }
         });
@@ -77,7 +78,7 @@ export const checkoutTable = async (req: Request, res: Response): Promise<void> 
         let finalTotal = 0;
         activeBill.orders.forEach(order => {
             order.items.forEach(item => {
-                if (item.status !== 'CANCELLED') {
+                if (item.status !== OrderStatus.CANCELLED) {
                     finalTotal += Number(item.menu.price) * item.quantity;
                 }
             });
@@ -86,7 +87,7 @@ export const checkoutTable = async (req: Request, res: Response): Promise<void> 
         await prisma.bill.update({
             where: { id: activeBill.id },
             data: {
-                status: 'PAID',
+                status: BillStatus.PAID,
                 closedAt: new Date(),
                 totalPrice: finalTotal,
                 paymentMethod: paymentMethod || 'CASH'

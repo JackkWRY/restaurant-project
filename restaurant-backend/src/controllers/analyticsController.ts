@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import { PrismaClient, Prisma } from '@prisma/client';
+import { BillStatus, OrderStatus } from '../config/enums.js';
 import dayjs from 'dayjs';
 
 const prisma = new PrismaClient();
@@ -27,14 +28,14 @@ export const getAnalyticsSummary = async (req: Request, res: Response): Promise<
             _count: { id: true },
             where: {
                 closedAt: { gte: today },
-                status: 'PAID'
+                status: BillStatus.PAID
             }
         });
 
         const pastBills = await prisma.bill.findMany({
             where: {
                 closedAt: { gte: sevenDaysAgo },
-                status: 'PAID'
+                status: BillStatus.PAID
             },
             select: {
                 closedAt: true,
@@ -57,7 +58,7 @@ export const getAnalyticsSummary = async (req: Request, res: Response): Promise<
         const topItemsGrouped = await prisma.orderItem.groupBy({
             by: ['menuId'],
             _sum: { quantity: true },
-            where: { status: { not: 'CANCELLED' } },
+            where: { status: { not: OrderStatus.CANCELLED } },
             orderBy: { _sum: { quantity: 'desc' } },
             take: 5
         });
@@ -131,11 +132,11 @@ export const getDailyBills = async (req: Request, res: Response): Promise<void> 
             );
 
             let displayTotal = 0;
-            if (bill.status === 'PAID') {
+            if (bill.status === BillStatus.PAID) {
                 displayTotal = Number(bill.totalPrice);
             } else {
                 displayTotal = allItems.reduce((sum, item) => {
-                    if (item.status === 'CANCELLED') return sum;
+                    if (item.status === OrderStatus.CANCELLED) return sum;
                     return sum + (item.price * item.quantity);
                 }, 0);
             }
@@ -171,7 +172,7 @@ export const getBillHistory = async (req: Request, res: Response): Promise<void>
 
         const bills = await prisma.bill.findMany({
             where: {
-                status: 'PAID',
+                status: BillStatus.PAID,
                 closedAt: {
                     gte: start,
                     lte: end
@@ -208,7 +209,7 @@ export const getBillHistory = async (req: Request, res: Response): Promise<void>
                     name: item.menu.nameTH,
                     price: Number(item.menu.price),
                     quantity: item.quantity,
-                    subtotal: item.status === 'CANCELLED' ? 0 : (Number(item.menu.price) * item.quantity),
+                    subtotal: item.status === OrderStatus.CANCELLED ? 0 : (Number(item.menu.price) * item.quantity),
                     status: item.status,
                     note: item.note
                 }))

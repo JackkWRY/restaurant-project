@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Lock, User, LogIn, UtensilsCrossed, Globe } from "lucide-react";
 import type { Dictionary } from "@/locales/dictionary";
 import Link from "next/link";
+import { ROLE } from "@/config/enums";
 
 export default function LoginForm({ 
   dict, 
@@ -42,9 +43,9 @@ export default function LoginForm({
         
         document.cookie = `token=${data.token}; path=/; max-age=86400; SameSite=Lax`;
 
-        if (data.user.role === 'ADMIN') {
+        if (data.user.role === ROLE.ADMIN) {
             router.push(`/${lang}/admin`);
-        } else if (data.user.role === 'KITCHEN') {
+        } else if (data.user.role === ROLE.KITCHEN) {
             router.push(`/${lang}/kitchen`);
         } else {
             router.push(`/${lang}/staff`);

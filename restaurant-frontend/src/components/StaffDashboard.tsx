@@ -2,7 +2,7 @@
 
 import { API_URL, fetcher } from "@/lib/utils";
 import { APP_CONFIG } from "@/config/constants";
-import { ORDER_STATUS } from "@/config/enums";
+import { ORDER_STATUS, ROLE } from "@/config/enums";
 import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link"; 
 import { useRouter } from "next/navigation"; 
@@ -268,7 +268,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
   };
 
   const handleChangeStatus = async (itemId: number, newStatus: string, menuName: string) => {
-      if (newStatus === 'CANCELLED') {
+      if (newStatus === ORDER_STATUS.CANCELLED) {
           handleCancelOrder(itemId, menuName);
           return;
       }
@@ -311,7 +311,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
         
         <div className="flex items-center gap-4"> 
             
-             {userRole === 'ADMIN' && (
+             {userRole === ROLE.ADMIN && (
                 <Link href={`/${lang}/admin`} className="text-sm font-medium text-slate-500 hover:text-slate-900 flex items-center gap-2 transition-colors">
                     <LayoutDashboard size={18} /> <span className="hidden md:inline">Dashboard</span>
                 </Link>
@@ -514,7 +514,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
                  <div className="space-y-4">
                     <div className="space-y-2">
                         {tableDetails.map((item, idx) => {
-                           const isCancelled = item.status === 'CANCELLED';
+                           const isCancelled = item.status === ORDER_STATUS.CANCELLED;
                            return (
                              <div key={idx} className={`flex justify-between text-sm border-b border-dashed border-slate-200 pb-2 ${isCancelled ? 'bg-slate-50' : ''}`}>
                                 <div className="flex-1">
