@@ -1,0 +1,20 @@
+export enum ORDER_STATUS {
+  PENDING = 'PENDING',
+  COOKING = 'COOKING',
+  READY = 'READY',
+  SERVED = 'SERVED',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED'
+}
+
+export enum BILL_STATUS {
+  OPEN = 'OPEN',
+  PAID = 'PAID',
+  CANCELLED = 'CANCELLED'
+}
+
+export enum ROLE {
+  ADMIN = 'ADMIN',
+  STAFF = 'STAFF',
+  KITCHEN = 'KITCHEN'
+}

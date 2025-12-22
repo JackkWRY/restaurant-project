@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import prisma from '../prisma.js';
+import { OrderStatus, BillStatus } from '../config/enums.js';
 
 export const createOrder = async (req: Request, res: Response) => {
     try {
@@ -23,7 +24,7 @@ export const createOrder = async (req: Request, res: Response) => {
     let activeBill = await prisma.bill.findFirst({
         where: {
             tableId: Number(tableId),
-            status: 'OPEN'
+            status: BillStatus.OPEN
         }
     });
 
@@ -31,7 +32,7 @@ export const createOrder = async (req: Request, res: Response) => {
         activeBill = await prisma.bill.create({
             data: {
                 tableId: Number(tableId),
-                status: 'OPEN',
+                status: BillStatus.OPEN,
                 totalPrice: 0
             }
         });
@@ -51,13 +52,14 @@ export const createOrder = async (req: Request, res: Response) => {
       data: {
         tableId: Number(tableId),
         totalPrice: currentOrderTotal,
-        status: 'PENDING',
+        status: OrderStatus.PENDING,
         billId: activeBill.id,
         items: {
           create: items.map((item: any) => ({
             menuId: Number(item.menuId), 
             quantity: item.quantity,
             note: item.note || '',
+            status: OrderStatus.PENDING 
           })),
         },
       },
@@ -90,7 +92,7 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
         status: status,
         items: {
           updateMany: {
-            where: { status: { not: 'CANCELLED' } },
+            where: { status: { not: OrderStatus.CANCELLED } },
             data: { status: status }
           }
         }
@@ -98,7 +100,7 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
       include: {
         table: true,
         items: { 
-          where: { status: { not: 'CANCELLED' } },
+          where: { status: { not: OrderStatus.CANCELLED } },
           include: { menu: true } 
         }
       }
@@ -119,11 +121,11 @@ export const getActiveOrders = async (req: Request, res: Response) => {
   try {
     const orders = await prisma.order.findMany({
       where: {
-        status: { in: ['PENDING', 'COOKING', 'READY'] } 
+        status: { in: [OrderStatus.PENDING, OrderStatus.COOKING, OrderStatus.READY] } 
       },
       include: {
         items: { 
-          where: { status: { not: 'CANCELLED' } }, 
+          where: { status: { not: OrderStatus.CANCELLED } },
           include: { menu: true } 
         },
         table: true
@@ -133,7 +135,7 @@ export const getActiveOrders = async (req: Request, res: Response) => {
 
     const validOrders = orders.filter(order => order.items.length > 0);
 
-    res.json({ status: 'success', data: orders });
+    res.json({ status: 'success', data: validOrders });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to fetch active orders' });

@@ -2,6 +2,7 @@
 
 import { API_URL, fetcher } from "@/lib/utils";
 import { APP_CONFIG } from "@/config/constants";
+import { ORDER_STATUS } from "@/config/enums";
 import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link"; 
 import { useRouter } from "next/navigation"; 
@@ -12,7 +13,7 @@ import { Clock, ChefHat, BellRing, LogOut, LayoutDashboard, Globe } from "lucide
 import type { Dictionary } from "@/locales/dictionary";
 
 // --- Types ---
-type ItemStatus = 'PENDING' | 'COOKING' | 'READY' | 'SERVED' | 'COMPLETED' | 'CANCELLED';
+type ItemStatus = ORDER_STATUS;
 
 interface RawOrderItem {
   id: number;
@@ -156,9 +157,9 @@ export default function KitchenDashboard({ dict, lang }: KitchenDashboardProps) 
     }
   };
 
-  const pendingItems = items.filter(i => i.status === 'PENDING');
-  const cookingItems = items.filter(i => i.status === 'COOKING');
-  const readyItems = items.filter(i => i.status === 'READY');
+  const pendingItems = items.filter(i => i.status === ORDER_STATUS.PENDING);
+  const cookingItems = items.filter(i => i.status === ORDER_STATUS.COOKING);
+  const readyItems = items.filter(i => i.status === ORDER_STATUS.READY);
 
   if (isLoading) return <div className="min-h-screen bg-slate-900 text-white flex justify-center items-center">{dict.common.loading}</div>;
   
@@ -208,7 +209,7 @@ export default function KitchenDashboard({ dict, lang }: KitchenDashboardProps) 
                     <KitchenCard key={item.id} item={item} 
                         btnLabel={`🔥 ${dict.kitchen.startCook}`} 
                         btnColor="bg-yellow-600 hover:bg-yellow-700" 
-                        onAction={() => handleUpdateStatus(item.id, 'COOKING')} 
+                        onAction={() => handleUpdateStatus(item.id, ORDER_STATUS.COOKING)} 
                     />
                 ))}
             </div>
@@ -225,7 +226,7 @@ export default function KitchenDashboard({ dict, lang }: KitchenDashboardProps) 
                     <KitchenCard key={item.id} item={item} 
                         btnLabel={`✅ ${dict.kitchen.finishCook}`} 
                         btnColor="bg-orange-600 hover:bg-orange-700" 
-                        onAction={() => handleUpdateStatus(item.id, 'READY')} 
+                        onAction={() => handleUpdateStatus(item.id, ORDER_STATUS.READY)}
                     />
                 ))}
             </div>
@@ -242,7 +243,7 @@ export default function KitchenDashboard({ dict, lang }: KitchenDashboardProps) 
                     <KitchenCard key={item.id} item={item} 
                         btnLabel={`🚀 ${dict.kitchen.served}`} 
                         btnColor="bg-green-600 hover:bg-green-700 shadow-green-900/20" 
-                        onAction={() => handleUpdateStatus(item.id, 'SERVED')} 
+                        onAction={() => handleUpdateStatus(item.id, ORDER_STATUS.SERVED)} 
                     />
                 ))}
             </div>

@@ -2,6 +2,7 @@
 
 import { API_URL, fetcher } from "@/lib/utils";
 import { APP_CONFIG } from "@/config/constants";
+import { ORDER_STATUS } from "@/config/enums";
 import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link"; 
 import { useRouter } from "next/navigation"; 
@@ -283,20 +284,22 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-        case 'PENDING': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-        case 'COOKING': return 'text-orange-600 bg-orange-50 border-orange-200';
-        case 'READY': return 'text-green-600 bg-green-50 border-green-200 font-bold';
-        case 'SERVED': return 'text-blue-700 bg-blue-50 border-blue-200 font-bold';
-        case 'COMPLETED': return 'text-slate-500 bg-slate-50 border-slate-200';
-        case 'CANCELLED': return 'text-red-500 bg-red-50 border-red-200 line-through';
+        case ORDER_STATUS.PENDING: return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+        case ORDER_STATUS.COOKING: return 'text-orange-600 bg-orange-50 border-orange-200';
+        case ORDER_STATUS.READY: return 'text-green-600 bg-green-50 border-green-200 font-bold';
+        case ORDER_STATUS.SERVED: return 'text-blue-700 bg-blue-50 border-blue-200 font-bold';
+        case ORDER_STATUS.COMPLETED: return 'text-slate-500 bg-slate-50 border-slate-200';
+        case ORDER_STATUS.CANCELLED: return 'text-red-500 bg-red-50 border-red-200 line-through';
         default: return 'text-slate-500';
     }
   };
 
   // Calculations for Receipt/Details
-  const validItems = useMemo(() => tableDetails.filter(i => i.status !== 'CANCELLED'), [tableDetails]);
+  const validItems = useMemo(() => tableDetails.filter(i => i.status !== ORDER_STATUS.CANCELLED), [tableDetails]);
   const totalAmount = useMemo(() => validItems.reduce((sum, i) => sum + i.total, 0), [validItems]);
-  const unservedCount = useMemo(() => validItems.filter(i => !['SERVED', 'COMPLETED'].includes(i.status)).length, [validItems]);
+  const unservedCount = useMemo(() => validItems.filter(i => 
+    ![ORDER_STATUS.SERVED, ORDER_STATUS.COMPLETED].includes(i.status as ORDER_STATUS)
+  ).length, [validItems]);
 
   return (
     <main className="min-h-screen bg-slate-100 p-6 relative">
@@ -444,7 +447,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
                   </thead>
                   <tbody className="divide-y">
                     {tableDetails.map((item, idx) => {
-                      const isCancelled = item.status === 'CANCELLED';
+                      const isCancelled = item.status === ORDER_STATUS.CANCELLED;
                       const isNewItem = newOrderIds.includes(item.orderId);
                       const statusColor = getStatusColor(item.status);
                       return (
@@ -467,11 +470,11 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
                                         onChange={(e) => handleChangeStatus(item.id, e.target.value, item.menuName)} 
                                         className={`text-xs border rounded p-1 font-bold outline-none cursor-pointer ${statusColor}`}
                                     >
-                                        <option value="PENDING">🕒 {dict.kitchen.pending}</option>
-                                        <option value="COOKING">🍳 {dict.kitchen.cooking}</option>
-                                        <option value="READY">✨ {dict.kitchen.ready}</option>
-                                        <option value="SERVED">✅ {dict.kitchen.served}</option>
-                                        <option value="CANCELLED">❌ {dict.common.cancel}</option>
+                                        <option value={ORDER_STATUS.PENDING}>🕒 {dict.kitchen.pending}</option>
+                                        <option value={ORDER_STATUS.COOKING}>🍳 {dict.kitchen.cooking}</option>
+                                        <option value={ORDER_STATUS.READY}>✨ {dict.kitchen.ready}</option>
+                                        <option value={ORDER_STATUS.SERVED}>✅ {dict.kitchen.served}</option>
+                                        <option value={ORDER_STATUS.CANCELLED}>❌ {dict.common.cancel}</option>
                                     </select>
                                 ) : <span className="text-xs text-red-500 font-bold border border-red-200 bg-red-50 px-2 py-1 rounded">{dict.staff.statusCancelled}</span>}
                             </td>

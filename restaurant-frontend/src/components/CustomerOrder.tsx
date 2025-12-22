@@ -1,6 +1,7 @@
 "use client";
 
 import { API_URL, fetcher } from "@/lib/utils";
+import { ORDER_STATUS } from "@/config/enums";
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { io } from "socket.io-client"; 
@@ -140,12 +141,12 @@ export default function CustomerOrder({ dict, lang }: CustomerOrderProps) {
 
   const getStatusDisplay = (status: string) => {
     switch (status) {
-        case 'PENDING': return { label: `🕒 ${dict.kitchen.pending}`, color: 'text-yellow-600' };
-        case 'COOKING': return { label: `🍳 ${dict.kitchen.cooking}`, color: 'text-orange-600' };
-        case 'READY': return { label: `✨ ${dict.kitchen.ready}`, color: 'text-green-600 animate-pulse font-bold' };
-        case 'SERVED': return { label: `✅ ${dict.kitchen.served}`, color: 'text-green-700 font-bold' };
-        case 'COMPLETED': return { label: `💰 ${dict.customer.statusCompleted}`, color: 'text-slate-500' };
-        case 'CANCELLED': return { label: `❌ ${dict.staff.statusCancelled}`, color: 'text-red-500 font-bold' };
+        case ORDER_STATUS.PENDING: return { label: `🕒 ${dict.kitchen.pending}`, color: 'text-yellow-600' };
+        case ORDER_STATUS.COOKING: return { label: `🍳 ${dict.kitchen.cooking}`, color: 'text-orange-600' };
+        case ORDER_STATUS.READY: return { label: `✨ ${dict.kitchen.ready}`, color: 'text-green-600 animate-pulse font-bold' };
+        case ORDER_STATUS.SERVED: return { label: `✅ ${dict.kitchen.served}`, color: 'text-green-700 font-bold' };
+        case ORDER_STATUS.COMPLETED: return { label: `💰 ${dict.customer.statusCompleted}`, color: 'text-slate-500' };
+        case ORDER_STATUS.CANCELLED: return { label: `❌ ${dict.staff.statusCancelled}`, color: 'text-red-500 font-bold' };
         default: return { label: status, color: 'text-slate-500' };
     }
   };
@@ -251,7 +252,7 @@ export default function CustomerOrder({ dict, lang }: CustomerOrderProps) {
                         <div className="space-y-3">
                             {historyItems.map((item, idx) => {
                                 const { label, color } = getStatusDisplay(item.status);
-                                const isCancelled = item.status === 'CANCELLED';
+                                const isCancelled = item.status === ORDER_STATUS.CANCELLED;
                                 return (
                                     <div key={idx} className={`flex justify-between items-start border-b pb-3 last:border-0 ${isCancelled ? 'bg-slate-50 opacity-60' : ''}`}>
                                         <div className="flex-1 min-w-0">
@@ -287,7 +288,7 @@ export default function CustomerOrder({ dict, lang }: CustomerOrderProps) {
                         <span>{dict.staff.total}</span>
                         <span>
                             {dict.common.currency}{historyItems
-                                .filter(i => i.status !== 'CANCELLED')
+                                .filter(i => i.status !== ORDER_STATUS.CANCELLED)
                                 .reduce((sum, i) => sum + i.total, 0)
                                 .toLocaleString()}
                         </span>

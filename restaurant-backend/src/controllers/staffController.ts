@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import prisma from '../prisma.js';
+import { OrderStatus } from '../config/enums.js';
 
 export const getTablesStatus = async (req: Request, res: Response) => {
   try {
@@ -8,7 +9,7 @@ export const getTablesStatus = async (req: Request, res: Response) => {
       include: {
         orders: {
           where: {
-            status: { not: 'COMPLETED' }
+            status: { not: OrderStatus.COMPLETED }
           },
           include: { 
             items: {
@@ -21,10 +22,10 @@ export const getTablesStatus = async (req: Request, res: Response) => {
 
     const tableData = tables.map(table => {
       const totalAmount = table.orders.reduce((orderSum, order) => {
-        if (order.status === 'CANCELLED') return orderSum;
+        if (order.status === OrderStatus.CANCELLED) return orderSum;
 
         const itemsTotal = order.items.reduce((itemSum, item) => {
-          if (item.status === 'CANCELLED') return itemSum;
+          if (item.status === OrderStatus.CANCELLED) return itemSum;
           return itemSum + (Number(item.menu.price) * item.quantity);
         }, 0);
 
@@ -32,7 +33,7 @@ export const getTablesStatus = async (req: Request, res: Response) => {
       }, 0);
       
       const readyCount = table.orders.reduce((count, order) => {
-        const readyItemsInOrder = order.items.filter(item => item.status === 'READY').length;
+        const readyItemsInOrder = order.items.filter(item => item.status === OrderStatus.READY).length;
         return count + readyItemsInOrder;
       }, 0);
 
@@ -63,7 +64,7 @@ export const getTableDetails = async (req: Request, res: Response) => {
       where: { id: Number(id) },
       include: {
         orders: {
-          where: { status: { notIn: ['COMPLETED'] } },
+          where: { status: { notIn: [OrderStatus.COMPLETED] } },
           include: { items: { include: { menu: true } } }
         }
       }
@@ -100,7 +101,7 @@ export const cancelOrderItem = async (req: Request, res: Response) => {
 
     const updatedItem = await prisma.orderItem.update({
       where: { id: Number(itemId) },
-      data: { status: 'CANCELLED' }
+      data: { status: OrderStatus.CANCELLED }
     });
 
     const parentOrder = await prisma.order.findUnique({
@@ -108,7 +109,7 @@ export const cancelOrderItem = async (req: Request, res: Response) => {
         include: {
             table: true,
             items: {
-                where: { status: { not: 'CANCELLED' } },
+                where: { status: { not: OrderStatus.CANCELLED } },
                 include: { menu: true }
             }
         }
@@ -119,10 +120,10 @@ export const cancelOrderItem = async (req: Request, res: Response) => {
     if (parentOrder && parentOrder.items.length > 0) {
         io.emit('order_status_updated', parentOrder);
     } else if (parentOrder && parentOrder.items.length === 0) {
-        io.emit('order_status_updated', { ...parentOrder, status: 'COMPLETED' });
+        io.emit('order_status_updated', { ...parentOrder, status: OrderStatus.COMPLETED });
     }
 
-    io.emit('order_status_updated', { id: itemId, status: 'CANCELLED' });
+    io.emit('order_status_updated', { id: itemId, status: OrderStatus.CANCELLED });
 
     res.json({ status: 'success', message: 'Item cancelled' });
   } catch (error) {

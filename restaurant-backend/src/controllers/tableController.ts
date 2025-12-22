@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import prisma from '../prisma.js';
+import { OrderStatus, BillStatus } from '../config/enums.js';
 
-// 1. สร้างโต๊ะใหม่
 export const createTable = async (req: Request, res: Response) => {
   try {
     const { name } = req.body;
@@ -25,7 +25,6 @@ export const createTable = async (req: Request, res: Response) => {
   }
 };
 
-// 2. แก้ไขชื่อโต๊ะ
 export const updateTable = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -42,7 +41,6 @@ export const updateTable = async (req: Request, res: Response) => {
   }
 };
 
-// 3. ลบโต๊ะ
 export const deleteTable = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -72,7 +70,6 @@ export const deleteTable = async (req: Request, res: Response) => {
   }
 };
 
-// 4. เปิด-ปิดโต๊ะ
 export const toggleAvailability = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -89,7 +86,6 @@ export const toggleAvailability = async (req: Request, res: Response) => {
   }
 };
 
-// 5. ดึงข้อมูลโต๊ะเดี่ยว
 export const getTableById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -106,7 +102,6 @@ export const getTableById = async (req: Request, res: Response) => {
   }
 };
 
-// 6. ลูกค้ากดเรียกพนักงาน
 export const updateCallStaff = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -117,7 +112,7 @@ export const updateCallStaff = async (req: Request, res: Response) => {
       data: { isCallingStaff: isCalling },
       include: {
         orders: {
-          where: { status: { not: 'COMPLETED' } }
+          where: { status: { not: OrderStatus.COMPLETED } }
         }
       }
     });
@@ -137,7 +132,6 @@ export const updateCallStaff = async (req: Request, res: Response) => {
   }
 };
 
-// 7. ดึงประวัติการสั่งอาหาร
 export const getCustomerOrders = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -145,7 +139,7 @@ export const getCustomerOrders = async (req: Request, res: Response) => {
     const orders = await prisma.order.findMany({
       where: {
         tableId: Number(id),
-        status: { not: 'COMPLETED' } 
+        status: { not: OrderStatus.COMPLETED }
       },
       include: {
         items: {
@@ -174,7 +168,6 @@ export const getCustomerOrders = async (req: Request, res: Response) => {
   }
 };
 
-// 8. เช็คบิลและปิดโต๊ะ
 export const closeTable = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -183,10 +176,10 @@ export const closeTable = async (req: Request, res: Response) => {
       where: {
         order: { 
           tableId: Number(id),
-          status: { not: 'COMPLETED' }
+          status: { not: OrderStatus.COMPLETED }
         },
         status: {
-          notIn: ['SERVED', 'COMPLETED', 'CANCELLED'] 
+          notIn: [OrderStatus.SERVED, OrderStatus.COMPLETED, OrderStatus.CANCELLED] 
         }
       }
     });
@@ -202,7 +195,7 @@ export const closeTable = async (req: Request, res: Response) => {
     const activeBill = await prisma.bill.findFirst({
         where: {
             tableId: Number(id),
-            status: 'OPEN'
+            status: BillStatus.OPEN
         },
         include: {
             orders: {
@@ -216,7 +209,7 @@ export const closeTable = async (req: Request, res: Response) => {
         
         activeBill.orders.forEach(order => {
             order.items.forEach(item => {
-                if (item.status !== 'CANCELLED') {
+                if (item.status !== OrderStatus.CANCELLED) {
                     finalTotal += Number(item.menu.price) * item.quantity;
                 }
             });
@@ -225,7 +218,7 @@ export const closeTable = async (req: Request, res: Response) => {
         await prisma.bill.update({
             where: { id: activeBill.id },
             data: {
-                status: 'PAID',
+                status: BillStatus.PAID,
                 closedAt: new Date(),
                 totalPrice: finalTotal,
                 paymentMethod: 'CASH'
@@ -239,19 +232,19 @@ export const closeTable = async (req: Request, res: Response) => {
       where: {
         order: { 
           tableId: Number(id),
-          status: { not: 'COMPLETED' }
+          status: { not: OrderStatus.COMPLETED }
         },
-        status: { not: 'CANCELLED' }
+        status: { not: OrderStatus.CANCELLED }
       },
-      data: { status: 'COMPLETED' }
+      data: { status: OrderStatus.COMPLETED }
     });
 
     await prisma.order.updateMany({
       where: { 
         tableId: Number(id),
-        status: { not: 'COMPLETED' }
+        status: { not: OrderStatus.COMPLETED }
       },
-      data: { status: 'COMPLETED' }
+      data: { status: OrderStatus.COMPLETED }
     });
 
     await prisma.table.update({
