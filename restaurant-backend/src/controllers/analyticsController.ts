@@ -1,8 +1,21 @@
 import type { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import dayjs from 'dayjs';
 
 const prisma = new PrismaClient();
+
+type BillWithRelations = Prisma.BillGetPayload<{
+    include: {
+        table: true;
+        orders: {
+            include: {
+                items: {
+                    include: { menu: true }
+                }
+            }
+        }
+    }
+}>;
 
 export const getAnalyticsSummary = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -35,7 +48,7 @@ export const getAnalyticsSummary = async (req: Request, res: Response): Promise<
             const dateKey = dateObj.format('YYYY-MM-DD');
             
             const dailyTotal = pastBills
-                .filter(b => dayjs(b.closedAt).format('YYYY-MM-DD') === dateKey)
+                .filter(b => b.closedAt && dayjs(b.closedAt).format('YYYY-MM-DD') === dateKey)
                 .reduce((sum, bill) => sum + (Number(bill.totalPrice) || 0), 0);
 
             return { name: dateLabel, total: dailyTotal };
@@ -105,9 +118,9 @@ export const getDailyBills = async (req: Request, res: Response): Promise<void> 
             }
         });
 
-        const formattedBills = bills.map((bill: any) => {
-            const allItems = bill.orders.flatMap((order: any) => 
-                order.items.map((item: any) => ({
+        const formattedBills = bills.map((bill: BillWithRelations) => {
+            const allItems = bill.orders.flatMap((order) => 
+                order.items.map((item) => ({
                     id: item.id,
                     quantity: item.quantity,
                     menuName: item.menu.nameTH,
@@ -121,7 +134,7 @@ export const getDailyBills = async (req: Request, res: Response): Promise<void> 
             if (bill.status === 'PAID') {
                 displayTotal = Number(bill.totalPrice);
             } else {
-                displayTotal = allItems.reduce((sum: number, item: any) => {
+                displayTotal = allItems.reduce((sum, item) => {
                     if (item.status === 'CANCELLED') return sum;
                     return sum + (item.price * item.quantity);
                 }, 0);
@@ -181,16 +194,16 @@ export const getBillHistory = async (req: Request, res: Response): Promise<void>
 
         const totalSales = bills.reduce((sum, bill) => sum + Number(bill.totalPrice), 0);
 
-        const formattedBills = bills.map((bill: any) => ({
+        const formattedBills = bills.map((bill: BillWithRelations) => ({
             id: bill.id,
             date: bill.closedAt,
             tableName: bill.table.name,
             total: Number(bill.totalPrice),
             paymentMethod: bill.paymentMethod,
-            itemsCount: bill.orders.reduce((sum: number, o: any) => sum + o.items.length, 0),
+            itemsCount: bill.orders.reduce((sum, o) => sum + o.items.length, 0),
             
-            items: bill.orders.flatMap((order: any) => 
-                order.items.map((item: any) => ({
+            items: bill.orders.flatMap((order) => 
+                order.items.map((item) => ({
                     id: item.id,
                     name: item.menu.nameTH,
                     price: Number(item.menu.price),
