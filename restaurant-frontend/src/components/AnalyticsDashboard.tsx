@@ -1,6 +1,6 @@
 "use client";
 
-import { API_URL } from "@/lib/utils";
+import { API_URL, fetcher } from "@/lib/utils";
 import { APP_CONFIG } from "@/config/constants";
 import { useState } from 'react';
 import useSWR from 'swr';
@@ -63,7 +63,6 @@ interface AnalyticsDashboardProps {
   dict: Dictionary;
 }
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
 const COLORS = APP_CONFIG.CHART_COLORS;
 
 export default function AnalyticsDashboard({ dict }: AnalyticsDashboardProps) {

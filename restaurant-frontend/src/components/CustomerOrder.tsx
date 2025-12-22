@@ -1,6 +1,6 @@
 "use client";
 
-import { API_URL } from "@/lib/utils";
+import { API_URL, fetcher } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { io } from "socket.io-client"; 
@@ -46,8 +46,6 @@ interface CustomerOrderProps {
   dict: Dictionary;
   lang: string;
 }
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 // --- Main Component ---
 export default function CustomerOrder({ dict, lang }: CustomerOrderProps) {

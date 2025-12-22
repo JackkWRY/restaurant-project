@@ -1,6 +1,6 @@
 "use client";
 
-import { API_URL } from "@/lib/utils";
+import { API_URL, fetcher } from "@/lib/utils";
 import { APP_CONFIG } from "@/config/constants";
 import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link"; 
@@ -48,8 +48,6 @@ interface KitchenDashboardProps {
   dict: Dictionary;
   lang: string;
 }
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function KitchenDashboard({ dict, lang }: KitchenDashboardProps) {
   const router = useRouter(); 

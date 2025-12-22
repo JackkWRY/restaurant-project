@@ -1,6 +1,6 @@
 "use client";
 
-import { API_URL } from "@/lib/utils";
+import { API_URL, fetcher } from "@/lib/utils";
 import { useEffect, useState, type ChangeEvent } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -43,8 +43,6 @@ interface AdminDashboardProps {
   dict: Dictionary;
   lang: string;
 }
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function AdminDashboard({ dict, lang }: AdminDashboardProps) {
   const router = useRouter();
