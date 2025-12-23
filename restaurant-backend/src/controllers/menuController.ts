@@ -23,7 +23,6 @@ export const getMenus = async (req: Request, res: Response) => {
 
     res.json({ status: 'success', data: categories });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: 'Failed to fetch menus' });
   }
 };
@@ -63,7 +62,6 @@ export const createMenu = async (req: Request, res: Response) => {
 
     res.status(201).json({ status: 'success', data: newMenu });
   } catch (error) {
-    console.error("Create Menu Error:", error);
     res.status(500).json({ error: 'Failed to create menu' });
   }
 };
@@ -90,7 +88,6 @@ export const updateMenu = async (req: Request, res: Response) => {
 
     res.json({ status: 'success', data: updatedMenu });
   } catch (error) {
-    console.error("Update Menu Error:", error);
     res.status(500).json({ error: 'Failed to update menu' });
   }
 };
@@ -108,10 +105,8 @@ export const deleteMenu = async (req: Request, res: Response) => {
       }
     });
 
-    console.log(`🗑️ Soft deleted menu #${id} (Removed from Admin & Customer view)`);
     res.json({ status: 'success', message: 'Menu deleted' });
   } catch (error) {
-    console.error("Delete Menu Error:", error);
     res.status(500).json({ error: 'Failed to delete menu' });
   }
 };

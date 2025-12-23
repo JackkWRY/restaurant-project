@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { z } from 'zod'; // ✅ Import Zod
+import { z } from 'zod';
 import prisma from '../prisma.js';
 import { OrderStatus, BillStatus } from '../config/enums.js';
 import { 
@@ -36,7 +36,6 @@ export const createTable = async (req: Request, res: Response) => {
 
     res.status(201).json({ status: 'success', data: updatedTable });
   } catch (error) {
-    console.error("Create Table Error:", error);
     res.status(500).json({ error: 'Failed to create table' });
   }
 };
@@ -81,7 +80,6 @@ export const deleteTable = async (req: Request, res: Response) => {
 
     res.json({ status: 'success', message: 'Table deleted' });
   } catch (error) {
-    console.error("Delete Table Error:", error);
     res.status(500).json({ error: 'Failed to delete table' });
   }
 };
@@ -143,7 +141,6 @@ export const updateCallStaff = async (req: Request, res: Response) => {
 
     res.json({ status: 'success', data: payload });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: 'Failed to update call staff status' });
   }
 };
@@ -179,7 +176,6 @@ export const getCustomerOrders = async (req: Request, res: Response) => {
 
     res.json({ status: 'success', data: items });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: 'Failed to fetch customer orders' });
   }
 };
@@ -240,8 +236,6 @@ export const closeTable = async (req: Request, res: Response) => {
                 paymentMethod: 'CASH'
             }
         });
-        
-        console.log(`✅ Bill ${activeBill.id} closed successfully. Total: ${finalTotal}`);
     }
     
     await prisma.orderItem.updateMany({
@@ -278,7 +272,6 @@ export const closeTable = async (req: Request, res: Response) => {
     res.json({ status: 'success', message: 'Table and Bill closed successfully' });
 
   } catch (error) {
-    console.error("Close Table Error:", error);
     res.status(500).json({ error: 'Failed to close table' });
   }
 };

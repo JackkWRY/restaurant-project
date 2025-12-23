@@ -9,7 +9,7 @@ type OrderItemInput = OrderInput['items'][number];
 
 export const createOrder = async (req: Request, res: Response) => {
     try {
-    const { tableId, items } = req.body;
+    const { tableId, items } = req.body as OrderInput;
 
     const table = await prisma.table.findUnique({ where: { id: Number(tableId) } });
     if (!table) { 
@@ -22,7 +22,7 @@ export const createOrder = async (req: Request, res: Response) => {
     }
 
     let currentOrderTotal = 0;
-    for (const item of items as OrderItemInput[]) {
+    for (const item of items) {
       const menu = await prisma.menu.findUnique({ where: { id: Number(item.menuId) } });
       if (menu) currentOrderTotal += Number(menu.price) * item.quantity;
     }
@@ -79,7 +79,6 @@ export const createOrder = async (req: Request, res: Response) => {
 
     res.status(201).json({ status: 'success', data: newOrder });
   } catch (error) {
-    console.error('Create Order Error:', error);
     res.status(500).json({ error: 'Failed to create order' });
   }
 };
@@ -114,7 +113,6 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
     
     res.json({ status: 'success', data: updatedOrder });
   } catch (error) {
-    console.error('Update Status Error:', error);
     res.status(500).json({ error: 'Failed to update status' });
   }
 };
@@ -139,7 +137,6 @@ export const getActiveOrders = async (req: Request, res: Response) => {
 
     res.json({ status: 'success', data: validOrders });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: 'Failed to fetch active orders' });
   }
 };
@@ -177,7 +174,6 @@ export const updateOrderItemStatus = async (req: Request, res: Response) => {
 
     res.json({ status: 'success', data: updatedItem });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: 'Failed to update item status' });
   }
 };
