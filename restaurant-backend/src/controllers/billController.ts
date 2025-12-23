@@ -6,7 +6,7 @@ import { checkoutSchema } from '../schemas/billSchema.js';
 
 type CheckoutInput = z.infer<typeof checkoutSchema>;
 
-export const getTableBill = async (req: Request, res: Response): Promise<void> => {
+export const getTableBill = async (req: Request, res: Response) => {
     try {
         const tableId = Number(req.params.tableId);
 
@@ -57,12 +57,11 @@ export const getTableBill = async (req: Request, res: Response): Promise<void> =
         });
 
     } catch (error) {
-        console.error("Get Bill Error:", error);
         res.status(500).json({ error: 'Failed to fetch bill' });
     }
 };
 
-export const checkoutTable = async (req: Request, res: Response): Promise<void> => {
+export const checkoutTable = async (req: Request, res: Response) => {
     try {
         const { tableId, paymentMethod } = req.body as CheckoutInput;
 
@@ -112,7 +111,6 @@ export const checkoutTable = async (req: Request, res: Response): Promise<void> 
         res.json({ status: 'success', message: 'Bill closed successfully' });
 
     } catch (error) {
-        console.error('Checkout Error:', error);
         res.status(500).json({ error: 'Failed to checkout' });
     }
 };

@@ -1,9 +1,8 @@
 import type { Request, Response } from 'express';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import prisma from '../prisma.js';
 import { BillStatus, OrderStatus } from '../config/enums.js';
 import dayjs from 'dayjs';
-
-const prisma = new PrismaClient();
 
 type BillWithRelations = Prisma.BillGetPayload<{
     include: {
@@ -18,7 +17,7 @@ type BillWithRelations = Prisma.BillGetPayload<{
     }
 }>;
 
-export const getAnalyticsSummary = async (req: Request, res: Response): Promise<void> => {
+export const getAnalyticsSummary = async (req: Request, res: Response) => {
     try {
         const today = dayjs().startOf('day').toDate();
         const sevenDaysAgo = dayjs().subtract(7, 'day').startOf('day').toDate();
@@ -45,8 +44,8 @@ export const getAnalyticsSummary = async (req: Request, res: Response): Promise<
 
         const salesTrend = Array.from({ length: 7 }).map((_, i) => {
             const dateObj = dayjs().subtract(6 - i, 'day');
-            const dateLabel = dateObj.format('DD/MM');
             const dateKey = dateObj.format('YYYY-MM-DD');
+            const dateLabel = dateObj.format('DD/MM');
             
             const dailyTotal = pastBills
                 .filter(b => b.closedAt && dayjs(b.closedAt).format('YYYY-MM-DD') === dateKey)
@@ -88,12 +87,11 @@ export const getAnalyticsSummary = async (req: Request, res: Response): Promise<
         });
 
     } catch (error) {
-        console.error("Analytics Summary Error:", error);
         res.status(500).json({ error: 'Failed to fetch analytics summary' });
     }
 };
 
-export const getDailyBills = async (req: Request, res: Response): Promise<void> => {
+export const getDailyBills = async (req: Request, res: Response) => {
     try {
         const today = dayjs().startOf('day').toDate();
 
@@ -114,9 +112,7 @@ export const getDailyBills = async (req: Request, res: Response): Promise<void> 
                     }
                 }
             },
-            orderBy: {
-                updatedAt: 'desc' 
-            }
+            orderBy: { updatedAt: 'desc' }
         });
 
         const formattedBills = bills.map((bill: BillWithRelations) => {
@@ -152,31 +148,23 @@ export const getDailyBills = async (req: Request, res: Response): Promise<void> 
             };
         });
 
-        res.json({
-            status: 'success',
-            data: formattedBills
-        });
-
+        res.json({ status: 'success', data: formattedBills });
     } catch (error) {
-        console.error("Daily Bills Error:", error);
         res.status(500).json({ error: 'Failed to fetch daily bills' });
     }
 };
 
-export const getBillHistory = async (req: Request, res: Response): Promise<void> => {
+export const getBillHistory = async (req: Request, res: Response) => {
     try {
         const { startDate, endDate } = req.query;
 
-        let start = startDate ? dayjs(startDate as string).startOf('day').toDate() : dayjs().startOf('month').toDate();
-        let end = endDate ? dayjs(endDate as string).endOf('day').toDate() : dayjs().endOf('day').toDate();
+        const start = startDate ? dayjs(startDate as string).startOf('day').toDate() : dayjs().startOf('month').toDate();
+        const end = endDate ? dayjs(endDate as string).endOf('day').toDate() : dayjs().endOf('day').toDate();
 
         const bills = await prisma.bill.findMany({
             where: {
                 status: BillStatus.PAID,
-                closedAt: {
-                    gte: start,
-                    lte: end
-                }
+                closedAt: { gte: start, lte: end }
             },
             include: {
                 table: true,
@@ -188,9 +176,7 @@ export const getBillHistory = async (req: Request, res: Response): Promise<void>
                     }
                 }
             },
-            orderBy: {
-                closedAt: 'desc'
-            }
+            orderBy: { closedAt: 'desc' }
         });
 
         const totalSales = bills.reduce((sum, bill) => sum + Number(bill.totalPrice), 0);
@@ -219,16 +205,11 @@ export const getBillHistory = async (req: Request, res: Response): Promise<void>
         res.json({
             status: 'success',
             data: {
-                summary: {
-                    totalSales,
-                    billCount: bills.length
-                },
+                summary: { totalSales, billCount: bills.length },
                 bills: formattedBills
             }
         });
-
     } catch (error) {
-        console.error("History Error:", error);
         res.status(500).json({ error: 'Failed to fetch bill history' });
     }
 };
