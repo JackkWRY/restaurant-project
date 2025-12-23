@@ -1,14 +1,18 @@
 import type { Request, Response } from 'express';
+import { z } from 'zod';
 import prisma from '../prisma.js';
 import { BillStatus, OrderStatus } from '../config/enums.js';
+import { checkoutSchema } from '../schemas/billSchema.js';
+
+type CheckoutInput = z.infer<typeof checkoutSchema>;
 
 export const getTableBill = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { tableId } = req.params;
+        const tableId = Number(req.params.tableId);
 
         const activeBill = await prisma.bill.findFirst({
             where: {
-                tableId: Number(tableId),
+                tableId: tableId,
                 status: BillStatus.OPEN
             },
             include: {
@@ -53,18 +57,18 @@ export const getTableBill = async (req: Request, res: Response): Promise<void> =
         });
 
     } catch (error) {
-        console.error(error);
+        console.error("Get Bill Error:", error);
         res.status(500).json({ error: 'Failed to fetch bill' });
     }
 };
 
 export const checkoutTable = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { tableId, paymentMethod } = req.body;
+        const { tableId, paymentMethod } = req.body as CheckoutInput;
 
         const activeBill = await prisma.bill.findFirst({
             where: {
-                tableId: Number(tableId),
+                tableId: tableId,
                 status: BillStatus.OPEN
             },
             include: { orders: { include: { items: { include: { menu: true } } } } }
@@ -90,12 +94,12 @@ export const checkoutTable = async (req: Request, res: Response): Promise<void> 
                 status: BillStatus.PAID,
                 closedAt: new Date(),
                 totalPrice: finalTotal,
-                paymentMethod: paymentMethod || 'CASH'
+                paymentMethod: paymentMethod
             }
         });
 
         await prisma.table.update({
-            where: { id: Number(tableId) },
+            where: { id: tableId },
             data: {
                 isOccupied: false,
                 isCallingStaff: false
@@ -103,9 +107,8 @@ export const checkoutTable = async (req: Request, res: Response): Promise<void> 
         });
 
         const io = req.app.get('io');
-        io.emit('table_updated', { id: Number(tableId), isOccupied: false });
+        io.emit('table_updated', { id: tableId, isOccupied: false });
 
-        console.log(`✅ Bill ${activeBill.id} CLOSED. Total: ${finalTotal}`);
         res.json({ status: 'success', message: 'Bill closed successfully' });
 
     } catch (error) {
