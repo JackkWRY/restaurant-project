@@ -1,6 +1,11 @@
 import type { Request, Response } from 'express';
+import { z } from 'zod';
 import prisma from '../prisma.js';
 import { OrderStatus, BillStatus } from '../config/enums.js';
+import { createOrderSchema } from '../schemas/orderSchema.js'; 
+
+type OrderInput = z.infer<typeof createOrderSchema>;
+type OrderItemInput = OrderInput['items'][number]; 
 
 export const createOrder = async (req: Request, res: Response) => {
     try {
@@ -17,7 +22,7 @@ export const createOrder = async (req: Request, res: Response) => {
     }
 
     let currentOrderTotal = 0;
-    for (const item of items) {
+    for (const item of items as OrderItemInput[]) {
       const menu = await prisma.menu.findUnique({ where: { id: Number(item.menuId) } });
       if (menu) currentOrderTotal += Number(menu.price) * item.quantity;
     }
@@ -37,9 +42,6 @@ export const createOrder = async (req: Request, res: Response) => {
                 totalPrice: 0
             }
         });
-        console.log(`✨ Created new Bill ID: ${activeBill.id} for Table ${tableId}`);
-    } else {
-        console.log(`🔗 Linking to existing Bill ID: ${activeBill.id}`);
     }
 
     await prisma.bill.update({
@@ -56,7 +58,7 @@ export const createOrder = async (req: Request, res: Response) => {
         status: OrderStatus.PENDING,
         billId: activeBill.id,
         items: {
-          create: items.map((item: any) => ({
+          create: items.map((item: OrderItemInput) => ({
             menuId: Number(item.menuId), 
             quantity: item.quantity,
             note: item.note || '',
@@ -110,7 +112,6 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
     const io = req.app.get('io');
     io.emit('order_status_updated', updatedOrder);
     
-    console.log(`✅ Order #${id} updated to ${status} (Synced items)`);
     res.json({ status: 'success', data: updatedOrder });
   } catch (error) {
     console.error('Update Status Error:', error);

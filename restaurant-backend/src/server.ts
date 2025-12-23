@@ -6,7 +6,6 @@ import { Server } from 'socket.io';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 
-import prisma from './prisma.js';
 import authRoutes from './routes/authRoutes.js';
 import settingRoutes from './routes/settingRoutes.js';
 import menuRoutes from './routes/menuRoutes.js';
@@ -21,32 +20,26 @@ import billRoutes from './routes/billRoutes.js';
 dotenv.config();
 
 const app = express();
-const PORT = Number(process.env.PORT) || 3000;
+const PORT = Number(process.env.PORT) || 3001;
+const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:3000';
 
 const httpServer = createServer(app);
 
-const allowedOrigins = [
-  'http://localhost:3001',
-  process.env.CLIENT_URL || ''
-];
-
+// Setup Socket.io
 const io = new Server(httpServer, {
   cors: {
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    methods: ["GET", "POST"]
+    origin: CLIENT_URL,
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
+// Security Middleware
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
+// Rate Limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 300,
@@ -54,26 +47,19 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
+// Setup Express CORS
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: CLIENT_URL,
   credentials: true
 }));
 
 app.use(express.json());
-
 app.set('io', io);
 
 io.on('connection', (socket) => {
-  console.log('🔌 A client connected:', socket.id);
-  
+  // console.log('🔌 Client connected:', socket.id); // ปิด Log เพื่อความสะอาด
   socket.on('disconnect', () => {
-    console.log('❌ A client disconnected:', socket.id);
+    // console.log('❌ Client disconnected');
   });
 });
 
@@ -89,12 +75,13 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api', billRoutes);
 
-// Home Route
+// Health Check
 app.get('/', (req: Request, res: Response) => {
-  res.send('<h1>Restaurant API is running! (TypeScript + Socket.io 🚀) [Secured]</h1>');
+  res.send(`<h1>Restaurant API Running! 🚀 (Allowing: ${CLIENT_URL})</h1>`);
 });
 
 // Start Server
 httpServer.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ Server is running on http://localhost:${PORT}`);
+  console.log(`✅ Backend running on port ${PORT}`);
+  console.log(`🔒 Accepting connections from: ${CLIENT_URL}`);
 });

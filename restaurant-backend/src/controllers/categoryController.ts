@@ -1,16 +1,15 @@
 import type { Request, Response } from 'express';
+import { z } from 'zod';
 import prisma from '../prisma.js';
+import { createCategorySchema } from '../schemas/categorySchema.js';
 
-// 1. ดึงหมวดหมู่ทั้งหมด
+type CategoryInput = z.infer<typeof createCategorySchema>;
+
 export const getCategories = async (req: Request, res: Response) => {
   try {
     const categories = await prisma.category.findMany({
-      orderBy: { id: 'asc' },
-      include: {
-        _count: {
-          select: { menus: true }
-        }
-      }
+      include: { menus: true },
+      orderBy: { id: 'asc' }
     });
     res.json({ status: 'success', data: categories });
   } catch (error) {
@@ -18,49 +17,50 @@ export const getCategories = async (req: Request, res: Response) => {
   }
 };
 
-// 2. สร้างหมวดหมู่ใหม่
 export const createCategory = async (req: Request, res: Response) => {
   try {
-    const { name } = req.body;
-    if (!name) return;
+    const { name } = req.body as CategoryInput;
 
     const newCategory = await prisma.category.create({
       data: { name }
     });
+
     res.status(201).json({ status: 'success', data: newCategory });
   } catch (error) {
+    console.error("Create Category Error:", error);
     res.status(500).json({ error: 'Failed to create category' });
   }
 };
 
-// 3. แก้ไขชื่อหมวดหมู่
 export const updateCategory = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { name } = req.body;
+    const { name } = req.body as CategoryInput;
 
     const updatedCategory = await prisma.category.update({
       where: { id: Number(id) },
       data: { name }
     });
+
     res.json({ status: 'success', data: updatedCategory });
   } catch (error) {
     res.status(500).json({ error: 'Failed to update category' });
   }
 };
 
-// 4. ลบหมวดหมู่
 export const deleteCategory = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    const category = await prisma.category.findUnique({
-      where: { id: Number(id) },
-      include: { menus: true }
+    const menuCount = await prisma.menu.count({
+      where: { categoryId: Number(id) }
     });
 
-    if (category && category.menus.length > 0) {
-      res.status(400).json({ error: 'ไม่สามารถลบได้ เนื่องจากมีรายการอาหารอยู่ในหมวดหมู่นี้' });
+    if (menuCount > 0) {
+      res.status(400).json({ 
+        status: 'error', 
+        message: 'Cannot delete category with existing menus. Please move or delete menus first.' 
+      });
       return; 
     }
 
@@ -70,6 +70,7 @@ export const deleteCategory = async (req: Request, res: Response) => {
 
     res.json({ status: 'success', message: 'Category deleted' });
   } catch (error) {
+    console.error("Delete Category Error:", error);
     res.status(500).json({ error: 'Failed to delete category' });
   }
 };

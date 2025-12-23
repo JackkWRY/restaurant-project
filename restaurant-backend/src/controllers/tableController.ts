@@ -1,21 +1,37 @@
 import type { Request, Response } from 'express';
+import { z } from 'zod'; // ✅ Import Zod
 import prisma from '../prisma.js';
 import { OrderStatus, BillStatus } from '../config/enums.js';
+import { 
+  createTableSchema, 
+  updateTableSchema, 
+  toggleAvailabilitySchema, 
+  updateCallStaffSchema 
+} from '../schemas/tableSchema.js';
+
+type CreateTableInput = z.infer<typeof createTableSchema>;
+type UpdateTableInput = z.infer<typeof updateTableSchema>;
+type ToggleAvailabilityInput = z.infer<typeof toggleAvailabilitySchema>;
+type UpdateCallStaffInput = z.infer<typeof updateCallStaffSchema>;
+
+const FRONTEND_URL = process.env.CLIENT_URL || 'http://localhost:3000';
 
 export const createTable = async (req: Request, res: Response) => {
   try {
-    const { name } = req.body;
+    const body = req.body as CreateTableInput;
     
     const newTable = await prisma.table.create({
       data: {
-        name,
-        qrCode: `http://localhost:3001/?tableId=`
+        name: body.name,
+        qrCode: "" 
       }
     });
 
+    const qrCodeUrl = `${FRONTEND_URL}/order?tableId=${newTable.id}`;
+
     const updatedTable = await prisma.table.update({
       where: { id: newTable.id },
-      data: { qrCode: `http://localhost:3001/?tableId=${newTable.id}` }
+      data: { qrCode: qrCodeUrl }
     });
 
     res.status(201).json({ status: 'success', data: updatedTable });
@@ -28,11 +44,11 @@ export const createTable = async (req: Request, res: Response) => {
 export const updateTable = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { name } = req.body;
+    const body = req.body as UpdateTableInput;
 
     const updatedTable = await prisma.table.update({
       where: { id: Number(id) },
-      data: { name }
+      data: { name: body.name }
     });
 
     res.json({ status: 'success', data: updatedTable });
@@ -73,11 +89,11 @@ export const deleteTable = async (req: Request, res: Response) => {
 export const toggleAvailability = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { isAvailable } = req.body;
+    const body = req.body as ToggleAvailabilityInput;
 
     const updatedTable = await prisma.table.update({
       where: { id: Number(id) },
-      data: { isAvailable }
+      data: { isAvailable: body.isAvailable }
     });
 
     res.json({ status: 'success', data: updatedTable });
@@ -105,11 +121,11 @@ export const getTableById = async (req: Request, res: Response) => {
 export const updateCallStaff = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { isCalling } = req.body;
+    const body = req.body as UpdateCallStaffInput;
 
     const updatedTable = await prisma.table.update({
       where: { id: Number(id) },
-      data: { isCallingStaff: isCalling },
+      data: { isCallingStaff: body.isCalling },
       include: {
         orders: {
           where: { status: { not: OrderStatus.COMPLETED } }

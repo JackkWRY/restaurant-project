@@ -1,13 +1,20 @@
 import type { Request, Response } from 'express';
+import { z } from 'zod';
 import prisma from '../prisma.js';
+import { createMenuSchema, updateMenuSchema } from '../schemas/menuSchema.js';
 
-// 1. ดึงเมนูทั้งหมด (สำหรับหน้าลูกค้า)
+type CreateMenuInput = z.infer<typeof createMenuSchema>;
+type UpdateMenuInput = z.infer<typeof updateMenuSchema>;
+
 export const getMenus = async (req: Request, res: Response) => {
   try {
     const categories = await prisma.category.findMany({
       include: {
         menus: {
-          where: { isVisible: true }, 
+          where: { 
+            isVisible: true,
+            deletedAt: null 
+          }, 
           orderBy: { id: 'asc' }
         }
       },
@@ -21,10 +28,12 @@ export const getMenus = async (req: Request, res: Response) => {
   }
 };
 
-// 2. ดึงเมนูทั้งหมด (สำหรับ Admin - เห็นทุกอย่าง)
 export const getAllMenuItems = async (req: Request, res: Response) => {
   try {
     const menus = await prisma.menu.findMany({
+      where: { 
+        deletedAt: null 
+      }, 
       include: { category: true },
       orderBy: { id: 'asc' }
     });
@@ -34,21 +43,21 @@ export const getAllMenuItems = async (req: Request, res: Response) => {
   }
 };
 
-// 3. สร้างเมนูใหม่
 export const createMenu = async (req: Request, res: Response) => {
   try {
-    const { nameTH, nameEN, price, categoryId, imageUrl, isRecommended, isAvailable, isVisible } = req.body;
+    const body = req.body as CreateMenuInput;
     
     const newMenu = await prisma.menu.create({
       data: {
-        nameTH,
-        nameEN,
-        price: Number(price),
-        categoryId: Number(categoryId),
-        imageUrl: imageUrl || '',
-        isRecommended: Boolean(isRecommended),
-        isAvailable: isAvailable !== undefined ? Boolean(isAvailable) : true,
-        isVisible: isVisible !== undefined ? Boolean(isVisible) : true
+        nameTH: body.nameTH,
+        nameEN: body.nameEN || '',
+        description: body.description,
+        price: body.price,
+        categoryId: body.categoryId,
+        imageUrl: body.imageUrl || '',
+        isRecommended: body.isRecommended || false,
+        isAvailable: body.isAvailable ?? true,
+        isVisible: body.isVisible ?? true
       }
     });
 
@@ -59,24 +68,23 @@ export const createMenu = async (req: Request, res: Response) => {
   }
 };
 
-// 4. แก้ไขเมนู
 export const updateMenu = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    
-    const { nameTH, nameEN, price, categoryId, imageUrl, isAvailable, isVisible, isRecommended } = req.body;
+    const body = req.body as UpdateMenuInput;
 
     const updatedMenu = await prisma.menu.update({
       where: { id: Number(id) },
       data: {
-        nameTH,
-        nameEN,
-        price: Number(price),
-        categoryId: Number(categoryId),
-        imageUrl,
-        isRecommended: isRecommended !== undefined ? Boolean(isRecommended) : undefined,
-        isAvailable: isAvailable !== undefined ? Boolean(isAvailable) : undefined,
-        isVisible: isVisible !== undefined ? Boolean(isVisible) : undefined
+        nameTH: body.nameTH,
+        nameEN: body.nameEN,
+        description: body.description,
+        price: body.price,
+        categoryId: body.categoryId,
+        imageUrl: body.imageUrl,
+        isRecommended: body.isRecommended,
+        isAvailable: body.isAvailable,
+        isVisible: body.isVisible
       }
     });
 
@@ -87,13 +95,20 @@ export const updateMenu = async (req: Request, res: Response) => {
   }
 };
 
-// 5. ลบเมนู (เหมือนเดิม)
 export const deleteMenu = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    await prisma.menu.delete({
-      where: { id: Number(id) }
+    
+    await prisma.menu.update({
+      where: { id: Number(id) },
+      data: { 
+        deletedAt: new Date(),
+        isVisible: false,
+        isAvailable: false
+      }
     });
+
+    console.log(`🗑️ Soft deleted menu #${id} (Removed from Admin & Customer view)`);
     res.json({ status: 'success', message: 'Menu deleted' });
   } catch (error) {
     console.error("Delete Menu Error:", error);

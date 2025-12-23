@@ -1,11 +1,15 @@
 import type { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { z } from 'zod';
 import prisma from '../prisma.js';
+import { loginSchema } from '../schemas/authSchema.js';
+
+type LoginInput = z.infer<typeof loginSchema>;
 
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { username, password } = req.body;
+    const { username, password } = req.body as LoginInput;
 
     const user = await prisma.user.findUnique({
       where: { username },
@@ -40,7 +44,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("Login Error:", error);
     res.status(500).json({ error: 'Login failed' });
   }
 };

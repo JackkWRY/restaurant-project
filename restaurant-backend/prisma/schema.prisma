@@ -45,6 +45,7 @@ model Menu {
   isAvailable   Boolean     @default(true)
   isVisible     Boolean     @default(true)
   isRecommended Boolean     @default(false)
+  deletedAt     DateTime?
   categoryId    Int
   category      Category    @relation(fields: [categoryId], references: [id])
   orderItems    OrderItem[]
