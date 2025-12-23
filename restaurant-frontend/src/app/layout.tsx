@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Kanit } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const kanit = Kanit({ 
@@ -28,6 +29,7 @@ export default async function RootLayout({
     <html lang={lang || 'en'}>
       <body className={`${kanit.className} antialiased`}>
         {children}
+        <Toaster position="top-center" richColors />
       </body>
     </html>
   );

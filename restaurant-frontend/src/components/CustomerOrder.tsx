@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { io } from "socket.io-client"; 
 import useSWR from "swr";
+import { toast } from "sonner";
 import { QrCode, Lock, Bell, History, X, ChevronDown, ChevronUp, Globe } from "lucide-react";
 import MenuItem from "@/components/MenuItem"; 
 import FloatingCart from "@/components/FloatingCart"; 
@@ -128,13 +129,13 @@ export default function CustomerOrder({ dict, lang }: CustomerOrderProps) {
             body: JSON.stringify({ isCalling: newStatus })
         });
         
-        if (newStatus) alert(dict.customer.alertCallStaff);
-        else alert(dict.customer.alertCancelCall);
+        if (newStatus) toast.success(dict.customer.alertCallStaff);
+        else toast.info(dict.customer.alertCancelCall);
         
         mutateTable();
     } catch (error) {
         console.error(error);
-        alert(dict.customer.alertFailed); 
+        toast.error(dict.customer.alertFailed);
         mutateTable();
     }
   };

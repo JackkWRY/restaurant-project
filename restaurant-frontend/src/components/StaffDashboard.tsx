@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation"; 
 import { io, type Socket } from "socket.io-client"; 
 import useSWR from "swr"; 
+import { toast } from "sonner"; 
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Pencil, Trash2, Plus, X, Check, Eye, UtensilsCrossed, Bell, Ban, ShoppingBag, Sparkles, Receipt, Coins, LogOut, LayoutDashboard, Globe, ChefHat } from "lucide-react";
 import type { Dictionary } from "@/locales/dictionary";
@@ -105,6 +106,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       router.push(`/${lang}/login`);
+      toast.success(dict.common.logout + " " + dict.common.success);
     }
   };
 
@@ -151,8 +153,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
 
         socketRef.current.on("item_status_updated", (item: { status: string }) => {
             mutateTables();
-            mutateDetails(); 
-
+            mutateDetails();
             if (item && item.status === 'READY') {
                 try {
                     const audio = new Audio(APP_CONFIG.SOUNDS.BELL_2); 
@@ -181,6 +182,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
             body: JSON.stringify({ isCalling: false })
         });
         mutateTables(); 
+        toast.success(dict.staff.callCustomer + " - " + dict.common.success);
     } catch (error) { console.error(error); }
   };
 
@@ -216,24 +218,28 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
       const data = await res.json();
       
       if (res.ok) {
-        alert(`💰 ${dict.common.success}!`); 
+        toast.success(`💰 ${dict.common.success}!`); 
         setNewOrderAlerts((prev) => prev.filter((tid) => tid !== selectedTableId));
         mutateTables(); 
         closeModal(); 
       } else {
-        alert(`${dict.common.error}: ${data.error}`);
+        toast.error(`${dict.common.error}: ${data.error}`);
       }
-    } catch (error) { console.error(error); alert(dict.common.error); }
+    } catch (error) { console.error(error); toast.error(dict.common.error); }
   };
 
   const handleToggleTable = async (tableId: number, currentStatus: boolean, isOccupied: boolean) => {
-    if (currentStatus === true && isOccupied) { alert(dict.staff.alertCannotClose); return; }
+    if (currentStatus === true && isOccupied) { 
+        toast.error(dict.staff.alertCannotClose);
+        return; 
+    }
     try {
       await fetch(`${API_URL}/api/tables/${tableId}/availability`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isAvailable: !currentStatus })
       });
       mutateTables();
+      toast.success(dict.common.success);
     } catch (error) { console.error(error); }
   };
 
@@ -244,27 +250,44 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newTableName })
       });
-      if (res.ok) { setNewTableName(""); setIsCreating(false); mutateTables(); }
+      if (res.ok) { 
+          setNewTableName(""); 
+          setIsCreating(false); 
+          mutateTables();
+          toast.success(dict.staff.addTable + " " + dict.common.success);
+      }
     } catch (error) { console.error(error); }
   };
 
   const handleDeleteTable = async (id: number) => {
     if (!confirm(dict.staff.alertConfirmDelete)) return;
-    try { await fetch(`${API_URL}/api/tables/${id}`, { method: 'DELETE' }); mutateTables(); } catch (error) { console.error(error); }
+    try {
+      await fetch(`${API_URL}/api/tables/${id}`, { method: 'DELETE' });
+      mutateTables();
+      toast.success(dict.common.success);
+    } catch (error) { console.error(error); }
   };
 
   const handleUpdateTableName = async (id: number, oldName: string) => {
     const newName = prompt(dict.staff.promptEditTable, oldName);
     if (!newName || newName === oldName) return;
-    try { await fetch(`${API_URL}/api/tables/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newName }) }); mutateTables(); } catch (error) { console.error(error); }
+    try {
+      await fetch(`${API_URL}/api/tables/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newName }) });
+      mutateTables();
+      toast.success(dict.common.success);
+    } catch (error) { console.error(error); }
   };
 
   const handleCancelOrder = async (itemId: number, menuName: string) => {
     if(!confirm(`${dict.common.confirm} ${dict.staff.order} "${menuName}" ?`)) return;
     try {
         const res = await fetch(`${API_URL}/api/staff/items/${itemId}/cancel`, { method: 'PATCH' });
-        if (res.ok) { mutateDetails(); mutateTables(); }
-    } catch (error) { console.error(error); alert(dict.common.error); }
+        if (res.ok) { 
+            mutateDetails(); 
+            mutateTables(); 
+            toast.success(dict.common.success);
+        }
+    } catch (error) { console.error(error); toast.error(dict.common.error); }
   };
 
   const handleChangeStatus = async (itemId: number, newStatus: string, menuName: string) => {
@@ -277,9 +300,12 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
               method: 'PATCH', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ status: newStatus })
           });
-          if (res.ok) mutateDetails();
-          else alert(dict.common.error);
-      } catch (error) { console.error(error); alert(dict.common.error); }
+          if (res.ok) {
+              mutateDetails();
+              toast.success(dict.common.success);
+          }
+          else toast.error(dict.common.error);
+      } catch (error) { console.error(error); toast.error(dict.common.error); }
   };
 
   const getStatusColor = (status: string) => {
