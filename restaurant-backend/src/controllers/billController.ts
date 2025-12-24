@@ -6,6 +6,25 @@ import { checkoutSchema } from '../schemas/billSchema.js';
 
 type CheckoutInput = z.infer<typeof checkoutSchema>;
 
+const calculateBillData = (orders: any[]) => {
+    const allItems = orders.flatMap(order => 
+        order.items.map((item: any) => ({
+            id: item.id,
+            menuName: item.menu.nameTH,
+            price: Number(item.menu.price),
+            quantity: item.quantity,
+            status: item.status,
+            total: Number(item.menu.price) * item.quantity
+        }))
+    );
+
+    const totalAmount = allItems.reduce((sum, item) => {
+        return item.status === OrderStatus.CANCELLED ? sum : sum + item.total;
+    }, 0);
+
+    return { allItems, totalAmount };
+};
+
 export const getTableBill = async (req: Request, res: Response) => {
     try {
         const tableId = Number(req.params.tableId);
@@ -31,20 +50,7 @@ export const getTableBill = async (req: Request, res: Response) => {
             return;
         }
 
-        const allItems = activeBill.orders.flatMap(order => 
-            order.items.map(item => ({
-                id: item.id,
-                menuName: item.menu.nameTH,
-                price: Number(item.menu.price),
-                quantity: item.quantity,
-                status: item.status,
-                total: Number(item.menu.price) * item.quantity
-            }))
-        );
-
-        const totalAmount = allItems.reduce((sum, item) => {
-            return item.status === OrderStatus.CANCELLED ? sum : sum + item.total;
-        }, 0);
+        const { allItems, totalAmount } = calculateBillData(activeBill.orders);
 
         res.json({
             status: 'success',
@@ -65,44 +71,38 @@ export const checkoutTable = async (req: Request, res: Response) => {
     try {
         const { tableId, paymentMethod } = req.body as CheckoutInput;
 
-        const activeBill = await prisma.bill.findFirst({
-            where: {
-                tableId: tableId,
-                status: BillStatus.OPEN
-            },
-            include: { orders: { include: { items: { include: { menu: true } } } } }
-        });
+        await prisma.$transaction(async (tx) => {
+            const activeBill = await tx.bill.findFirst({
+                where: {
+                    tableId: tableId,
+                    status: BillStatus.OPEN
+                },
+                include: { orders: { include: { items: { include: { menu: true } } } } }
+            });
 
-        if (!activeBill) {
-            res.status(404).json({ error: 'Active bill not found' });
-            return;
-        }
+            if (!activeBill) {
+                throw new Error('ACTIVE_BILL_NOT_FOUND');
+            }
 
-        let finalTotal = 0;
-        activeBill.orders.forEach(order => {
-            order.items.forEach(item => {
-                if (item.status !== OrderStatus.CANCELLED) {
-                    finalTotal += Number(item.menu.price) * item.quantity;
+            const { totalAmount } = calculateBillData(activeBill.orders);
+
+            await tx.bill.update({
+                where: { id: activeBill.id },
+                data: {
+                    status: BillStatus.PAID,
+                    closedAt: new Date(),
+                    totalPrice: totalAmount,
+                    paymentMethod: paymentMethod
                 }
             });
-        });
 
-        await prisma.bill.update({
-            where: { id: activeBill.id },
-            data: {
-                status: BillStatus.PAID,
-                closedAt: new Date(),
-                totalPrice: finalTotal,
-                paymentMethod: paymentMethod
-            }
-        });
-
-        await prisma.table.update({
-            where: { id: tableId },
-            data: {
-                isOccupied: false,
-                isCallingStaff: false
-            }
+            await tx.table.update({
+                where: { id: tableId },
+                data: {
+                    isOccupied: false,
+                    isCallingStaff: false
+                }
+            });
         });
 
         const io = req.app.get('io');
@@ -110,7 +110,11 @@ export const checkoutTable = async (req: Request, res: Response) => {
 
         res.json({ status: 'success', message: 'Bill closed successfully' });
 
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to checkout' });
+    } catch (error: any) {
+        if (error.message === 'ACTIVE_BILL_NOT_FOUND') {
+            res.status(404).json({ error: 'Active bill not found' });
+        } else {
+            res.status(500).json({ error: 'Failed to checkout' });
+        }
     }
 };
