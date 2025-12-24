@@ -309,7 +309,7 @@ function CategoryManager({ dict }: { dict: Dictionary }) {
 }
 
 function MenuManager({ dict }: { dict: Dictionary }) {
-    const { data: menusData, mutate: mutateMenus } = useSWR(`${API_URL}/api/menus/all`, fetcher);
+    const { data: menusData, mutate: mutateMenus } = useSWR(`${API_URL}/api/menus?scope=all`, fetcher);
     const { data: catsData } = useSWR(`${API_URL}/api/categories`, fetcher);
 
     const menus: Menu[] = menusData?.status === 'success' ? menusData.data : [];

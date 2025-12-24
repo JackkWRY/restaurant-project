@@ -8,6 +8,20 @@ type UpdateMenuInput = z.infer<typeof updateMenuSchema>;
 
 export const getMenus = async (req: Request, res: Response) => {
   try {
+    const { scope } = req.query;
+
+    if (scope === 'all') {
+      const menus = await prisma.menu.findMany({
+        where: { 
+          deletedAt: null 
+        }, 
+        include: { category: true },
+        orderBy: { id: 'asc' }
+      });
+      res.json({ status: 'success', data: menus });
+      return;
+    }
+
     const categories = await prisma.category.findMany({
       include: {
         menus: {
@@ -24,21 +38,6 @@ export const getMenus = async (req: Request, res: Response) => {
     res.json({ status: 'success', data: categories });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch menus' });
-  }
-};
-
-export const getAllMenuItems = async (req: Request, res: Response) => {
-  try {
-    const menus = await prisma.menu.findMany({
-      where: { 
-        deletedAt: null 
-      }, 
-      include: { category: true },
-      orderBy: { id: 'asc' }
-    });
-    res.json({ status: 'success', data: menus });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch menu items' });
   }
 };
 

@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { 
-    getMenus, 
-    getAllMenuItems,
+    getMenus,
     createMenu,
     updateMenu,
     deleteMenu
@@ -13,7 +12,6 @@ import { createMenuSchema, updateMenuSchema } from '../schemas/menuSchema.js';
 const router = Router();
 
 router.get('/menus', getMenus);
-router.get('/menus/all', getAllMenuItems);
 router.post('/menus', validateRequest(createMenuSchema), createMenu);
 router.put('/menus/:id', validateRequest(updateMenuSchema), updateMenu);
 router.delete('/menus/:id', deleteMenu);
