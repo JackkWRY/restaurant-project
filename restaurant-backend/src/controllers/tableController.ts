@@ -275,3 +275,96 @@ export const closeTable = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to close table' });
   }
 };
+
+export const getTablesStatus = async (req: Request, res: Response) => {
+  try {
+    const tables = await prisma.table.findMany({
+      orderBy: { name: 'asc' },
+      include: {
+        orders: {
+          where: {
+            status: { not: OrderStatus.COMPLETED }
+          },
+          include: { 
+            items: {
+              include: { menu: true }
+            }
+          }
+        }
+      }
+    });
+
+    const tableData = tables.map(table => {
+      const totalAmount = table.orders.reduce((orderSum, order) => {
+        if (order.status === OrderStatus.CANCELLED) return orderSum;
+
+        const itemsTotal = order.items.reduce((itemSum, item) => {
+          if (item.status === OrderStatus.CANCELLED) return itemSum;
+          return itemSum + (Number(item.menu.price) * item.quantity);
+        }, 0);
+
+        return orderSum + itemsTotal;
+      }, 0);
+      
+      const readyCount = table.orders.reduce((count, order) => {
+        const readyItemsInOrder = order.items.filter(item => item.status === OrderStatus.READY).length;
+        return count + readyItemsInOrder;
+      }, 0);
+
+      return {
+        id: table.id,
+        name: table.name,
+        isOccupied: table.isOccupied,
+        totalAmount: totalAmount,
+        activeOrders: table.orders.length,
+        isAvailable: table.isAvailable,
+        isCallingStaff: table.isCallingStaff,
+        readyOrderCount: readyCount
+      };
+    });
+
+    res.json({ status: 'success', data: tableData });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to fetch table status' });
+  }
+};
+
+export const getTableDetails = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const table = await prisma.table.findUnique({
+      where: { id: Number(id) },
+      include: {
+        orders: {
+          where: { status: { notIn: [OrderStatus.COMPLETED] } },
+          include: { items: { include: { menu: true } } }
+        }
+      }
+    });
+
+    if (!table) {
+      res.status(404).json({ error: 'Table not found' });
+      return;
+    }
+
+    const allItems = table.orders.flatMap(order => 
+      order.items.map(item => ({
+        id: item.id,
+        orderId: order.id,
+        menuName: item.menu.nameTH,
+        price: Number(item.menu.price),
+        quantity: item.quantity,
+        total: Number(item.menu.price) * item.quantity,
+        status: item.status,
+        note: item.note
+      }))
+    );
+
+    res.json({ status: 'success', data: { ...table, items: allItems } });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to fetch details' });
+  }
+};

@@ -63,7 +63,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
   const toggleLang = lang === 'en' ? 'th' : 'en';
 
   // --- 1. Main SWR: Fetch All Tables ---
-  const { data: tablesData, mutate: mutateTables, isLoading: loadingTables } = useSWR(`${API_URL}/api/staff/tables`, fetcher, {
+  const { data: tablesData, mutate: mutateTables, isLoading: loadingTables } = useSWR(`${API_URL}/api/tables/status`, fetcher, {
     refreshInterval: 5000,
     revalidateOnFocus: true,
   });
@@ -74,7 +74,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
 
   // --- 2. Details SWR: Fetch Specific Table Details ---
   const { data: detailsData, mutate: mutateDetails, isLoading: loadingDetails } = useSWR(
-    selectedTableId ? `${API_URL}/api/staff/tables/${selectedTableId}` : null,
+    selectedTableId ? `${API_URL}/api/tables/${selectedTableId}/details` : null,
     fetcher,
     { refreshInterval: 5000 }
   );
@@ -281,7 +281,11 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
   const handleCancelOrder = async (itemId: number, menuName: string) => {
     if(!confirm(`${dict.common.confirm} ${dict.staff.order} "${menuName}" ?`)) return;
     try {
-        const res = await fetch(`${API_URL}/api/staff/items/${itemId}/cancel`, { method: 'PATCH' });
+        const res = await fetch(`${API_URL}/api/orders/items/${itemId}/status`, { 
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'CANCELLED' })
+        });
         if (res.ok) { 
             mutateDetails(); 
             mutateTables(); 

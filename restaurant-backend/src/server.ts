@@ -10,7 +10,6 @@ import authRoutes from './routes/authRoutes.js';
 import settingRoutes from './routes/settingRoutes.js';
 import menuRoutes from './routes/menuRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
-import staffRoutes from './routes/staffRoutes.js';
 import tableRoutes from './routes/tableRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
@@ -30,7 +29,6 @@ const allowedOrigins = [CLIENT_URL, 'http://localhost:3000'];
 // Setup Socket.io
 const io = new Server(httpServer, {
   cors: {
-    // origin: CLIENT_URL,
     origin: allowedOrigins,
     methods: ["GET", "POST"],
     credentials: true
@@ -52,7 +50,6 @@ app.use(limiter);
 
 // Setup Express CORS
 app.use(cors({
-  // origin: CLIENT_URL,
   origin: allowedOrigins,
   credentials: true
 }));
@@ -72,7 +69,6 @@ app.use('/api', authRoutes);
 app.use('/api', settingRoutes);
 app.use('/api', menuRoutes);
 app.use('/api', orderRoutes);
-app.use('/api', staffRoutes);
 app.use('/api', tableRoutes);
 app.use('/api', categoryRoutes);
 app.use('/api/upload', uploadRoutes);
@@ -81,13 +77,11 @@ app.use('/api', billRoutes);
 
 // Health Check
 app.get('/', (req: Request, res: Response) => {
-  // res.send(`<h1>Restaurant API Running! 🚀 (Allowing: ${CLIENT_URL})</h1>`);
   res.send(`<h1>Restaurant API Running! 🚀</h1><p>Allowed Origins: ${allowedOrigins.join(', ')}</p>`);
 });
 
 // Start Server
 httpServer.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Backend running on port ${PORT}`);
-  // console.log(`🔒 Accepting connections from: ${CLIENT_URL}`);
   console.log(`🔒 Allowed Origins:`, allowedOrigins);
 });
