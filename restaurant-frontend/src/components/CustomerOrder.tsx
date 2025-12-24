@@ -74,11 +74,11 @@ export default function CustomerOrder({ dict, lang }: CustomerOrderProps) {
   const restaurantName = settingsData?.status === 'success' ? settingsData.data : dict.common.loading;
 
   const { data: historyData, mutate: mutateHistory } = useSWR(
-      showHistory && tableIdParam ? `${API_URL}/api/tables/${tableIdParam}/orders` : null,
+      showHistory && tableIdParam ? `${API_URL}/api/bills/table/${tableIdParam}` : null,
       fetcher,
       { refreshInterval: 5000 }
   );
-  const historyItems: HistoryItem[] = historyData?.status === 'success' ? historyData.data : [];
+  const historyItems: HistoryItem[] = historyData?.status === 'success' ? historyData.data.items : [];
 
   useEffect(() => {
     if (!tableIdParam) return;

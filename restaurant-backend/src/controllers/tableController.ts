@@ -145,41 +145,6 @@ export const updateCallStaff = async (req: Request, res: Response) => {
   }
 };
 
-export const getCustomerOrders = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-
-    const orders = await prisma.order.findMany({
-      where: {
-        tableId: Number(id),
-        status: { not: OrderStatus.COMPLETED }
-      },
-      include: {
-        items: {
-          include: { menu: true }
-        }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
-
-    const items = orders.flatMap(order => 
-      order.items.map(item => ({
-        id: item.id,
-        menuName: item.menu.nameTH,
-        price: Number(item.menu.price),
-        quantity: item.quantity,
-        status: item.status,
-        total: Number(item.menu.price) * item.quantity,
-        note: item.note
-      }))
-    );
-
-    res.json({ status: 'success', data: items });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch customer orders' });
-  }
-};
-
 export const closeTable = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;

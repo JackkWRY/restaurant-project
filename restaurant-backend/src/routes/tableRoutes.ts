@@ -6,7 +6,6 @@ import {
     toggleAvailability, 
     getTableById,
     updateCallStaff,
-    getCustomerOrders,
     closeTable,
     getTablesStatus,
     getTableDetails
@@ -29,7 +28,6 @@ router.patch('/tables/:id/availability', validateRequest(toggleAvailabilitySchem
 router.get('/tables/status', getTablesStatus);
 router.get('/tables/:id', getTableById);
 router.patch('/tables/:id/call', validateRequest(updateCallStaffSchema), updateCallStaff);
-router.get('/tables/:id/orders', getCustomerOrders);
 router.post('/tables/:id/close', closeTable);
 router.get('/tables/:id/details', getTableDetails);
 

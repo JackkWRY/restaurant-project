@@ -7,22 +7,30 @@ import { checkoutSchema } from '../schemas/billSchema.js';
 type CheckoutInput = z.infer<typeof checkoutSchema>;
 
 const calculateBillData = (orders: any[]) => {
-    const allItems = orders.flatMap(order => 
-        order.items.map((item: any) => ({
-            id: item.id,
-            menuName: item.menu.nameTH,
-            price: Number(item.menu.price),
-            quantity: item.quantity,
-            status: item.status,
-            total: Number(item.menu.price) * item.quantity
-        }))
-    );
+    let total = 0;
+    const items: any[] = [];
 
-    const totalAmount = allItems.reduce((sum, item) => {
-        return item.status === OrderStatus.CANCELLED ? sum : sum + item.total;
-    }, 0);
+    orders.forEach(order => {
+        order.items.forEach((item: any) => {
+            const itemTotal = Number(item.menu.price) * item.quantity;
+            
+            items.push({
+                id: item.id,
+                menuName: item.menu.nameTH,
+                price: Number(item.menu.price),
+                quantity: item.quantity,
+                status: item.status,
+                total: itemTotal,
+                note: item.note || ''
+            });
 
-    return { allItems, totalAmount };
+            if (item.status !== OrderStatus.CANCELLED) {
+                total += itemTotal;
+            }
+        });
+    });
+
+    return { total, items };
 };
 
 export const getTableBill = async (req: Request, res: Response) => {
@@ -46,19 +54,27 @@ export const getTableBill = async (req: Request, res: Response) => {
         });
 
         if (!activeBill) {
-            res.status(404).json({ error: 'No active bill found for this table' });
+            res.json({
+                status: 'success',
+                data: {
+                    billId: null,
+                    tableId: tableId,
+                    items: [],
+                    totalAmount: 0
+                }
+            });
             return;
         }
 
-        const { allItems, totalAmount } = calculateBillData(activeBill.orders);
+        const { total, items } = calculateBillData(activeBill.orders);
 
         res.json({
             status: 'success',
             data: {
                 billId: activeBill.id,
                 tableId: activeBill.tableId,
-                items: allItems,
-                totalAmount: totalAmount
+                items: items,
+                totalAmount: total 
             }
         });
 
@@ -84,14 +100,14 @@ export const checkoutTable = async (req: Request, res: Response) => {
                 throw new Error('ACTIVE_BILL_NOT_FOUND');
             }
 
-            const { totalAmount } = calculateBillData(activeBill.orders);
+            const { total } = calculateBillData(activeBill.orders);
 
             await tx.bill.update({
                 where: { id: activeBill.id },
                 data: {
                     status: BillStatus.PAID,
                     closedAt: new Date(),
-                    totalPrice: totalAmount,
+                    totalPrice: total,
                     paymentMethod: paymentMethod
                 }
             });
@@ -112,9 +128,9 @@ export const checkoutTable = async (req: Request, res: Response) => {
 
     } catch (error: any) {
         if (error.message === 'ACTIVE_BILL_NOT_FOUND') {
-            res.status(404).json({ error: 'Active bill not found' });
+             res.status(404).json({ error: 'Active bill not found' });
         } else {
-            res.status(500).json({ error: 'Failed to checkout' });
+             res.status(500).json({ error: 'Failed to checkout' });
         }
     }
 };
