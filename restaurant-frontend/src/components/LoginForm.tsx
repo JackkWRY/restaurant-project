@@ -38,10 +38,12 @@ export default function LoginForm({
       const data = await res.json();
 
       if (res.ok) {
-        localStorage.setItem("token", data.token);
+        // Store both access token and refresh token
+        localStorage.setItem("token", data.accessToken);
+        localStorage.setItem("refreshToken", data.refreshToken);
         localStorage.setItem("user", JSON.stringify(data.user));
         
-        document.cookie = `token=${data.token}; path=/; max-age=86400; SameSite=Lax`;
+        document.cookie = `token=${data.accessToken}; path=/; max-age=86400; SameSite=Lax`;
 
         if (data.user.role === ROLE.ADMIN) {
             router.push(`/${lang}/admin`);
