@@ -3,13 +3,8 @@
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useCartStore } from "@/store/useCartStore";
-import type { Dictionary } from "@/locales/dictionary";
 
-interface TableDetectorProps {
-  dict: Dictionary;
-}
-
-export default function TableDetector({ dict }: TableDetectorProps) {
+export default function TableDetector() {
   const searchParams = useSearchParams();
   const { setTableId } = useCartStore();
 
@@ -26,7 +21,7 @@ export default function TableDetector({ dict }: TableDetectorProps) {
         setTableId(id);
       }
     }
-  }, [searchParams, setTableId, dict]);
+  }, [searchParams, setTableId]);
 
   return null;
 }

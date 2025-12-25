@@ -1,6 +1,6 @@
 "use client";
 
-import { API_URL, fetcher } from "@/lib/utils";
+import { API_URL, fetcher, authFetch } from "@/lib/utils";
 import { APP_CONFIG } from "@/config/constants";
 import { ORDER_STATUS, ROLE } from "@/config/enums";
 import { useEffect, useState, useRef, useMemo } from "react";
@@ -212,7 +212,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
     if (!confirm(`${dict.common.confirm} ${tableName}?`)) return;
 
     try {
-      const res = await fetch(`${API_URL}/api/tables/${selectedTableId}/close`, { 
+      const res = await authFetch(`${API_URL}/api/tables/${selectedTableId}/close`, { 
         method: 'POST' 
       });
       const data = await res.json();
@@ -234,7 +234,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
         return; 
     }
     try {
-      await fetch(`${API_URL}/api/tables/${tableId}/availability`, {
+      await authFetch(`${API_URL}/api/tables/${tableId}/availability`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isAvailable: !currentStatus })
       });
@@ -246,7 +246,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
   const handleCreateTable = async () => {
     if (!newTableName.trim()) return;
     try {
-      const res = await fetch(`${API_URL}/api/tables`, {
+      const res = await authFetch(`${API_URL}/api/tables`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newTableName })
       });
@@ -262,7 +262,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
   const handleDeleteTable = async (id: number) => {
     if (!confirm(dict.staff.alertConfirmDelete)) return;
     try {
-      await fetch(`${API_URL}/api/tables/${id}`, { method: 'DELETE' });
+      await authFetch(`${API_URL}/api/tables/${id}`, { method: 'DELETE' });
       mutateTables();
       toast.success(dict.common.success);
     } catch (error) { console.error(error); }
@@ -272,7 +272,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
     const newName = prompt(dict.staff.promptEditTable, oldName);
     if (!newName || newName === oldName) return;
     try {
-      await fetch(`${API_URL}/api/tables/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newName }) });
+      await authFetch(`${API_URL}/api/tables/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newName }) });
       mutateTables();
       toast.success(dict.common.success);
     } catch (error) { console.error(error); }
@@ -281,7 +281,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
   const handleCancelOrder = async (itemId: number, menuName: string) => {
     if(!confirm(`${dict.common.confirm} ${dict.staff.order} "${menuName}" ?`)) return;
     try {
-        const res = await fetch(`${API_URL}/api/orders/items/${itemId}/status`, { 
+        const res = await authFetch(`${API_URL}/api/orders/items/${itemId}/status`, { 
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: 'CANCELLED' })
@@ -300,7 +300,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
           return;
       }
       try {
-          const res = await fetch(`${API_URL}/api/orders/items/${itemId}/status`, {
+          const res = await authFetch(`${API_URL}/api/orders/items/${itemId}/status`, {
               method: 'PATCH', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ status: newStatus })
           });

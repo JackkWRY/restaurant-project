@@ -188,7 +188,7 @@ export default function CustomerOrder({ dict, lang }: CustomerOrderProps) {
 
   return (
     <main className="container mx-auto p-4 max-w-md min-h-screen bg-white pb-24 relative">
-      <TableDetector dict={dict} />
+      <TableDetector />
 
       <header className="mb-6 mt-4 flex justify-between items-center sticky top-0 bg-white/95 backdrop-blur-sm z-10 py-3 border-b">
         <div>

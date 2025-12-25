@@ -1,6 +1,6 @@
 "use client";
 
-import { API_URL } from "@/lib/utils";
+import { API_URL, authFetch } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Calendar, Search, FileText, DollarSign, Eye, X, Receipt, StickyNote } from "lucide-react"; 
 import dayjs from "dayjs";
@@ -45,16 +45,21 @@ export default function HistoryDashboard({ dict }: HistoryDashboardProps) {
   
   const [data, setData] = useState<HistoryData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
 
   const fetchHistory = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/analytics/history?startDate=${startDate}&endDate=${endDate}`);
+      const res = await authFetch(`${API_URL}/api/analytics/history?startDate=${startDate}&endDate=${endDate}&page=${currentPage}&limit=20`);
       const json = await res.json();
       if (json.status === 'success') {
         setData(json.data);
+        if (json.pagination) {
+          setTotalPages(json.pagination.totalPages);
+        }
       }
     } catch (error) {
       console.error(error);
@@ -66,7 +71,7 @@ export default function HistoryDashboard({ dict }: HistoryDashboardProps) {
   useEffect(() => {
     fetchHistory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [currentPage]);
 
   return (
     <div className="min-h-screen bg-slate-100 p-6 relative">
@@ -175,6 +180,29 @@ export default function HistoryDashboard({ dict }: HistoryDashboardProps) {
                 </tbody>
             </table>
         </div>
+        
+        {/* Pagination */}
+        {data && totalPages > 1 && (
+          <div className="p-4 border-t flex justify-center items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg font-bold hover:bg-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            >
+              ← ก่อนหน้า
+            </button>
+            <span className="px-4 py-2 text-slate-600 font-bold">
+              หน้า {currentPage} / {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg font-bold hover:bg-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            >
+              ถัดไป →
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Modal Detail */}

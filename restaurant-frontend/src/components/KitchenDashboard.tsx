@@ -1,6 +1,6 @@
 "use client";
 
-import { API_URL, fetcher } from "@/lib/utils";
+import { API_URL, authFetch, authFetcher } from "@/lib/utils";
 import { APP_CONFIG } from "@/config/constants";
 import { ORDER_STATUS, ROLE } from "@/config/enums";
 import { useEffect, useState, useRef, useMemo } from "react";
@@ -57,7 +57,7 @@ export default function KitchenDashboard({ dict, lang }: KitchenDashboardProps) 
   const toggleLang = lang === 'en' ? 'th' : 'en';
 
   // 1. Data Fetching
-  const { data: swrData, error, isLoading, mutate } = useSWR(`${API_URL}/api/orders/active`, fetcher, {
+  const { data: swrData, error, isLoading, mutate } = useSWR(`${API_URL}/api/orders/active`, authFetcher, {
     refreshInterval: 5000,
     revalidateOnFocus: true,
   });
@@ -150,7 +150,7 @@ export default function KitchenDashboard({ dict, lang }: KitchenDashboardProps) 
   // 5. Action Handler
   const handleUpdateStatus = async (itemId: number, newStatus: ItemStatus) => {
     try {
-      await fetch(`${API_URL}/api/orders/items/${itemId}/status`, {
+      await authFetch(`${API_URL}/api/orders/items/${itemId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),

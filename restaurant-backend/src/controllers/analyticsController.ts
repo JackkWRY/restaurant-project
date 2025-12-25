@@ -157,29 +157,43 @@ export const getDailyBills = async (req: Request, res: Response) => {
 export const getBillHistory = async (req: Request, res: Response) => {
     try {
         const { startDate, endDate } = req.query;
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 20;
+        const skip = (page - 1) * limit;
 
         const start = startDate ? dayjs(startDate as string).startOf('day').toDate() : dayjs().startOf('month').toDate();
         const end = endDate ? dayjs(endDate as string).endOf('day').toDate() : dayjs().endOf('day').toDate();
 
-        const bills = await prisma.bill.findMany({
-            where: {
-                status: BillStatus.PAID,
-                closedAt: { gte: start, lte: end }
-            },
-            include: {
-                table: true,
-                orders: {
-                    include: {
-                        items: {
-                            include: { menu: true }
+        const where = {
+            status: BillStatus.PAID,
+            closedAt: { gte: start, lte: end }
+        };
+
+        const [bills, total, totalSalesResult] = await Promise.all([
+            prisma.bill.findMany({
+                where,
+                include: {
+                    table: true,
+                    orders: {
+                        include: {
+                            items: {
+                                include: { menu: true }
+                            }
                         }
                     }
-                }
-            },
-            orderBy: { closedAt: 'desc' }
-        });
+                },
+                orderBy: { closedAt: 'desc' },
+                skip,
+                take: limit
+            }),
+            prisma.bill.count({ where }),
+            prisma.bill.aggregate({
+                where,
+                _sum: { totalPrice: true }
+            })
+        ]);
 
-        const totalSales = bills.reduce((sum, bill) => sum + Number(bill.totalPrice), 0);
+        const totalSales = Number(totalSalesResult._sum.totalPrice) || 0;
 
         const formattedBills = bills.map((bill: BillWithRelations) => ({
             id: bill.id,
@@ -205,8 +219,14 @@ export const getBillHistory = async (req: Request, res: Response) => {
         res.json({
             status: 'success',
             data: {
-                summary: { totalSales, billCount: bills.length },
+                summary: { totalSales, billCount: total },
                 bills: formattedBills
+            },
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
             }
         });
     } catch (error) {

@@ -9,13 +9,28 @@ const stringToBoolean = z.preprocess((val) => {
 }, z.boolean().optional());
 
 export const createMenuSchema = z.object({
-  nameTH: z.string().min(1, "Thai name is required"),
-  nameEN: z.string().optional(),
+  nameTH: z.string()
+    .min(1, "Thai name is required")
+    .max(100, "Thai name must be less than 100 characters")
+    .trim(),
   
-  price: z.coerce.number().min(0, "Price cannot be negative"),
-  categoryId: z.coerce.number().int().positive("Category ID must be valid"),
+  nameEN: z.string()
+    .max(100, "English name must be less than 100 characters")
+    .trim()
+    .optional(),
   
-  description: z.string().optional(),
+  price: z.coerce.number()
+    .positive("Price must be greater than 0")
+    .max(999999, "Price is too high"),
+  
+  categoryId: z.coerce.number()
+    .int("Category ID must be an integer")
+    .positive("Category ID must be valid"),
+  
+  description: z.string()
+    .max(500, "Description must be less than 500 characters")
+    .trim()
+    .optional(),
   
   imageUrl: z.union([
     z.string().url({ message: "Invalid image URL" }),

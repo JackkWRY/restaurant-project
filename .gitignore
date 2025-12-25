@@ -4,7 +4,12 @@ node_modules/
 # Environment variables (ห้ามหลุดไป GitHub เด็ดขาด)
 .env
 .env.local
-.env.*
+.env.development
+.env.production
+.env.test
+
+# Allow .env.example files
+!.env.example
 
 # Next.js build output
 .next/

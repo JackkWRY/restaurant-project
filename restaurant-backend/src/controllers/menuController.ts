@@ -9,19 +9,38 @@ type UpdateMenuInput = z.infer<typeof updateMenuSchema>;
 export const getMenus = async (req: Request, res: Response) => {
   try {
     const { scope } = req.query;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 100;
+    const skip = (page - 1) * limit;
 
     if (scope === 'all') {
-      const menus = await prisma.menu.findMany({
-        where: { 
-          deletedAt: null 
-        }, 
-        include: { category: true },
-        orderBy: { id: 'asc' }
+      const where = { deletedAt: null };
+      
+      const [menus, total] = await Promise.all([
+        prisma.menu.findMany({
+          where,
+          include: { category: true },
+          orderBy: { id: 'desc' },
+          skip,
+          take: limit
+        }),
+        prisma.menu.count({ where })
+      ]);
+
+      res.json({ 
+        status: 'success', 
+        data: menus,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit)
+        }
       });
-      res.json({ status: 'success', data: menus });
       return;
     }
 
+    // For customer view - no pagination, grouped by category
     const categories = await prisma.category.findMany({
       include: {
         menus: {

@@ -1,6 +1,6 @@
 "use client";
 
-import { API_URL, fetcher } from "@/lib/utils";
+import { API_URL, authFetcher } from "@/lib/utils";
 import { APP_CONFIG } from "@/config/constants";
 import { ORDER_STATUS, BILL_STATUS } from "@/config/enums"; 
 import { useState } from 'react';
@@ -69,8 +69,8 @@ const COLORS = APP_CONFIG.CHART_COLORS;
 export default function AnalyticsDashboard({ dict }: AnalyticsDashboardProps) {
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
-    const { data: summaryData, isLoading: summaryLoading, error: summaryError } = useSWR<ApiResponse>(`${API_URL}/api/analytics/summary`, fetcher, { refreshInterval: 30000 });
-    const { data: ordersData, isLoading: ordersLoading } = useSWR<OrderHistoryResponse>(`${API_URL}/api/analytics/orders`, fetcher, { refreshInterval: 10000 });
+    const { data: summaryData, isLoading: summaryLoading, error: summaryError } = useSWR<ApiResponse>(`${API_URL}/api/analytics/summary`, authFetcher, { refreshInterval: 30000 });
+    const { data: ordersData, isLoading: ordersLoading } = useSWR<OrderHistoryResponse>(`${API_URL}/api/analytics/orders`, authFetcher, { refreshInterval: 10000 });
 
     if (summaryError) return <div className="p-8 text-red-500 text-center">{dict.dashboard.error}</div>;
     if (summaryLoading) return <div className="p-8 text-slate-500 text-center animate-pulse">{dict.dashboard.loading}</div>;

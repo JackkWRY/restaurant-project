@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Kanit } from "next/font/google";
 import { Toaster } from "sonner";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import "./globals.css";
 
 const kanit = Kanit({ 
@@ -28,7 +29,9 @@ export default async function RootLayout({
   return (
     <html lang={lang || 'en'}>
       <body className={`${kanit.className} antialiased`}>
-        {children}
+        <ErrorBoundary>
+          {children}
+        </ErrorBoundary>
         <Toaster position="top-center" richColors />
       </body>
     </html>

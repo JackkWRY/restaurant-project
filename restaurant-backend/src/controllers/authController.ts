@@ -26,7 +26,13 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const secret = process.env.JWT_SECRET || 'default-secret';
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      console.error('JWT_SECRET is not defined in environment variables');
+      res.status(500).json({ error: 'Server configuration error' });
+      return;
+    }
+
     const token = jwt.sign(
       { userId: user.id, username: user.username, role: user.role },
       secret,
