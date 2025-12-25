@@ -1,7 +1,8 @@
 import type { Request, Response, NextFunction } from 'express';
-import { z, ZodError } from 'zod';
+import { ZodError, type ZodSchema } from 'zod';
+import logger from '../config/logger.js';
 
-export const validateRequest = (schema: z.ZodType<any, any>) => async (req: Request, res: Response, next: NextFunction) => {
+export const validateRequest = (schema: ZodSchema<any, any>) => async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (req.body) {
       req.body = await schema.parseAsync(req.body);
@@ -17,8 +18,12 @@ export const validateRequest = (schema: z.ZodType<any, any>) => async (req: Requ
       
       res.status(400).json({ status: 'error', errors: formattedErrors });
     } else {
-      console.error("Validation Error:", error);
-      res.status(400).json({ status: 'error', message: 'Invalid request data' });
+      logger.warn('Validation error', { 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        path: req.path,
+        method: req.method
+      });
+      return res.status(400).json({ status: 'error', message: 'Invalid request data' });
     }
   }
 };

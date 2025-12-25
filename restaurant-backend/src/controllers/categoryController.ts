@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import prisma from '../prisma.js';
+import logger from '../config/logger.js';
 import { createCategorySchema } from '../schemas/categorySchema.js';
 
 type CategoryInput = z.infer<typeof createCategorySchema>;
@@ -37,7 +38,7 @@ export const createCategory = async (req: Request, res: Response) => {
 
     res.status(201).json({ status: 'success', data: newCategory });
   } catch (error) {
-    console.error("Create Category Error:", error);
+    logger.error('Create category error', { error: error instanceof Error ? error.message : 'Unknown error' });
     res.status(500).json({ error: 'Failed to create category' });
   }
 };
@@ -59,9 +60,9 @@ export const updateCategory = async (req: Request, res: Response) => {
 };
 
 export const deleteCategory = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  
   try {
-    const { id } = req.params;
-
     const menuCount = await prisma.menu.count({
       where: { categoryId: Number(id) }
     });
@@ -80,7 +81,7 @@ export const deleteCategory = async (req: Request, res: Response) => {
 
     res.json({ status: 'success', message: 'Category deleted' });
   } catch (error) {
-    console.error("Delete Category Error:", error);
+    logger.error('Delete category error', { error: error instanceof Error ? error.message : 'Unknown error', categoryId: id });
     res.status(500).json({ error: 'Failed to delete category' });
   }
 };

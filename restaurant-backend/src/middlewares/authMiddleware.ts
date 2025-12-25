@@ -1,5 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import type { JwtPayload } from 'jsonwebtoken';
+import logger from '../config/logger.js';
 
 // Extend Express Request type
 export interface AuthRequest extends Request {
@@ -33,11 +35,8 @@ export const verifyToken = (
 
     const secret = process.env.JWT_SECRET;
     if (!secret) {
-      console.error("JWT_SECRET is not defined in environment variables");
-      res.status(500).json({
-        status: "error",
-        message: "Server configuration error",
-      });
+      logger.error('JWT_SECRET is not defined in environment variables');
+      res.status(500).json({ error: 'Server configuration error' });
       return;
     }
 
@@ -66,11 +65,9 @@ export const verifyToken = (
       return;
     }
 
-    console.error("Token verification error:", error);
-    res.status(401).json({
-      status: "error",
-      message: "Authentication failed",
-    });
+    logger.error('Token verification error', { error: error instanceof Error ? error.message : 'Unknown error' });
+    res.status(401).json({ error: 'Invalid token' });
+    return;
   }
 };
 

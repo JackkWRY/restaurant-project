@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import prisma from '../prisma.js';
+import logger from '../config/logger.js';
 import { OrderStatus, BillStatus } from '../config/enums.js';
 import { 
   createTableSchema, 
@@ -41,8 +42,9 @@ export const createTable = async (req: Request, res: Response) => {
 };
 
 export const updateTable = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  
   try {
-    const { id } = req.params;
     const body = req.body as UpdateTableInput;
 
     const updatedTable = await prisma.table.update({
@@ -52,7 +54,8 @@ export const updateTable = async (req: Request, res: Response) => {
 
     res.json({ status: 'success', data: updatedTable });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to update table' });
+    logger.error('Update table name error', { error: error instanceof Error ? error.message : 'Unknown error', tableId: id });
+    res.status(500).json({ error: 'Failed to update table name' });
   }
 };
 
@@ -290,7 +293,7 @@ export const getTablesStatus = async (req: Request, res: Response) => {
 
     res.json({ status: 'success', data: tableData });
   } catch (error) {
-    console.error(error);
+    logger.error('Fetch table status error', { error: error instanceof Error ? error.message : 'Unknown error' });
     res.status(500).json({ error: 'Failed to fetch table status' });
   }
 };
@@ -329,7 +332,7 @@ export const getTableDetails = async (req: Request, res: Response) => {
 
     res.json({ status: 'success', data: { ...table, items: allItems } });
   } catch (error) {
-    console.error(error);
+    logger.error('Fetch table details error', { error: error instanceof Error ? error.message : 'Unknown error' });
     res.status(500).json({ error: 'Failed to fetch details' });
   }
 };

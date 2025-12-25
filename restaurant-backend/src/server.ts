@@ -15,6 +15,8 @@ import categoryRoutes from './routes/categoryRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
 import billRoutes from './routes/billRoutes.js';
+import logger from './config/logger.js';
+import { requestLogger } from './middlewares/requestLogger.js';
 
 dotenv.config();
 
@@ -55,12 +57,13 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.use(requestLogger); // Add request logging
 app.set('io', io);
 
 io.on('connection', (socket) => {
-  // console.log('🔌 Client connected:', socket.id); // ปิด Log เพื่อความสะอาด
+  logger.debug('Client connected', { socketId: socket.id });
   socket.on('disconnect', () => {
-    // console.log('❌ Client disconnected');
+    logger.debug('Client disconnected', { socketId: socket.id });
   });
 });
 
@@ -82,6 +85,5 @@ app.get('/', (req: Request, res: Response) => {
 
 // Start Server
 httpServer.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ Backend running on port ${PORT}`);
-  console.log(`🔒 Allowed Origins:`, allowedOrigins);
+  logger.info(`Backend running on port ${PORT}`, { port: PORT, allowedOrigins });
 });

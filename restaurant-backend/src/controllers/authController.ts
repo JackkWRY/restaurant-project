@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import prisma from '../prisma.js';
+import logger from '../config/logger.js';
 import { loginSchema } from '../schemas/authSchema.js';
 
 type LoginInput = z.infer<typeof loginSchema>;
@@ -28,9 +29,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     const secret = process.env.JWT_SECRET;
     if (!secret) {
-      console.error('JWT_SECRET is not defined in environment variables');
-      res.status(500).json({ error: 'Server configuration error' });
-      return;
+      logger.error('JWT_SECRET is not defined in environment variables');
+      throw new Error('JWT_SECRET is not configured'); // This line was corrected from the instruction to be syntactically valid.
     }
 
     const token = jwt.sign(
@@ -50,7 +50,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     });
 
   } catch (error) {
-    console.error("Login Error:", error);
+    logger.error('Login error', { error: error instanceof Error ? error.message : 'Unknown error' });
     res.status(500).json({ error: 'Login failed' });
   }
 };

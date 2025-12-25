@@ -24,6 +24,9 @@ model User {
   password  String
   role      String   @default("STAFF")
   createdAt DateTime @default(now())
+
+  @@index([username])
+  @@index([role])
 }
 
 // --------------------------------------------------------
@@ -52,6 +55,8 @@ model Menu {
 
   @@index([categoryId])
   @@index([isRecommended])
+  @@index([deletedAt])
+  @@index([isVisible, isAvailable])
 }
 
 // --------------------------------------------------------
@@ -66,6 +71,9 @@ model Table {
   isCallingStaff Boolean @default(false)
   orders         Order[]
   bills          Bill[]
+
+  @@index([isAvailable])
+  @@index([isOccupied])
 }
 
 // --------------------------------------------------------
@@ -106,6 +114,7 @@ model Order {
   @@index([tableId])
   @@index([billId])
   @@index([createdAt])
+  @@index([tableId, status])
 }
 
 // --------------------------------------------------------
@@ -125,6 +134,7 @@ model OrderItem {
 
   @@index([menuId])
   @@index([status])
+  @@index([orderId])
 }
 
 // --------------------------------------------------------
