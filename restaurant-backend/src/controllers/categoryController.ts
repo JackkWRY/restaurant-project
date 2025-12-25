@@ -8,7 +8,17 @@ type CategoryInput = z.infer<typeof createCategorySchema>;
 export const getCategories = async (req: Request, res: Response) => {
   try {
     const categories = await prisma.category.findMany({
-      include: { menus: true },
+      include: {
+        _count: {
+          select: {
+            menus: {
+              where: {
+                deletedAt: null
+              }
+            }
+          }
+        }
+      },
       orderBy: { id: 'asc' }
     });
     res.json({ status: 'success', data: categories });
