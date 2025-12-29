@@ -1,34 +1,24 @@
-import prisma from '../prisma.js';
+import { categoryRepository } from '../repositories/categoryRepository.js';
 import { NotFoundError, ConflictError } from '../errors/AppError.js';
 
 /**
  * Category Service
  * Handles all business logic related to categories
+ * Now uses Repository for data access
  */
 export class CategoryService {
   /**
    * Get all categories
    */
   async getCategories() {
-    const categories = await prisma.category.findMany({
-      orderBy: { id: 'asc' }
-    });
-
-    return categories;
+    return await categoryRepository.findAll();
   }
 
   /**
    * Get category by ID
    */
   async getCategoryById(id: number) {
-    const category = await prisma.category.findUnique({
-      where: { id },
-      include: {
-        menus: {
-          where: { deletedAt: null }
-        }
-      }
-    });
+    const category = await categoryRepository.findById(id, true);
 
     if (!category) {
       throw new NotFoundError('Category');
@@ -42,21 +32,15 @@ export class CategoryService {
    */
   async createCategory(data: { name: string }) {
     // Check if category name already exists
-    const existing = await prisma.category.findFirst({
-      where: { name: data.name }
-    });
+    const existing = await categoryRepository.findByName(data.name);
 
     if (existing) {
       throw new ConflictError('Category name already exists');
     }
 
-    const category = await prisma.category.create({
-      data: {
-        name: data.name
-      }
+    return await categoryRepository.create({
+      name: data.name
     });
-
-    return category;
   }
 
   /**
@@ -68,24 +52,14 @@ export class CategoryService {
 
     // If name is being updated, check for duplicates
     if (data.name) {
-      const existing = await prisma.category.findFirst({
-        where: {
-          name: data.name,
-          id: { not: id }
-        }
-      });
+      const existing = await categoryRepository.findByName(data.name);
 
-      if (existing) {
+      if (existing && existing.id !== id) {
         throw new ConflictError('Category name already exists');
       }
     }
 
-    const category = await prisma.category.update({
-      where: { id },
-      data
-    });
-
-    return category;
+    return await categoryRepository.update(id, data);
   }
 
   /**
@@ -93,16 +67,16 @@ export class CategoryService {
    */
   async deleteCategory(id: number) {
     // Check category exists
-    const category = await this.getCategoryById(id);
+    await this.getCategoryById(id);
 
     // Check if category has menus
-    if (category.menus && category.menus.length > 0) {
+    const hasMenus = await categoryRepository.hasMenus(id);
+
+    if (hasMenus) {
       throw new ConflictError('Cannot delete category with existing menus');
     }
 
-    await prisma.category.delete({
-      where: { id }
-    });
+    await categoryRepository.delete(id);
 
     return { message: 'Category deleted successfully' };
   }
