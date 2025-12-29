@@ -17,25 +17,18 @@ import analyticsRoutes from './routes/analyticsRoutes.js';
 import billRoutes from './routes/billRoutes.js';
 import logger from './config/logger.js';
 import { requestLogger } from './middlewares/requestLogger.js';
+import config, { PORT, CORS_CONFIG, RATE_LIMIT_CONFIG, SOCKET_CONFIG, validateConfig } from './config/index.js';
 
 dotenv.config();
 
-const app = express();
-const PORT = Number(process.env.PORT) || 3001;
-const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:3000';
+// Validate required environment variables
+validateConfig();
 
+const app = express();
 const httpServer = createServer(app);
 
-const allowedOrigins = [CLIENT_URL, 'http://localhost:3000'];
-
 // Setup Socket.io
-const io = new Server(httpServer, {
-  cors: {
-    origin: allowedOrigins,
-    methods: ["GET", "POST"],
-    credentials: true
-  }
-});
+const io = new Server(httpServer, SOCKET_CONFIG);
 
 // Security Middleware
 app.use(helmet({
@@ -44,16 +37,16 @@ app.use(helmet({
 
 // Rate Limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 300,
-  message: 'Too many requests from this IP, please try again later.'
+  windowMs: RATE_LIMIT_CONFIG.windowMs,
+  max: RATE_LIMIT_CONFIG.maxRequests,
+  message: RATE_LIMIT_CONFIG.message
 });
 app.use(limiter);
 
 // Setup Express CORS
 app.use(cors({
-  origin: allowedOrigins,
-  credentials: true
+  origin: CORS_CONFIG.origins,
+  credentials: CORS_CONFIG.credentials
 }));
 
 app.use(express.json());
@@ -80,10 +73,14 @@ app.use('/api', billRoutes);
 
 // Health Check
 app.get('/', (req: Request, res: Response) => {
-  res.send(`<h1>Restaurant API Running! 🚀</h1><p>Allowed Origins: ${allowedOrigins.join(', ')}</p>`);
+  res.send(`<h1>Restaurant API Running! 🚀</h1><p>Allowed Origins: ${CORS_CONFIG.origins.join(', ')}</p>`);
 });
 
 // Start Server
 httpServer.listen(PORT, '0.0.0.0', () => {
-  logger.info(`Backend running on port ${PORT}`, { port: PORT, allowedOrigins });
+  logger.info(`Backend running on port ${PORT}`, { 
+    port: PORT, 
+    allowedOrigins: CORS_CONFIG.origins,
+    environment: config.env
+  });
 });
