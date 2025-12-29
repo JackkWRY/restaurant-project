@@ -1,132 +1,98 @@
 import type { Request, Response } from 'express';
-import { z } from 'zod';
-import prisma from '../prisma.js';
-import { createMenuSchema, updateMenuSchema } from '../schemas/menuSchema.js';
-import { NotFoundError, ValidationError } from '../errors/AppError.js';
 import { asyncHandler } from '../middlewares/errorHandler.js';
+import { menuService } from '../services/menuService.js';
 
-type CreateMenuInput = z.infer<typeof createMenuSchema>;
-type UpdateMenuInput = z.infer<typeof updateMenuSchema>;
+/**
+ * Menu Controller
+ * Handles HTTP requests and delegates business logic to MenuService
+ */
 
+/**
+ * GET /api/menus
+ * Get all menus with optional filtering
+ */
 export const getMenus = asyncHandler(async (req: Request, res: Response) => {
-  try {
-    const { scope } = req.query;
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 100;
-    const skip = (page - 1) * limit;
+  const { scope } = req.query;
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 100;
 
-    if (scope === 'all') {
-      const where = { deletedAt: null };
-      
-      const [menus, total] = await Promise.all([
-        prisma.menu.findMany({
-          where,
-          include: { category: true },
-          orderBy: { id: 'desc' },
-          skip,
-          take: limit
-        }),
-        prisma.menu.count({ where })
-      ]);
+  const result = await menuService.getMenus({ scope: scope as string, page, limit });
 
-      res.json({ 
-        status: 'success', 
-        data: menus,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit)
-        }
-      });
-      return;
-    }
-
-    // For customer view - no pagination, grouped by category
-    const categories = await prisma.category.findMany({
-      include: {
-        menus: {
-          where: { 
-            isVisible: true,
-            deletedAt: null 
-          }, 
-          orderBy: { id: 'asc' }
-        }
-      },
-      orderBy: { id: 'asc' }
+  if ('pagination' in result) {
+    res.json({
+      status: 'success',
+      data: result.menus,
+      pagination: result.pagination
     });
-
-    res.json({ status: 'success', data: categories });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch menus' });
+  } else {
+    res.json({
+      status: 'success',
+      data: result.categories
+    });
   }
 });
 
-export const createMenu = async (req: Request, res: Response) => {
-  try {
-    const body = req.body as CreateMenuInput;
-    
-    const newMenu = await prisma.menu.create({
-      data: {
-        nameTH: body.nameTH,
-        nameEN: body.nameEN || '',
-        description: body.description,
-        price: body.price,
-        categoryId: body.categoryId,
-        imageUrl: body.imageUrl || '',
-        isRecommended: body.isRecommended || false,
-        isAvailable: body.isAvailable ?? true,
-        isVisible: body.isVisible ?? true
-      }
-    });
+/**
+ * GET /api/menus/:id
+ * Get menu by ID
+ */
+export const getMenuById = asyncHandler(async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  const menu = await menuService.getMenuById(id);
+  
+  res.json({ status: 'success', data: menu });
+});
 
-    res.status(201).json({ status: 'success', data: newMenu });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to create menu' });
-  }
-};
+/**
+ * POST /api/menus
+ * Create new menu
+ */
+export const createMenu = asyncHandler(async (req: Request, res: Response) => {
+  const menu = await menuService.createMenu(req.body);
+  
+  res.status(201).json({ status: 'success', data: menu });
+});
 
-export const updateMenu = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const body = req.body as UpdateMenuInput;
+/**
+ * PUT /api/menus/:id
+ * Update menu
+ */
+export const updateMenu = asyncHandler(async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  const menu = await menuService.updateMenu(id, req.body);
+  
+  res.json({ status: 'success', data: menu });
+});
 
-    const updatedMenu = await prisma.menu.update({
-      where: { id: Number(id) },
-      data: {
-        nameTH: body.nameTH,
-        nameEN: body.nameEN,
-        description: body.description,
-        price: body.price,
-        categoryId: body.categoryId,
-        imageUrl: body.imageUrl,
-        isRecommended: body.isRecommended,
-        isAvailable: body.isAvailable,
-        isVisible: body.isVisible
-      }
-    });
+/**
+ * DELETE /api/menus/:id
+ * Soft delete menu
+ */
+export const deleteMenu = asyncHandler(async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  await menuService.deleteMenu(id);
+  
+  res.json({ status: 'success', message: 'Menu deleted' });
+});
 
-    res.json({ status: 'success', data: updatedMenu });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to update menu' });
-  }
-};
+/**
+ * PATCH /api/menus/:id/toggle-availability
+ * Toggle menu availability
+ */
+export const toggleAvailability = asyncHandler(async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  const menu = await menuService.toggleAvailability(id);
+  
+  res.json({ status: 'success', data: menu });
+});
 
-export const deleteMenu = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    
-    await prisma.menu.update({
-      where: { id: Number(id) },
-      data: { 
-        deletedAt: new Date(),
-        isVisible: false,
-        isAvailable: false
-      }
-    });
-
-    res.json({ status: 'success', message: 'Menu deleted' });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to delete menu' });
-  }
-};
+/**
+ * PATCH /api/menus/:id/toggle-visibility
+ * Toggle menu visibility
+ */
+export const toggleVisibility = asyncHandler(async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  const menu = await menuService.toggleVisibility(id);
+  
+  res.json({ status: 'success', data: menu });
+});
