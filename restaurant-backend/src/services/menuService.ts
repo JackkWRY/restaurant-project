@@ -1,6 +1,7 @@
 import prisma from '../prisma.js';
 import { NotFoundError, ValidationError } from '../errors/AppError.js';
 import type { CreateMenuInput, UpdateMenuInput } from '../types/menu.ts';
+import { MenuDto, CategoryDto } from '../dtos/menuDto.js';
 
 /**
  * Menu Service
@@ -33,7 +34,7 @@ export class MenuService {
       ]);
 
       return {
-        menus,
+        menus: MenuDto.fromPrismaMany(menus),
         pagination: {
           page,
           limit,
@@ -57,7 +58,7 @@ export class MenuService {
       orderBy: { id: 'asc' }
     });
 
-    return { categories };
+    return { categories: CategoryDto.fromPrismaMany(categories) };
   }
 
   /**
@@ -73,7 +74,7 @@ export class MenuService {
       throw new NotFoundError('Menu');
     }
 
-    return menu;
+    return MenuDto.fromPrisma(menu);
   }
 
   /**
@@ -104,7 +105,7 @@ export class MenuService {
       include: { category: true }
     });
 
-    return menu;
+    return MenuDto.fromPrisma(menu);
   }
 
   /**
@@ -131,7 +132,7 @@ export class MenuService {
       include: { category: true }
     });
 
-    return menu;
+    return MenuDto.fromPrisma(menu);
   }
 
   /**
@@ -146,7 +147,7 @@ export class MenuService {
       data: { deletedAt: new Date() }
     });
 
-    return menu;
+    return MenuDto.fromPrisma(menu);
   }
 
   /**
@@ -160,7 +161,7 @@ export class MenuService {
       data: { isAvailable: !menu.isAvailable }
     });
 
-    return updated;
+    return MenuDto.fromPrisma(updated);
   }
 
   /**
@@ -174,7 +175,7 @@ export class MenuService {
       data: { isVisible: !menu.isVisible }
     });
 
-    return updated;
+    return MenuDto.fromPrisma(updated);
   }
 }
 
