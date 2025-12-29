@@ -76,6 +76,10 @@ app.get('/', (req: Request, res: Response) => {
   res.send(`<h1>Restaurant API Running! 🚀</h1><p>Allowed Origins: ${CORS_CONFIG.origins.join(', ')}</p>`);
 });
 
+// Error Handler (must be last!)
+import { errorHandler } from './middlewares/errorHandler.js';
+app.use(errorHandler);
+
 // Start Server
 httpServer.listen(PORT, '0.0.0.0', () => {
   logger.info(`Backend running on port ${PORT}`, { 

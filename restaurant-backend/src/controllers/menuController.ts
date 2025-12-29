@@ -2,11 +2,13 @@ import type { Request, Response } from 'express';
 import { z } from 'zod';
 import prisma from '../prisma.js';
 import { createMenuSchema, updateMenuSchema } from '../schemas/menuSchema.js';
+import { NotFoundError, ValidationError } from '../errors/AppError.js';
+import { asyncHandler } from '../middlewares/errorHandler.js';
 
 type CreateMenuInput = z.infer<typeof createMenuSchema>;
 type UpdateMenuInput = z.infer<typeof updateMenuSchema>;
 
-export const getMenus = async (req: Request, res: Response) => {
+export const getMenus = asyncHandler(async (req: Request, res: Response) => {
   try {
     const { scope } = req.query;
     const page = parseInt(req.query.page as string) || 1;
@@ -58,7 +60,7 @@ export const getMenus = async (req: Request, res: Response) => {
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch menus' });
   }
-};
+});
 
 export const createMenu = async (req: Request, res: Response) => {
   try {
