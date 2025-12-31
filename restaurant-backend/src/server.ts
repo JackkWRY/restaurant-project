@@ -5,6 +5,7 @@ import { createServer } from 'node:http';
 import { Server } from 'socket.io';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import compression from 'compression';
 
 import authRoutes from './routes/authRoutes.js';
 import settingRoutes from './routes/settingRoutes.js';
@@ -42,6 +43,9 @@ const limiter = rateLimit({
   message: RATE_LIMIT_CONFIG.message
 });
 app.use(limiter);
+
+// Response Compression (reduces response size by 60-70%)
+app.use(compression());
 
 // Setup Express CORS
 app.use(cors({
