@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import type { JwtPayload } from 'jsonwebtoken';
 import logger from '../config/logger.js';
+import { sendUnauthorized, sendError, sendForbidden } from '../utils/apiResponse.js';
 
 // Extend Express Request type
 export interface AuthRequest extends Request {
@@ -24,10 +25,7 @@ export const verifyToken = (
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      res.status(401).json({
-        status: "error",
-        message: "No token provided",
-      });
+      sendUnauthorized(res, "No token provided");
       return;
     }
 
@@ -36,7 +34,7 @@ export const verifyToken = (
     const secret = process.env.JWT_SECRET;
     if (!secret) {
       logger.error('JWT_SECRET is not defined in environment variables');
-      res.status(500).json({ error: 'Server configuration error' });
+      sendError(res, 'Server configuration error');
       return;
     }
 
@@ -50,23 +48,17 @@ export const verifyToken = (
     next();
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
-      res.status(401).json({
-        status: "error",
-        message: "Token expired",
-      });
+      sendUnauthorized(res, "Token expired");
       return;
     }
 
     if (error instanceof jwt.JsonWebTokenError) {
-      res.status(401).json({
-        status: "error",
-        message: "Invalid token",
-      });
+      sendUnauthorized(res, "Invalid token");
       return;
     }
 
     logger.error('Token verification error', { error: error instanceof Error ? error.message : 'Unknown error' });
-    res.status(401).json({ error: 'Invalid token' });
+    sendUnauthorized(res, 'Invalid token');
     return;
   }
 };
@@ -85,18 +77,12 @@ export const requireRole = (roles: string[]) => {
     // First verify token
     verifyToken(req, res, () => {
       if (!req.user) {
-        res.status(401).json({
-          status: "error",
-          message: "Authentication required",
-        });
+        sendUnauthorized(res, "Authentication required");
         return;
       }
 
       if (!roles.includes(req.user.role)) {
-        res.status(403).json({
-          status: "error",
-          message: "Insufficient permissions",
-        });
+        sendForbidden(res, "Insufficient permissions");
         return;
       }
 

@@ -6,6 +6,7 @@ import prisma from '../prisma.js';
 import logger from '../config/logger.js';
 import { JWT_CONFIG } from '../config/index.js';
 import { loginSchema, refreshSchema, logoutSchema } from '../schemas/authSchema.js';
+import { sendSuccess, sendError, sendUnauthorized } from '../utils/apiResponse.js';
 
 type LoginInput = z.infer<typeof loginSchema>;
 type RefreshInput = z.infer<typeof refreshSchema>;
@@ -20,13 +21,13 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     });
 
     if (!user) {
-      res.status(401).json({ error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
+      sendUnauthorized(res, 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
       return;
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      res.status(401).json({ error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
+      sendUnauthorized(res, 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
       return;
     }
 
@@ -35,7 +36,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     
     if (!secret || !refreshSecret) {
       logger.error('JWT_SECRET or REFRESH_TOKEN_SECRET is not defined');
-      res.status(500).json({ error: 'Server configuration error' });
+      sendError(res, 'Server configuration error');
       return;
     }
 
@@ -59,8 +60,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     logger.info('User logged in', { userId: user.id, username: user.username });
 
-    res.json({
-      status: 'success',
+    sendSuccess(res, {
       accessToken,
       refreshToken,
       user: {
@@ -72,7 +72,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
   } catch (error) {
     logger.error('Login error', { error: error instanceof Error ? error.message : 'Unknown error' });
-    res.status(500).json({ error: 'Login failed' });
+    sendError(res, 'Login failed');
   }
 };
 
@@ -85,7 +85,7 @@ export const refresh = async (req: Request, res: Response): Promise<void> => {
 
     if (!refreshSecret || !accessSecret) {
       logger.error('JWT secrets not configured');
-      res.status(500).json({ error: 'Server configuration error' });
+      sendError(res, 'Server configuration error');
       return;
     }
 
@@ -106,7 +106,7 @@ export const refresh = async (req: Request, res: Response): Promise<void> => {
     });
 
     if (!tokenRecord) {
-      res.status(401).json({ error: 'Invalid or expired refresh token' });
+      sendUnauthorized(res, 'Invalid or expired refresh token');
       return;
     }
 
@@ -119,22 +119,19 @@ export const refresh = async (req: Request, res: Response): Promise<void> => {
 
     logger.info('Token refreshed', { userId: decoded.userId });
 
-    res.json({
-      status: 'success',
-      accessToken: newAccessToken
-    });
+    sendSuccess(res, { accessToken: newAccessToken });
 
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
-      res.status(401).json({ error: 'Refresh token expired' });
+      sendUnauthorized(res, 'Refresh token expired');
       return;
     }
     if (error instanceof jwt.JsonWebTokenError) {
-      res.status(401).json({ error: 'Invalid refresh token' });
+      sendUnauthorized(res, 'Invalid refresh token');
       return;
     }
     logger.error('Refresh token error', { error: error instanceof Error ? error.message : 'Unknown error' });
-    res.status(500).json({ error: 'Token refresh failed' });
+    sendError(res, 'Token refresh failed');
   }
 };
 
@@ -149,13 +146,10 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
 
     logger.info('User logged out');
 
-    res.json({
-      status: 'success',
-      message: 'Logged out successfully'
-    });
+    sendSuccess(res, undefined, 'Logged out successfully');
 
   } catch (error) {
     logger.error('Logout error', { error: error instanceof Error ? error.message : 'Unknown error' });
-    res.status(500).json({ error: 'Logout failed' });
+    sendError(res, 'Logout failed');
   }
 };

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { v2 as cloudinary } from 'cloudinary';
+import { sendSuccess, sendBadRequest, sendError } from '../utils/apiResponse.js';
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -10,7 +11,7 @@ cloudinary.config({
 export const uploadImage = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.file) {
-      res.status(400).json({ status: 'error', message: 'No file provided' });
+      sendBadRequest(res, 'No file provided');
       return;
     }
 
@@ -22,12 +23,9 @@ export const uploadImage = async (req: Request, res: Response): Promise<void> =>
         resource_type: "auto"
     });
 
-    res.json({
-      status: 'success',
-      url: result.secure_url
-    });
+    sendSuccess(res, { url: result.secure_url });
 
   } catch (error) {
-    res.status(500).json({ status: 'error', message: 'Upload failed' });
+    sendError(res, 'Upload failed');
   }
 };

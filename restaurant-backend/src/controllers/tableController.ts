@@ -3,6 +3,7 @@ import { z } from 'zod';
 import prisma from '../prisma.js';
 import logger from '../config/logger.js';
 import { OrderStatus, BillStatus } from '../config/enums.js';
+import { sendSuccess, sendCreated, sendError, sendBadRequest, sendNotFound } from '../utils/apiResponse.js';
 import { 
   createTableSchema, 
   updateTableSchema, 
@@ -35,9 +36,9 @@ export const createTable = async (req: Request, res: Response) => {
       data: { qrCode: qrCodeUrl }
     });
 
-    res.status(201).json({ status: 'success', data: updatedTable });
+    sendCreated(res, updatedTable);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to create table' });
+    sendError(res, 'Failed to create table');
   }
 };
 
@@ -52,10 +53,10 @@ export const updateTable = async (req: Request, res: Response) => {
       data: { name: body.name }
     });
 
-    res.json({ status: 'success', data: updatedTable });
+    sendSuccess(res, updatedTable);
   } catch (error) {
     logger.error('Update table name error', { error: error instanceof Error ? error.message : 'Unknown error', tableId: id });
-    res.status(500).json({ error: 'Failed to update table name' });
+    sendError(res, 'Failed to update table name');
   }
 };
 
@@ -81,9 +82,9 @@ export const deleteTable = async (req: Request, res: Response) => {
       where: { id: Number(id) }
     });
 
-    res.json({ status: 'success', message: 'Table deleted' });
+    sendSuccess(res, undefined, 'Table deleted');
   } catch (error) {
-    res.status(500).json({ error: 'Failed to delete table' });
+    sendError(res, 'Failed to delete table');
   }
 };
 
@@ -97,9 +98,9 @@ export const toggleAvailability = async (req: Request, res: Response) => {
       data: { isAvailable: body.isAvailable }
     });
 
-    res.json({ status: 'success', data: updatedTable });
+    sendSuccess(res, updatedTable);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to update availability' });
+    sendError(res, 'Failed to update availability');
   }
 };
 
@@ -109,13 +110,13 @@ export const getTableById = async (req: Request, res: Response) => {
     const table = await prisma.table.findUnique({ where: { id: Number(id) } });
 
     if (!table) {
-      res.status(404).json({ error: 'Table not found' });
+      sendNotFound(res, 'Table not found');
       return;
     }
     
-    res.json({ status: 'success', data: table });
+    sendSuccess(res, table);
   } catch (error) {
-    res.status(500).json({ error: 'Error fetching table' });
+    sendError(res, 'Error fetching table');
   }
 };
 
@@ -142,9 +143,9 @@ export const updateCallStaff = async (req: Request, res: Response) => {
     const io = req.app.get('io');
     io.emit('table_updated', payload); 
 
-    res.json({ status: 'success', data: payload });
+    sendSuccess(res, payload);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to update call staff status' });
+    sendError(res, 'Failed to update call staff status');
   }
 };
 
@@ -165,10 +166,7 @@ export const closeTable = async (req: Request, res: Response) => {
     });
 
     if (unservedItems) {
-      res.status(400).json({ 
-        status: 'error', 
-        error: 'Cannot close table. Some items are not yet SERVED or COMPLETED.' 
-      });
+      sendBadRequest(res, 'Cannot close table. Some items are not yet SERVED or COMPLETED.');
       return; 
     }
 
@@ -237,10 +235,10 @@ export const closeTable = async (req: Request, res: Response) => {
     const io = req.app.get('io');
     io.emit('table_updated', { id: Number(id) }); 
 
-    res.json({ status: 'success', message: 'Table and Bill closed successfully' });
+    sendSuccess(res, undefined, 'Table and Bill closed successfully');
 
   } catch (error) {
-    res.status(500).json({ error: 'Failed to close table' });
+    sendError(res, 'Failed to close table');
   }
 };
 
@@ -291,10 +289,10 @@ export const getTablesStatus = async (req: Request, res: Response) => {
       };
     });
 
-    res.json({ status: 'success', data: tableData });
+    sendSuccess(res, tableData);
   } catch (error) {
     logger.error('Fetch table status error', { error: error instanceof Error ? error.message : 'Unknown error' });
-    res.status(500).json({ error: 'Failed to fetch table status' });
+    sendError(res, 'Failed to fetch table status');
   }
 };
 
@@ -313,7 +311,7 @@ export const getTableDetails = async (req: Request, res: Response) => {
     });
 
     if (!table) {
-      res.status(404).json({ error: 'Table not found' });
+      sendNotFound(res, 'Table not found');
       return;
     }
 
@@ -330,9 +328,9 @@ export const getTableDetails = async (req: Request, res: Response) => {
       }))
     );
 
-    res.json({ status: 'success', data: { ...table, items: allItems } });
+    sendSuccess(res, { ...table, items: allItems });
   } catch (error) {
     logger.error('Fetch table details error', { error: error instanceof Error ? error.message : 'Unknown error' });
-    res.status(500).json({ error: 'Failed to fetch details' });
+    sendError(res, 'Failed to fetch details');
   }
 };

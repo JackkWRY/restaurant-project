@@ -40,7 +40,8 @@ const refreshAccessToken = async (): Promise<string | null> => {
 
     if (res.ok) {
       const data = await res.json();
-      const newAccessToken = data.accessToken;
+      // New response format: { status: 'success', data: { accessToken } }
+      const newAccessToken = data.data?.accessToken || data.accessToken; // Fallback for compatibility
       
       // Save new access token
       if (typeof window !== 'undefined') {

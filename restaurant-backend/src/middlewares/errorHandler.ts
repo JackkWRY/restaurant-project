@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { AppError } from '../errors/AppError.js';
 import logger from '../config/logger.js';
+import { sendError } from '../utils/apiResponse.js';
 
 /**
  * Global Error Handler Middleware
@@ -31,10 +32,7 @@ export const errorHandler = (
       });
     }
 
-    res.status(error.statusCode).json({
-      status: 'error',
-      message: error.message
-    });
+    sendError(res, error.message, error.statusCode);
     return;
   }
 
@@ -46,10 +44,7 @@ export const errorHandler = (
     method: req.method
   });
 
-  res.status(500).json({
-    status: 'error',
-    message: 'Internal server error'
-  });
+  sendError(res, 'Internal server error', 500);
 };
 
 /**

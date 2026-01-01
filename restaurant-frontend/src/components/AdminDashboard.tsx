@@ -56,11 +56,25 @@ export default function AdminDashboard({ dict, lang }: AdminDashboardProps) {
     }
   }, [router, lang]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (confirm(dict.common.logoutConfirm)) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        router.push(`/${lang}/login`);
+        try {
+            const refreshToken = localStorage.getItem("refreshToken");
+            if (refreshToken) {
+                await fetch(`${API_URL}/api/logout`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refreshToken })
+                });
+            }
+        } catch (error) {
+            console.error('Logout error:', error);
+        } finally {
+            localStorage.removeItem("token");
+            localStorage.removeItem("refreshToken");
+            localStorage.removeItem("user");
+            router.push(`/${lang}/login`);
+        }
     }
   };
 
@@ -312,7 +326,10 @@ function MenuManager({ dict }: { dict: Dictionary }) {
     const { data: menusData, mutate: mutateMenus } = useSWR(`${API_URL}/api/menus?scope=all`, authFetcher);
     const { data: catsData } = useSWR(`${API_URL}/api/categories`, authFetcher);
 
-    const menus: Menu[] = menusData?.status === 'success' ? menusData.data : [];
+    // Handle both grouped and paginated responses
+    const menus: Menu[] = menusData?.status === 'success' 
+        ? (Array.isArray(menusData.data) ? menusData.data : menusData.data?.menus || [])
+        : [];
     const categories: Category[] = catsData?.status === 'success' ? catsData.data : [];
     
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -372,9 +389,10 @@ function MenuManager({ dict }: { dict: Dictionary }) {
             const data = await res.json();
 
             if (data.status === "success") {
-                setNewImage(data.url);
+                // New response format: { status: 'success', data: { url: '...' } }
+                setNewImage(data.data?.url || data.url);
             } else {
-                alert("Upload failed: " + data.message);
+                alert("Upload failed: " + (data.message || 'Unknown error'));
             }
         } catch (error) {
             console.error("Upload Error:", error);

@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import prisma from '../prisma.js';
 import { BillStatus, OrderStatus } from '../config/enums.js';
 import dayjs from 'dayjs';
+import { sendSuccess, sendError } from '../utils/apiResponse.js';
 
 type BillWithRelations = Prisma.BillGetPayload<{
     include: {
@@ -76,18 +77,15 @@ export const getAnalyticsSummary = async (req: Request, res: Response) => {
             };
         });
 
-        res.json({
-            status: 'success',
-            data: {
-                todayTotal: Number(todaySales._sum.totalPrice) || 0,
-                todayCount: todaySales._count.id || 0,
-                salesTrend,
-                topItems
-            }
+        sendSuccess(res, {
+            todayTotal: Number(todaySales._sum.totalPrice) || 0,
+            todayCount: todaySales._count.id || 0,
+            salesTrend,
+            topItems
         });
 
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch analytics summary' });
+        sendError(res, 'Failed to fetch analytics summary');
     }
 };
 
@@ -148,9 +146,9 @@ export const getDailyBills = async (req: Request, res: Response) => {
             };
         });
 
-        res.json({ status: 'success', data: formattedBills });
+        sendSuccess(res, formattedBills);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch daily bills' });
+        sendError(res, 'Failed to fetch daily bills');
     }
 };
 
@@ -216,6 +214,7 @@ export const getBillHistory = async (req: Request, res: Response) => {
             )
         }));
 
+        // Note: pagination info needs custom handling
         res.json({
             status: 'success',
             data: {
@@ -230,6 +229,6 @@ export const getBillHistory = async (req: Request, res: Response) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch bill history' });
+        sendError(res, 'Failed to fetch bill history');
     }
 };

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import prisma from '../prisma.js';
 import logger from '../config/logger.js';
 import { createCategorySchema } from '../schemas/categorySchema.js';
+import { sendSuccess, sendCreated, sendError, sendBadRequest } from '../utils/apiResponse.js';
 
 type CategoryInput = z.infer<typeof createCategorySchema>;
 
@@ -22,9 +23,9 @@ export const getCategories = async (req: Request, res: Response) => {
       },
       orderBy: { id: 'asc' }
     });
-    res.json({ status: 'success', data: categories });
+    sendSuccess(res, categories);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch categories' });
+    sendError(res, 'Failed to fetch categories');
   }
 };
 
@@ -36,10 +37,10 @@ export const createCategory = async (req: Request, res: Response) => {
       data: { name }
     });
 
-    res.status(201).json({ status: 'success', data: newCategory });
+    sendCreated(res, newCategory);
   } catch (error) {
     logger.error('Create category error', { error: error instanceof Error ? error.message : 'Unknown error' });
-    res.status(500).json({ error: 'Failed to create category' });
+    sendError(res, 'Failed to create category');
   }
 };
 
@@ -53,9 +54,9 @@ export const updateCategory = async (req: Request, res: Response) => {
       data: { name }
     });
 
-    res.json({ status: 'success', data: updatedCategory });
+    sendSuccess(res, updatedCategory);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to update category' });
+    sendError(res, 'Failed to update category');
   }
 };
 
@@ -68,10 +69,7 @@ export const deleteCategory = async (req: Request, res: Response) => {
     });
 
     if (menuCount > 0) {
-      res.status(400).json({ 
-        status: 'error', 
-        message: 'Cannot delete category with existing menus. Please move or delete menus first.' 
-      });
+      sendBadRequest(res, 'Cannot delete category with existing menus. Please move or delete menus first.');
       return; 
     }
 
@@ -79,9 +77,9 @@ export const deleteCategory = async (req: Request, res: Response) => {
       where: { id: Number(id) }
     });
 
-    res.json({ status: 'success', message: 'Category deleted' });
+    sendSuccess(res, undefined, 'Category deleted');
   } catch (error) {
     logger.error('Delete category error', { error: error instanceof Error ? error.message : 'Unknown error', categoryId: id });
-    res.status(500).json({ error: 'Failed to delete category' });
+    sendError(res, 'Failed to delete category');
   }
 };

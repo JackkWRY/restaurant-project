@@ -15,7 +15,6 @@ import tableRoutes from './routes/tableRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
-import billRoutes from './routes/billRoutes.js';
 import logger from './config/logger.js';
 import { requestLogger } from './middlewares/requestLogger.js';
 import config, { PORT, CORS_CONFIG, RATE_LIMIT_CONFIG, SOCKET_CONFIG } from './config/index.js';
@@ -73,7 +72,6 @@ app.use('/api', tableRoutes);
 app.use('/api', categoryRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/analytics', analyticsRoutes);
-app.use('/api', billRoutes);
 
 // Health Check
 app.get('/', (req: Request, res: Response) => {

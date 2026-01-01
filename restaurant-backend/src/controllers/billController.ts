@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { asyncHandler } from '../middlewares/errorHandler.js';
 import { billService } from '../services/billService.js';
+import { sendSuccess } from '../utils/apiResponse.js';
 
 /**
  * Bill Controller
@@ -15,7 +16,7 @@ export const getTableBill = asyncHandler(async (req: Request, res: Response) => 
   const tableId = Number(req.params.tableId);
   const billData = await billService.getTableBill(tableId);
 
-  res.json({ status: 'success', data: billData });
+  sendSuccess(res, billData);
 });
 
 /**

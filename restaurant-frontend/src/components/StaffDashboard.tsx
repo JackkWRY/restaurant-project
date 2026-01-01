@@ -101,12 +101,26 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (confirm(dict.common.logoutConfirm)) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      router.push(`/${lang}/login`);
-      toast.success(dict.common.logout + " " + dict.common.success);
+      try {
+        const refreshToken = localStorage.getItem("refreshToken");
+        if (refreshToken) {
+          await fetch(`${API_URL}/api/logout`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refreshToken })
+          });
+        }
+      } catch (error) {
+        console.error('Logout error:', error);
+      } finally {
+        localStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("user");
+        router.push(`/${lang}/login`);
+        toast.success(dict.common.logout + " " + dict.common.success);
+      }
     }
   };
 
@@ -223,7 +237,8 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
         mutateTables(); 
         closeModal(); 
       } else {
-        toast.error(`${dict.common.error}: ${data.error}`);
+        // New error format: { status: 'error', message: '...' }
+        toast.error(`${dict.common.error}: ${data.message || data.error || 'Unknown error'}`);
       }
     } catch (error) { console.error(error); toast.error(dict.common.error); }
   };

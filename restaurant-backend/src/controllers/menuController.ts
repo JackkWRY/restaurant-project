@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { asyncHandler } from '../middlewares/errorHandler.js';
 import { menuService } from '../services/menuService.js';
+import { sendSuccess, sendCreated } from '../utils/apiResponse.js';
 
 /**
  * Menu Controller
@@ -19,16 +20,14 @@ export const getMenus = asyncHandler(async (req: Request, res: Response) => {
   const result = await menuService.getMenus({ scope: scope as string, page, limit });
 
   if ('pagination' in result) {
+    // Pagination response - keep custom format for now
     res.json({
       status: 'success',
       data: result.menus,
       pagination: result.pagination
     });
   } else {
-    res.json({
-      status: 'success',
-      data: result.categories
-    });
+    sendSuccess(res, result.categories);
   }
 });
 
@@ -40,7 +39,7 @@ export const getMenuById = asyncHandler(async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   const menu = await menuService.getMenuById(id);
   
-  res.json({ status: 'success', data: menu });
+  sendSuccess(res, menu);
 });
 
 /**
@@ -50,7 +49,7 @@ export const getMenuById = asyncHandler(async (req: Request, res: Response) => {
 export const createMenu = asyncHandler(async (req: Request, res: Response) => {
   const menu = await menuService.createMenu(req.body);
   
-  res.status(201).json({ status: 'success', data: menu });
+  sendCreated(res, menu);
 });
 
 /**
@@ -61,7 +60,7 @@ export const updateMenu = asyncHandler(async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   const menu = await menuService.updateMenu(id, req.body);
   
-  res.json({ status: 'success', data: menu });
+  sendSuccess(res, menu);
 });
 
 /**
@@ -72,7 +71,7 @@ export const deleteMenu = asyncHandler(async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   await menuService.deleteMenu(id);
   
-  res.json({ status: 'success', message: 'Menu deleted' });
+  sendSuccess(res, undefined, 'Menu deleted');
 });
 
 /**
@@ -83,7 +82,7 @@ export const toggleAvailability = asyncHandler(async (req: Request, res: Respons
   const id = Number(req.params.id);
   const menu = await menuService.toggleAvailability(id);
   
-  res.json({ status: 'success', data: menu });
+  sendSuccess(res, menu);
 });
 
 /**
@@ -94,5 +93,5 @@ export const toggleVisibility = asyncHandler(async (req: Request, res: Response)
   const id = Number(req.params.id);
   const menu = await menuService.toggleVisibility(id);
   
-  res.json({ status: 'success', data: menu });
+  sendSuccess(res, menu);
 });

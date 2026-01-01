@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { z } from 'zod';
 import prisma from '../prisma.js';
 import { updateSettingSchema } from '../schemas/settingSchema.js';
+import { sendSuccess, sendError } from '../utils/apiResponse.js';
 
 type UpdateSettingInput = z.infer<typeof updateSettingSchema>;
 
@@ -11,12 +12,9 @@ export const getRestaurantName = async (req: Request, res: Response) => {
       where: { key: 'restaurant_name' }
     });
     
-    res.json({ 
-      status: 'success', 
-      data: setting ? setting.value : 'Restaurant 🍳'
-    });
+    sendSuccess(res, setting ? setting.value : 'Restaurant 🍳');
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch settings' });
+    sendError(res, 'Failed to fetch settings');
   }
 };
 
@@ -30,8 +28,8 @@ export const updateRestaurantName = async (req: Request, res: Response) => {
       create: { key: 'restaurant_name', value: name }
     });
 
-    res.json({ status: 'success', data: setting });
+    sendSuccess(res, setting);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to update settings' });
+    sendError(res, 'Failed to update settings');
   }
 };

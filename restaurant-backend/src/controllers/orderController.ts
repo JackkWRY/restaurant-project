@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { asyncHandler } from '../middlewares/errorHandler.js';
 import { orderService } from '../services/orderService.js';
+import { sendSuccess, sendCreated } from '../utils/apiResponse.js';
 
 /**
  * Order Controller
@@ -17,7 +18,7 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
   const io = req.app.get('io');
   io.emit('new_order', newOrder);
 
-  res.status(201).json({ status: 'success', data: newOrder });
+  sendCreated(res, newOrder);
 });
 
 /**
@@ -26,7 +27,7 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
  */
 export const getActiveOrders = asyncHandler(async (req: Request, res: Response) => {
   const orders = await orderService.getActiveOrders();
-  res.json({ status: 'success', data: orders });
+  sendSuccess(res, orders);
 });
 
 /**
@@ -42,7 +43,7 @@ export const updateOrderStatus = asyncHandler(async (req: Request, res: Response
   const io = req.app.get('io');
   io.emit('order_status_updated', updatedOrder);
 
-  res.json({ status: 'success', data: updatedOrder });
+  sendSuccess(res, updatedOrder);
 });
 
 /**
@@ -70,5 +71,5 @@ export const updateOrderItemStatus = asyncHandler(async (req: Request, res: Resp
 
   io.emit('item_status_updated', payload);
 
-  res.json({ status: 'success', data: updatedItem });
+  sendSuccess(res, updatedItem);
 });

@@ -37,24 +37,28 @@ export default function LoginForm({
 
       const data = await res.json();
 
-      if (res.ok) {
-        // Store both access token and refresh token
-        localStorage.setItem("token", data.accessToken);
-        localStorage.setItem("refreshToken", data.refreshToken);
-        localStorage.setItem("user", JSON.stringify(data.user));
+      if (res.ok && data.status === 'success') {
+        // New response format: { status: 'success', data: { accessToken, refreshToken, user } }
+        const { accessToken, refreshToken, user } = data.data;
         
-        document.cookie = `token=${data.accessToken}; path=/; max-age=86400; SameSite=Lax`;
+        // Store both access token and refresh token
+        localStorage.setItem("token", accessToken);
+        localStorage.setItem("refreshToken", refreshToken);
+        localStorage.setItem("user", JSON.stringify(user));
+        
+        document.cookie = `token=${accessToken}; path=/; max-age=86400; SameSite=Lax`;
 
-        if (data.user.role === ROLE.ADMIN) {
+        if (user.role === ROLE.ADMIN) {
             router.push(`/${lang}/admin`);
-        } else if (data.user.role === ROLE.KITCHEN) {
+        } else if (user.role === ROLE.KITCHEN) {
             router.push(`/${lang}/kitchen`);
         } else {
             router.push(`/${lang}/staff`);
         }
 
       } else {
-        setError(data.error || dict.auth.loginFailed);
+        // New error format: { status: 'error', message: '...' }
+        setError(data.message || dict.auth.loginFailed);
       }
     } catch (err) {
       console.error("Login error:", err);
