@@ -6,6 +6,7 @@ import { Server } from 'socket.io';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import compression from 'compression';
+import jwt from 'jsonwebtoken';
 
 import authRoutes from './routes/authRoutes.js';
 import settingRoutes from './routes/settingRoutes.js';
@@ -17,7 +18,7 @@ import uploadRoutes from './routes/uploadRoutes.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
 import logger from './config/logger.js';
 import { requestLogger } from './middlewares/requestLogger.js';
-import config, { PORT, CORS_CONFIG, RATE_LIMIT_CONFIG, SOCKET_CONFIG } from './config/index.js';
+import config, { PORT, CORS_CONFIG, RATE_LIMIT_CONFIG, SOCKET_CONFIG, JWT_CONFIG } from './config/index.js';
 
 dotenv.config();
 
@@ -29,6 +30,41 @@ const httpServer = createServer(app);
 
 // Setup Socket.io
 const io = new Server(httpServer, SOCKET_CONFIG);
+
+// Socket.IO Authentication Middleware
+io.use((socket, next) => {
+  const token = socket.handshake.auth.token;
+  
+  if (!token) {
+    logger.warn('Socket connection attempt without token', { socketId: socket.id });
+    return next(new Error('Authentication error: No token provided'));
+  }
+  
+  try {
+    const secret = JWT_CONFIG.accessTokenSecret;
+    if (!secret) {
+      logger.error('JWT_SECRET not configured for Socket.IO');
+      return next(new Error('Server configuration error'));
+    }
+    
+    const decoded = jwt.verify(token, secret) as { userId: number; role: string };
+    socket.data.user = decoded;
+    
+    logger.debug('Socket authenticated', { 
+      socketId: socket.id, 
+      userId: decoded.userId, 
+      role: decoded.role 
+    });
+    
+    next();
+  } catch (err) {
+    logger.warn('Socket authentication failed', { 
+      socketId: socket.id, 
+      error: err instanceof Error ? err.message : 'Unknown error' 
+    });
+    return next(new Error('Authentication error: Invalid token'));
+  }
+});
 
 // Security Middleware
 app.use(helmet({
@@ -56,10 +92,33 @@ app.use(express.json());
 app.use(requestLogger); // Add request logging
 app.set('io', io);
 
+// Socket.IO Connection Handler
 io.on('connection', (socket) => {
-  logger.debug('Client connected', { socketId: socket.id });
+  const user = socket.data.user;
+  
+  logger.info('User connected via Socket.IO', { 
+    socketId: socket.id, 
+    userId: user.userId, 
+    role: user.role 
+  });
+  
+  // Join role-based rooms for targeted broadcasting
+  if (user.role === 'ADMIN' || user.role === 'STAFF') {
+    socket.join('staff-room');
+    logger.debug('User joined staff-room', { userId: user.userId });
+  }
+  
+  if (user.role === 'KITCHEN') {
+    socket.join('kitchen-room');
+    logger.debug('User joined kitchen-room', { userId: user.userId });
+  }
+  
   socket.on('disconnect', () => {
-    logger.debug('Client disconnected', { socketId: socket.id });
+    logger.info('User disconnected', { 
+      socketId: socket.id, 
+      userId: user.userId, 
+      role: user.role 
+    });
   });
 });
 

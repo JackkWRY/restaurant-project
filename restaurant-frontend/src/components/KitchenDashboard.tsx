@@ -129,10 +129,19 @@ export default function KitchenDashboard({ dict, lang }: KitchenDashboardProps) 
 
   // 4. Socket Integration
   useEffect(() => {
-    if (!localStorage.getItem("token")) return;
+    const token = localStorage.getItem("token");
+    if (!token) return;
 
     if (!socketRef.current) {
-        socketRef.current = io(API_URL);
+        socketRef.current = io(API_URL, {
+          auth: {
+            token: token
+          }
+        });
+        
+        socketRef.current.on('connect_error', (error) => {
+          console.error('Socket connection error:', error.message);
+        });
         
         socketRef.current.on("new_order", () => {
             mutate();

@@ -126,10 +126,23 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
 
   // --- 4. Socket Integration ---
   useEffect(() => {
-    if (!localStorage.getItem("token")) return;
+    const token = localStorage.getItem("token");
+    if (!token) return;
 
     if (!socketRef.current) {
-        socketRef.current = io(API_URL);
+        socketRef.current = io(API_URL, {
+          auth: {
+            token: token
+          }
+        });
+        
+        socketRef.current.on('connect_error', (error) => {
+          console.error('Socket connection error:', error.message);
+          // If authentication fails, try to refresh token
+          if (error.message.includes('Authentication')) {
+            socketRef.current?.disconnect();
+          }
+        });
         
         socketRef.current.on("new_order", (newOrder: NewOrderPayload) => {
             mutateTables(); 
