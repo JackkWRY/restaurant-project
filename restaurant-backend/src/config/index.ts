@@ -1,42 +1,44 @@
 /**
  * Application Configuration
- * Centralized configuration for all hard-coded values
+ * Centralized configuration using validated environment variables
  */
 
+import { env } from './env.js';
+
 // Environment
-export const NODE_ENV = process.env.NODE_ENV || 'development';
+export const NODE_ENV = env.NODE_ENV;
 export const IS_PRODUCTION = NODE_ENV === 'production';
 export const IS_DEVELOPMENT = NODE_ENV === 'development';
 
 // Server
-export const PORT = Number(process.env.PORT) || 3001;
-export const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:3000';
+export const PORT = env.PORT;
+export const CLIENT_URL = env.CLIENT_URL;
 
 // JWT Configuration
 export const JWT_CONFIG = {
-  accessTokenSecret: process.env.JWT_SECRET,
-  refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET,
-  accessTokenExpiry: process.env.JWT_ACCESS_EXPIRY || '15m',
-  refreshTokenExpiry: process.env.JWT_REFRESH_EXPIRY || '7d',
+  accessTokenSecret: env.JWT_SECRET,
+  refreshTokenSecret: env.REFRESH_TOKEN_SECRET,
+  accessTokenExpiry: env.JWT_ACCESS_EXPIRY,
+  refreshTokenExpiry: env.JWT_REFRESH_EXPIRY,
   refreshTokenExpiryMs: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
 } as const;
 
 // Rate Limiting
 export const RATE_LIMIT_CONFIG = {
-  windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  maxRequests: Number(process.env.RATE_LIMIT_MAX) || 300,
+  windowMs: env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000, // 15 minutes
+  maxRequests: env.RATE_LIMIT_MAX || 300,
   message: 'Too many requests from this IP, please try again later.',
 } as const;
 
 // Pagination
 export const PAGINATION_CONFIG = {
-  defaultLimit: Number(process.env.PAGINATION_DEFAULT_LIMIT) || 10,
-  maxLimit: Number(process.env.PAGINATION_MAX_LIMIT) || 100,
+  defaultLimit: env.PAGINATION_DEFAULT_LIMIT || 10,
+  maxLimit: env.PAGINATION_MAX_LIMIT || 100,
 } as const;
 
 // Logging
 export const LOG_CONFIG = {
-  level: IS_PRODUCTION ? 'info' : 'debug',
+  level: env.LOG_LEVEL || (IS_PRODUCTION ? 'info' : 'debug'),
   maxFiles: '14d',
   maxSize: '20m',
   datePattern: 'YYYY-MM-DD',
@@ -44,14 +46,14 @@ export const LOG_CONFIG = {
 
 // CORS
 export const CORS_CONFIG = {
-  origins: [CLIENT_URL, 'http://localhost:3000'],
+  origins: env.CORS_ORIGIN ? [env.CORS_ORIGIN, CLIENT_URL] : [CLIENT_URL, 'http://localhost:3000'],
   credentials: true,
 };
 
 // Socket.IO
 export const SOCKET_CONFIG = {
   cors: {
-    origin: [CLIENT_URL, 'http://localhost:3000'],
+    origin: env.CORS_ORIGIN ? [env.CORS_ORIGIN, CLIENT_URL] : [CLIENT_URL, 'http://localhost:3000'],
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -59,29 +61,21 @@ export const SOCKET_CONFIG = {
 
 // Cloudinary (if needed)
 export const CLOUDINARY_CONFIG = {
-  cloudName: process.env.CLOUDINARY_CLOUD_NAME,
-  apiKey: process.env.CLOUDINARY_API_KEY,
-  apiSecret: process.env.CLOUDINARY_API_SECRET,
+  cloudName: env.CLOUDINARY_CLOUD_NAME,
+  apiKey: env.CLOUDINARY_API_KEY,
+  apiSecret: env.CLOUDINARY_API_SECRET,
 } as const;
 
 // Database
-export const DATABASE_URL = process.env.DATABASE_URL;
+export const DATABASE_URL = env.DATABASE_URL;
 
-// Validation
+/**
+ * @deprecated Environment variables are now validated automatically on startup via env.ts
+ * This function is kept for backward compatibility but does nothing
+ */
 export const validateConfig = () => {
-  const required = {
-    DATABASE_URL,
-    JWT_ACCESS_SECRET: JWT_CONFIG.accessTokenSecret,
-    JWT_REFRESH_SECRET: JWT_CONFIG.refreshTokenSecret,
-  };
-
-  const missing = Object.entries(required)
-    .filter(([_, value]) => !value)
-    .map(([key]) => key);
-
-  if (missing.length > 0) {
-    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
-  }
+  // Environment validation now happens automatically in env.ts
+  // This function is kept for backward compatibility
 };
 
 export default {

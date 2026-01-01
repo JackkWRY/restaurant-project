@@ -18,12 +18,12 @@ import analyticsRoutes from './routes/analyticsRoutes.js';
 import billRoutes from './routes/billRoutes.js';
 import logger from './config/logger.js';
 import { requestLogger } from './middlewares/requestLogger.js';
-import config, { PORT, CORS_CONFIG, RATE_LIMIT_CONFIG, SOCKET_CONFIG, validateConfig } from './config/index.js';
+import config, { PORT, CORS_CONFIG, RATE_LIMIT_CONFIG, SOCKET_CONFIG } from './config/index.js';
 
 dotenv.config();
 
-// Validate required environment variables
-validateConfig();
+// Environment variables are validated automatically when importing from config/env.ts
+// No need to call validateConfig() anymore
 
 const app = express();
 const httpServer = createServer(app);
