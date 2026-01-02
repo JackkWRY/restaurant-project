@@ -377,6 +377,25 @@ function MenuManager({ dict }: { dict: Dictionary }) {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        // Client-side validation
+        const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+        const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+
+        // Check file type
+        if (!ALLOWED_TYPES.includes(file.type)) {
+            alert('Invalid file type. Only JPEG, PNG, and WebP images are allowed.');
+            e.target.value = ''; // Reset input
+            return;
+        }
+
+        // Check file size
+        if (file.size > MAX_SIZE) {
+            const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+            alert(`File too large (${sizeMB}MB). Maximum size is 5MB.`);
+            e.target.value = ''; // Reset input
+            return;
+        }
+
         setUploading(true);
         const formData = new FormData();
         formData.append("file", file);
@@ -399,6 +418,7 @@ function MenuManager({ dict }: { dict: Dictionary }) {
             alert("Upload error");
         } finally {
             setUploading(false);
+            e.target.value = ''; // Reset input after upload
         }
     };
 
