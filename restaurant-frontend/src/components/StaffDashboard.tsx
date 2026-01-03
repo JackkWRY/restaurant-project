@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Pencil, Trash2, Plus, X, Check, Eye, UtensilsCrossed, Bell, Ban, ShoppingBag, Sparkles, Receipt, Coins, LogOut, LayoutDashboard, Globe, ChefHat } from "lucide-react";
 import type { Dictionary } from "@/locales/dictionary";
+import { logger } from "@/lib/logger";
 
 // --- Types ---
 interface TableStatus {
@@ -95,7 +96,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
             const user = JSON.parse(userStr);
             setUserRole(user.role);
         } catch (e) {
-            console.error("Error parsing user", e);
+            logger.error("Error parsing user", e);
         }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -113,7 +114,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
           });
         }
       } catch (error) {
-        console.error('Logout error:', error);
+        logger.error('Logout error:', error);
       } finally {
         localStorage.removeItem("token");
         localStorage.removeItem("refreshToken");
@@ -137,7 +138,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
         });
         
         socketRef.current.on('connect_error', (error) => {
-          console.error('Socket connection error:', error.message);
+          logger.error('Socket connection error:', error.message);
           // If authentication fails, try to refresh token
           if (error.message.includes('Authentication')) {
             socketRef.current?.disconnect();
@@ -154,9 +155,9 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
 
             try {
                 const audio = new Audio(APP_CONFIG.SOUNDS.NOTIFICATION); 
-                audio.play().catch((err) => console.log("Audio play blocked:", err));
+                audio.play().catch((err) => logger.warn("Audio play blocked:", err));
             } catch (error) {
-                console.error("Error playing sound:", error);
+                logger.error("Error playing sound:", error);
             }
         });
 
@@ -166,9 +167,9 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
             if (updatedTable && updatedTable.isCallingStaff) {
                 try {
                     const audio = new Audio(APP_CONFIG.SOUNDS.BELL_1);
-                    audio.play().catch((err) => console.log("Audio play blocked (User must interact first):", err));
+                    audio.play().catch((err) => logger.warn("Audio play blocked (User must interact first):", err));
                 } catch (error) {
-                    console.error("Error playing sound:", error);
+                    logger.error("Error playing sound:", error);
                 }
             }
         });
@@ -184,9 +185,9 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
             if (item && item.status === 'READY') {
                 try {
                     const audio = new Audio(APP_CONFIG.SOUNDS.BELL_2); 
-                    audio.play().catch((err) => console.log("Audio play blocked:", err));
+                    audio.play().catch((err) => logger.warn("Audio play blocked:", err));
                 } catch (error) {
-                    console.error("Error playing sound:", error);
+                    logger.error("Error playing sound:", error);
                 }
             }
         });
@@ -210,7 +211,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
         });
         mutateTables(); 
         toast.success(dict.staff.callCustomer + " - " + dict.common.success);
-    } catch (error) { console.error(error); }
+    } catch (error) { logger.error(error); }
   };
 
   const handleViewDetails = (id: number) => {
@@ -253,7 +254,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
         // New error format: { status: 'error', message: '...' }
         toast.error(`${dict.common.error}: ${data.message || data.error || 'Unknown error'}`);
       }
-    } catch (error) { console.error(error); toast.error(dict.common.error); }
+    } catch (error) { logger.error(error); toast.error(dict.common.error); }
   };
 
   const handleToggleTable = async (tableId: number, currentStatus: boolean, isOccupied: boolean) => {
@@ -268,7 +269,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
       });
       mutateTables();
       toast.success(dict.common.success);
-    } catch (error) { console.error(error); }
+    } catch (error) { logger.error(error); }
   };
 
   const handleCreateTable = async () => {
@@ -284,7 +285,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
           mutateTables();
           toast.success(dict.staff.addTable + " " + dict.common.success);
       }
-    } catch (error) { console.error(error); }
+    } catch (error) { logger.error(error); }
   };
 
   const handleDeleteTable = async (id: number) => {
@@ -293,7 +294,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
       await authFetch(`${API_URL}/api/tables/${id}`, { method: 'DELETE' });
       mutateTables();
       toast.success(dict.common.success);
-    } catch (error) { console.error(error); }
+    } catch (error) { logger.error(error); }
   };
 
   const handleUpdateTableName = async (id: number, oldName: string) => {
@@ -303,7 +304,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
       await authFetch(`${API_URL}/api/tables/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newName }) });
       mutateTables();
       toast.success(dict.common.success);
-    } catch (error) { console.error(error); }
+    } catch (error) { logger.error(error); }
   };
 
   const handleCancelOrder = async (itemId: number, menuName: string) => {
@@ -319,7 +320,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
             mutateTables(); 
             toast.success(dict.common.success);
         }
-    } catch (error) { console.error(error); toast.error(dict.common.error); }
+    } catch (error) { logger.error(error); toast.error(dict.common.error); }
   };
 
   const handleChangeStatus = async (itemId: number, newStatus: string, menuName: string) => {
@@ -337,7 +338,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
               toast.success(dict.common.success);
           }
           else toast.error(dict.common.error);
-      } catch (error) { console.error(error); toast.error(dict.common.error); }
+      } catch (error) { logger.error(error); toast.error(dict.common.error); }
   };
 
   const getStatusColor = (status: string) => {

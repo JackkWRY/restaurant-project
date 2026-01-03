@@ -11,6 +11,7 @@ import useSWR from "swr";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Clock, ChefHat, BellRing, LogOut, LayoutDashboard, Globe } from "lucide-react"; 
 import type { Dictionary } from "@/locales/dictionary";
+import { logger } from "@/lib/logger";
 
 // --- Types ---
 type ItemStatus = ORDER_STATUS;
@@ -99,7 +100,7 @@ export default function KitchenDashboard({ dict, lang }: KitchenDashboardProps) 
             const user = JSON.parse(userStr);
             setUserRole(user.role);
         } catch (e) {
-            console.error("Error parsing user data", e);
+            logger.error("Error parsing user data", e);
         }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -117,7 +118,7 @@ export default function KitchenDashboard({ dict, lang }: KitchenDashboardProps) 
           });
         }
       } catch (error) {
-        console.error('Logout error:', error);
+        logger.error('Logout error:', error);
       } finally {
         localStorage.removeItem("token");
         localStorage.removeItem("refreshToken");
@@ -140,16 +141,16 @@ export default function KitchenDashboard({ dict, lang }: KitchenDashboardProps) 
         });
         
         socketRef.current.on('connect_error', (error) => {
-          console.error('Socket connection error:', error.message);
+          logger.error('Socket connection error:', error.message);
         });
         
         socketRef.current.on("new_order", () => {
             mutate();
             try {
                 const audio = new Audio(APP_CONFIG.SOUNDS.NOTIFICATION);
-                audio.play().catch((err) => console.log("Audio play blocked (User must interact first):", err));
+                audio.play().catch((err) => logger.warn("Audio play blocked (User must interact first):", err));
             } catch (error) {
-                console.error("Error playing sound:", error);
+                logger.error("Error playing sound:", error);
             }
         });
         
@@ -180,7 +181,7 @@ export default function KitchenDashboard({ dict, lang }: KitchenDashboardProps) 
       });
       mutate();
     } catch (error) { 
-        console.error(error); 
+        logger.error(error); 
     }
   };
 

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useCartStore } from "@/store/useCartStore";
+import { logger } from "@/lib/logger";
 
 export default function TableDetector() {
   const searchParams = useSearchParams();
@@ -15,9 +16,9 @@ export default function TableDetector() {
       const id = Number(idStr);
 
       if (isNaN(id)) {
-        console.error("Invalid Table ID");
+        logger.error("Invalid Table ID");
       } else {
-        console.log("📍 Detected Table ID:", id);
+        logger.debug("Detected Table ID:", id);
         setTableId(id);
       }
     }

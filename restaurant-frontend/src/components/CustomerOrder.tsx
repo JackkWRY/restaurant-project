@@ -13,6 +13,7 @@ import FloatingCart from "@/components/FloatingCart";
 import TableDetector from "@/components/TableDetector"; 
 import { useCartStore } from "@/store/useCartStore";
 import type { Dictionary } from "@/locales/dictionary";
+import { logger } from "@/lib/logger";
 
 // --- Types ---
 interface Menu {
@@ -85,7 +86,7 @@ export default function CustomerOrder({ dict, lang }: CustomerOrderProps) {
 
     const socket = io(API_URL);
     
-    socket.on("connect", () => { console.log("✅ Customer connected to socket"); });
+    socket.on("connect", () => { logger.debug("Customer connected to socket"); });
     
     socket.on("table_updated", (updatedTable: TableInfo) => {
         if (String(updatedTable.id) === String(tableIdParam)) {
