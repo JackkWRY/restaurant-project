@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 interface RootLayoutProps {
   children: React.ReactNode;
-  params: Promise<{ lang: string }>;
+  params?: Promise<{ lang?: string }>;
 }
 
 export default async function RootLayout({
@@ -24,10 +24,11 @@ export default async function RootLayout({
   params, 
 }: RootLayoutProps) {
   
-  const { lang } = await params;
+  const resolvedParams = params ? await params : {};
+  const lang = resolvedParams.lang || 'en';
 
   return (
-    <html lang={lang || 'en'}>
+    <html lang={lang}>
       <body className={`${kanit.className} antialiased`}>
         <ErrorBoundary>
           {children}

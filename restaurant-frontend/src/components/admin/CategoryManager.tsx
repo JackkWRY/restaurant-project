@@ -1,0 +1,144 @@
+"use client";
+
+import { API_URL, authFetch, authFetcher } from "@/lib/utils";
+import { useState } from "react";
+import { List, Plus, Pencil, Trash2 } from "lucide-react";
+import useSWR from "swr";
+import type { Dictionary } from "@/locales/dictionary";
+
+interface Category {
+  id: number;
+  name: string;
+  _count?: { menus: number };
+}
+
+interface CategoryManagerProps {
+  dict: Dictionary;
+}
+
+/**
+ * CategoryManager Component
+ * Manages menu categories (CRUD operations)
+ */
+export default function CategoryManager({ dict }: CategoryManagerProps) {
+  const [newCategoryName, setNewCategoryName] = useState("");
+
+  const { data: catData, mutate } = useSWR(
+    `${API_URL}/api/categories`,
+    authFetcher
+  );
+  const categories: Category[] =
+    catData?.status === "success" ? catData.data : [];
+  const isLoading = !catData;
+
+  const handleCreate = async () => {
+    if (!newCategoryName.trim()) return;
+
+    try {
+      await authFetch(`${API_URL}/api/categories`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newCategoryName }),
+      });
+      setNewCategoryName("");
+      mutate();
+    } catch (error) {
+      console.error("Failed to create category:", error);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm(dict.admin.confirmDelete)) return;
+
+    try {
+      const res = await authFetch(`${API_URL}/api/categories/${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) mutate();
+    } catch (error) {
+      console.error("Failed to delete category:", error);
+    }
+  };
+
+  const handleUpdate = async (id: number, oldName: string) => {
+    const newName = prompt(dict.admin.promptEdit, oldName);
+    if (!newName || newName === oldName) return;
+
+    try {
+      await authFetch(`${API_URL}/api/categories/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newName }),
+      });
+      mutate();
+    } catch (error) {
+      console.error("Failed to update category:", error);
+    }
+  };
+
+  return (
+    <div>
+      <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+        <List className="text-purple-600" />
+        {dict.admin.manageCategories}
+      </h2>
+
+      <div className="flex gap-2 mb-6">
+        <input
+          type="text"
+          placeholder={dict.admin.placeholderCategory}
+          className="flex-1 border p-3 rounded-lg bg-slate-50 focus:bg-white transition-colors"
+          value={newCategoryName}
+          onChange={(e) => setNewCategoryName(e.target.value)}
+        />
+        <button
+          onClick={handleCreate}
+          className="bg-purple-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-purple-700 flex items-center gap-2"
+        >
+          <Plus size={20} /> {dict.admin.add}
+        </button>
+      </div>
+
+      {isLoading ? (
+        <p className="text-slate-500">{dict.common.loading}</p>
+      ) : (
+        <div className="space-y-3">
+          {categories.map((cat) => (
+            <div
+              key={cat.id}
+              className="flex justify-between items-center bg-white border p-4 rounded-xl hover:shadow-md transition-shadow group"
+            >
+              <div>
+                <span className="font-bold text-lg text-slate-800">
+                  {cat.name}
+                </span>
+                <span className="ml-3 text-sm text-slate-400 bg-slate-100 px-2 py-1 rounded-full">
+                  {cat._count?.menus || 0} {dict.admin.menuCount}
+                </span>
+              </div>
+              <div className="flex gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={() => handleUpdate(cat.id, cat.name)}
+                  className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                >
+                  <Pencil size={18} />
+                </button>
+                <button
+                  onClick={() => handleDelete(cat.id)}
+                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
+            </div>
+          ))}
+          {categories.length === 0 && (
+            <p className="text-center text-slate-400 py-10">
+              {dict.admin.noCategory}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
