@@ -1,5 +1,6 @@
 import prisma from '../prisma.js';
 import type { Order, OrderItem, Prisma } from '@prisma/client';
+import { OrderStatus } from '../config/enums.js';
 
 /**
  * Order Repository
@@ -80,7 +81,7 @@ export class OrderRepository {
   /**
    * Find active orders
    */
-  async findActiveOrders(statuses: any[]) {
+  async findActiveOrders(statuses: OrderStatus[]) {
     return await prisma.order.findMany({
       where: {
         status: { in: statuses }

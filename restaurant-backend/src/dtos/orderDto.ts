@@ -1,4 +1,4 @@
-import type { Order, OrderItem, Menu } from '@prisma/client';
+import type { Order, OrderItem, Menu, Table } from '@prisma/client';
 import { TableDto } from './tableDto.js';
 import { MenuDto } from './menuDto.js';
 
@@ -49,7 +49,7 @@ export class OrderDto {
   items?: OrderItemDto[];
   createdAt: Date;
 
-  constructor(order: Order & { table?: any; items?: (OrderItem & { menu?: Menu })[] }) {
+  constructor(order: Order & { table?: Table; items?: (OrderItem & { menu?: Menu })[] }) {
     this.id = order.id;
     this.tableId = order.tableId;
     this.billId = order.billId;
@@ -66,11 +66,11 @@ export class OrderDto {
     }
   }
 
-  static fromPrisma(order: Order & { table?: any; items?: (OrderItem & { menu?: Menu })[] }): OrderDto {
+  static fromPrisma(order: Order & { table?: Table; items?: (OrderItem & { menu?: Menu })[] }): OrderDto {
     return new OrderDto(order);
   }
 
-  static fromPrismaMany(orders: (Order & { table?: any; items?: (OrderItem & { menu?: Menu })[] })[]): OrderDto[] {
+  static fromPrismaMany(orders: (Order & { table?: Table; items?: (OrderItem & { menu?: Menu })[] })[]): OrderDto[] {
     return orders.map(order => new OrderDto(order));
   }
 }

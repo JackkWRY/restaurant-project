@@ -1,5 +1,6 @@
 import prisma from '../prisma.js';
 import type { OrderItem, Prisma } from '@prisma/client';
+import { OrderStatus } from '../config/enums.js';
 
 /**
  * OrderItem Repository
@@ -40,7 +41,7 @@ export class OrderItemRepository {
   /**
    * Update order item status
    */
-  async updateStatus(id: number, status: any) {
+  async updateStatus(id: number, status: OrderStatus) {
     return await prisma.orderItem.update({
       where: { id },
       data: { status },

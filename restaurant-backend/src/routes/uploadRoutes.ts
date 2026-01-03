@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request } from 'express';
 import multer from 'multer';
 import { uploadImage } from '../controllers/uploadController.js';
 
@@ -8,7 +8,7 @@ const router = Router();
 const storage = multer.memoryStorage();
 
 // File filter for image validation
-const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   // Allowed MIME types
   const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
   

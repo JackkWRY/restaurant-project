@@ -1,5 +1,6 @@
 import prisma from '../prisma.js';
 import type { Bill, Prisma } from '@prisma/client';
+import { BillStatus } from '../config/enums.js';
 
 /**
  * Bill Repository
@@ -47,7 +48,7 @@ export class BillRepository {
   /**
    * Find active bill by table
    */
-  async findActiveBillByTable(tableId: number, status: any) {
+  async findActiveBillByTable(tableId: number, status: BillStatus) {
     return await prisma.bill.findFirst({
       where: {
         tableId,

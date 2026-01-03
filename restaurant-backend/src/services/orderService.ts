@@ -123,7 +123,7 @@ export class OrderService {
   /**
    * Update order status
    */
-  async updateOrderStatus(id: number, status: any) {
+  async updateOrderStatus(id: number, status: OrderStatus) {
     const order = await orderRepository.findById(id);
     if (!order) {
       throw new NotFoundError('Order');
@@ -157,7 +157,7 @@ export class OrderService {
   /**
    * Update order item status
    */
-  async updateOrderItemStatus(itemId: number, status: any) {
+  async updateOrderItemStatus(itemId: number, status: OrderStatus) {
     const item = await orderItemRepository.findById(itemId);
     if (!item) {
       throw new NotFoundError('Order item');

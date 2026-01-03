@@ -1,4 +1,4 @@
-import type { Bill, Order, OrderItem, Menu } from '@prisma/client';
+import type { Bill, Order, OrderItem, Menu, Table } from '@prisma/client';
 import { TableDto } from './tableDto.js';
 import { OrderDto } from './orderDto.js';
 
@@ -19,7 +19,7 @@ export class BillDto {
   closedAt: Date | null;
 
   constructor(bill: Bill & { 
-    table?: any; 
+    table?: Table; 
     orders?: (Order & { items?: (OrderItem & { menu?: Menu })[] })[]
   }) {
     this.id = bill.id;
@@ -41,14 +41,14 @@ export class BillDto {
   }
 
   static fromPrisma(bill: Bill & { 
-    table?: any; 
+    table?: Table; 
     orders?: (Order & { items?: (OrderItem & { menu?: Menu })[] })[]
   }): BillDto {
     return new BillDto(bill);
   }
 
   static fromPrismaMany(bills: (Bill & { 
-    table?: any; 
+    table?: Table; 
     orders?: (Order & { items?: (OrderItem & { menu?: Menu })[] })[]
   })[]): BillDto[] {
     return bills.map(bill => new BillDto(bill));

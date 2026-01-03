@@ -3,6 +3,23 @@ import { tableRepository } from '../repositories/tableRepository.js';
 import { NotFoundError } from '../errors/AppError.js';
 import { BillDto } from '../dtos/billDto.js';
 import { OrderStatus, BillStatus } from '../config/enums.js';
+import type { Order, OrderItem, Menu } from '@prisma/client';
+
+// Type for orders with relations
+type OrderWithRelations = Order & {
+  items: (OrderItem & { menu: Menu })[];
+};
+
+// Type for bill item
+interface BillItem {
+  id: number;
+  menuName: string;
+  price: number;
+  quantity: number;
+  status: string;
+  total: number;
+  note: string;
+}
 
 interface CheckoutInput {
   tableId: number;
@@ -77,12 +94,12 @@ export class BillService {
   /**
    * Calculate bill data
    */
-  private calculateBillData(orders: any[]) {
+  private calculateBillData(orders: OrderWithRelations[]) {
     let total = 0;
-    const items: any[] = [];
+    const items: BillItem[] = [];
 
     orders.forEach(order => {
-      order.items.forEach((item: any) => {
+      order.items.forEach((item) => {
         const itemTotal = Number(item.menu.price) * item.quantity;
 
         items.push({
