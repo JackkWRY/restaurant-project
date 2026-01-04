@@ -3,6 +3,7 @@
 import { API_URL, authFetch, authFetcher } from "@/lib/utils";
 import { useState, type ChangeEvent } from "react";
 import Image from "next/image";
+import { logger } from "@/lib/logger";
 import {
   Utensils,
   Plus,
@@ -143,7 +144,7 @@ export default function MenuManager({ dict }: MenuManagerProps) {
         alert("Upload failed: " + (data.message || "Unknown error"));
       }
     } catch (error) {
-      console.error("Upload Error:", error);
+      logger.error("Upload Error:", error);
       alert("Upload error");
     } finally {
       setUploading(false);
@@ -189,7 +190,7 @@ export default function MenuManager({ dict }: MenuManagerProps) {
         alert(dict.admin.alertFailed);
       }
     } catch (error) {
-      console.error("Failed to save menu:", error);
+      logger.error("Failed to save menu:", error);
       alert(dict.common.error);
     }
   };
@@ -201,7 +202,7 @@ export default function MenuManager({ dict }: MenuManagerProps) {
       await authFetch(`${API_URL}/api/menus/${id}`, { method: "DELETE" });
       mutateMenus();
     } catch (error) {
-      console.error("Failed to delete menu:", error);
+      logger.error("Failed to delete menu:", error);
     }
   };
 
@@ -219,7 +220,7 @@ export default function MenuManager({ dict }: MenuManagerProps) {
       });
       if (res.ok) mutateMenus();
     } catch (error) {
-      console.error("Failed to toggle menu:", error);
+      logger.error("Failed to toggle menu:", error);
     }
   };
 

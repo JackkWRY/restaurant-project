@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import type { Dictionary } from "@/locales/dictionary";
 import { API_URL } from "@/lib/utils";
+import { logger } from "@/lib/logger";
 
 // Lazy load components
 const AnalyticsDashboard = dynamic(() => import("./AnalyticsDashboard"), {
@@ -79,7 +80,7 @@ export default function AdminDashboard({ dict, lang }: AdminDashboardProps) {
           });
         }
       } catch (error) {
-        console.error("Logout error:", error);
+        logger.error("Logout error:", error);
       } finally {
         localStorage.removeItem("token");
         localStorage.removeItem("refreshToken");

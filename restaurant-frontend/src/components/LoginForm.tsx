@@ -1,6 +1,7 @@
 "use client";
 
 import { API_URL } from "@/lib/utils";
+import { logger } from "@/lib/logger";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, User, LogIn, UtensilsCrossed, Globe } from "lucide-react";
@@ -61,7 +62,7 @@ export default function LoginForm({
         setError(data.message || dict.auth.loginFailed);
       }
     } catch (err) {
-      console.error("Login error:", err);
+      logger.error("Login error:", err);
       setError(dict.common.error);
     } finally {
       setLoading(false);

@@ -3,6 +3,7 @@
 import { API_URL, authFetch } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Calendar, Search, FileText, DollarSign, Eye, X, Receipt, StickyNote } from "lucide-react"; 
+import { logger } from "@/lib/logger";
 import dayjs from "dayjs";
 import { ORDER_STATUS } from "@/config/enums";
 import type { Dictionary } from "@/locales/dictionary";
@@ -62,7 +63,7 @@ export default function HistoryDashboard({ dict }: HistoryDashboardProps) {
         }
       }
     } catch (error) {
-      console.error(error);
+      logger.error(error);
     } finally {
       setLoading(false);
     }

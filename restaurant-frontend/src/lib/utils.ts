@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { logger } from "./logger";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -54,7 +55,7 @@ const refreshAccessToken = async (): Promise<string | null> => {
     // Refresh token expired or invalid
     return null;
   } catch (error) {
-    console.error('Token refresh failed:', error);
+    logger.error('Token refresh failed:', error);
     return null;
   }
 };

@@ -144,7 +144,7 @@ export default function CustomerOrder({ dict, lang }: CustomerOrderProps) {
         
         mutateTable();
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         toast.error(dict.customer.alertFailed);
         mutateTable();
     }

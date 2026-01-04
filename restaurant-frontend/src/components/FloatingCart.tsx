@@ -1,6 +1,7 @@
 "use client";
 
 import { API_URL } from "@/lib/utils";
+import { logger } from "@/lib/logger";
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ShoppingCart, X, Plus, Minus, Trash2, Utensils, MessageSquare } from "lucide-react"; 
@@ -47,7 +48,7 @@ export default function FloatingCart({ dict }: FloatingCartProps) {
         } else {
             alert(dict.customer.orderFailed);
         }
-    } catch (error) { console.error(error); alert(dict.customer.serverError); }
+    } catch (error) { logger.error(error); alert(dict.customer.serverError); }
   };
 
   return (

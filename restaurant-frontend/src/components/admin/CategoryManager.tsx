@@ -2,6 +2,7 @@
 
 import { API_URL, authFetch, authFetcher } from "@/lib/utils";
 import { useState } from "react";
+import { logger } from "@/lib/logger";
 import { List, Plus, Pencil, Trash2 } from "lucide-react";
 import useSWR from "swr";
 import type { Dictionary } from "@/locales/dictionary";
@@ -43,7 +44,7 @@ export default function CategoryManager({ dict }: CategoryManagerProps) {
       setNewCategoryName("");
       mutate();
     } catch (error) {
-      console.error("Failed to create category:", error);
+      logger.error("Failed to create category:", error);
     }
   };
 
@@ -56,7 +57,7 @@ export default function CategoryManager({ dict }: CategoryManagerProps) {
       });
       if (res.ok) mutate();
     } catch (error) {
-      console.error("Failed to delete category:", error);
+      logger.error("Failed to delete category:", error);
     }
   };
 
@@ -72,7 +73,7 @@ export default function CategoryManager({ dict }: CategoryManagerProps) {
       });
       mutate();
     } catch (error) {
-      console.error("Failed to update category:", error);
+      logger.error("Failed to update category:", error);
     }
   };
 

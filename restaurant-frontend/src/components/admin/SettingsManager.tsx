@@ -1,6 +1,7 @@
 "use client";
 
 import { API_URL, authFetch } from "@/lib/utils";
+import { logger } from "@/lib/logger";
 import { useState, useEffect } from "react";
 import { Settings, Save } from "lucide-react";
 import type { Dictionary } from "@/locales/dictionary";
@@ -29,7 +30,7 @@ export default function SettingsManager({ dict }: SettingsManagerProps) {
         setRestaurantName(data.data);
       }
     } catch (error) {
-      console.error("Failed to fetch settings:", error);
+      logger.error("Failed to fetch settings:", error);
     }
   };
 
@@ -50,7 +51,7 @@ export default function SettingsManager({ dict }: SettingsManagerProps) {
         alert(dict.admin.alertFailed);
       }
     } catch (error) {
-      console.error("Failed to save settings:", error);
+      logger.error("Failed to save settings:", error);
       alert(dict.common.error);
     } finally {
       setLoading(false);
