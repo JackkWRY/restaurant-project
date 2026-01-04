@@ -9,8 +9,21 @@ import { sendSuccess, sendCreated } from '../utils/apiResponse.js';
  */
 
 /**
+ * Creates a new order with multiple items in a transaction
+ * 
+ * Broadcasts the new order to authenticated users (staff/kitchen) and
+ * notifies the customer at the specific table via Socket.IO.
+ * 
+ * @param req - Express request with tableId and items array in body
+ * @param res - Express response
+ * @returns 201 with created order including all items
+ * 
+ * @example
  * POST /api/orders
- * Create new order
+ * Body: {
+ *   "tableId": 1,
+ *   "items": [{ "menuId": 5, "quantity": 2, "note": "No spicy" }]
+ * }
  */
 export const createOrder = asyncHandler(async (req: Request, res: Response) => {
   const newOrder = await orderService.createOrder(req.body);
@@ -31,8 +44,14 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
 });
 
 /**
- * GET /api/orders/active
- * Get active orders
+ * Retrieves all active (non-completed) orders
+ * 
+ * Returns orders that are pending, cooking, ready, or served.
+ * Excludes completed and cancelled orders.
+ * 
+ * @param req - Express request
+ * @param res - Express response
+ * @returns 200 with array of active orders
  */
 export const getActiveOrders = asyncHandler(async (req: Request, res: Response) => {
   const orders = await orderService.getActiveOrders();
@@ -40,8 +59,14 @@ export const getActiveOrders = asyncHandler(async (req: Request, res: Response) 
 });
 
 /**
- * PATCH /api/orders/:id/status
- * Update order status
+ * Updates order status and broadcasts changes
+ * 
+ * Emits real-time updates to both authenticated (staff/kitchen) and
+ * public (customer) namespaces for immediate status synchronization.
+ * 
+ * @param req - Express request with order ID in params and status in body
+ * @param res - Express response
+ * @returns 200 with updated order
  */
 export const updateOrderStatus = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
@@ -65,8 +90,14 @@ export const updateOrderStatus = asyncHandler(async (req: Request, res: Response
 });
 
 /**
- * PATCH /api/orders/items/:itemId/status
- * Update order item status
+ * Updates individual order item status
+ * 
+ * Allows granular control over each dish in an order.
+ * Broadcasts updates to kitchen, staff, and customer.
+ * 
+ * @param req - Express request with itemId in params and status in body
+ * @param res - Express response
+ * @returns 200 with updated order item
  */
 export const updateOrderItemStatus = asyncHandler(async (req: Request, res: Response) => {
   const { itemId } = req.params;

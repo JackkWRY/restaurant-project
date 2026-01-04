@@ -12,6 +12,20 @@ type LoginInput = z.infer<typeof loginSchema>;
 type RefreshInput = z.infer<typeof refreshSchema>;
 type LogoutInput = z.infer<typeof logoutSchema>;
 
+/**
+ * Authenticates user and issues JWT tokens
+ * 
+ * Validates credentials, generates access and refresh tokens,
+ * and stores refresh token in database for security.
+ * 
+ * @param req - Express request with username and password in body
+ * @param res - Express response
+ * @returns 200 with tokens and user data, or 401 if invalid credentials
+ * 
+ * @example
+ * POST /api/login
+ * Body: { "username": "admin", "password": "password123" }
+ */
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { username, password } = req.body as LoginInput;
@@ -76,6 +90,16 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+/**
+ * Refreshes access token using refresh token
+ * 
+ * Validates refresh token from database and issues new access token.
+ * Implements token rotation for enhanced security.
+ * 
+ * @param req - Express request with refreshToken in body
+ * @param res - Express response
+ * @returns 200 with new access token, or 401 if token invalid
+ */
 export const refresh = async (req: Request, res: Response): Promise<void> => {
   try {
     const { refreshToken } = req.body as RefreshInput;
@@ -135,6 +159,19 @@ export const refresh = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+/**
+ * Invalidates a refresh token, effectively logging out the user from a specific session.
+ *
+ * Deletes the provided refresh token from the database, preventing its reuse.
+ *
+ * @param req - Express request with refreshToken in body
+ * @param res - Express response
+ * @returns 200 with success message, or 500 if logout fails
+ *
+ * @example
+ * POST /api/logout
+ * Body: { "refreshToken": "eyJ..." }
+ */
 export const logout = async (req: Request, res: Response): Promise<void> => {
   try {
     const { refreshToken } = req.body as LogoutInput;

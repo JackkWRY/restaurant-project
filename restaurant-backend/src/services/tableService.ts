@@ -19,7 +19,9 @@ interface UpdateTableInput {
  */
 export class TableService {
   /**
-   * Get all tables
+   * Retrieves all tables with their current status
+   * 
+   * @returns Array of tables with DTO transformation
    */
   async getTables() {
     const tables = await tableRepository.findAll();
@@ -27,7 +29,11 @@ export class TableService {
   }
 
   /**
-   * Get table by ID
+   * Retrieves a single table by ID
+   * 
+   * @param id - Table ID
+   * @returns Table data with DTO transformation
+   * @throws {NotFoundError} If table doesn't exist
    */
   async getTableById(id: number) {
     const table = await tableRepository.findById(id);
@@ -40,7 +46,13 @@ export class TableService {
   }
 
   /**
-   * Create table
+   * Creates a new table with validation
+   * 
+   * Validates that table name is unique before creation.
+   * 
+   * @param data - Table creation data
+   * @returns Created table with DTO transformation
+   * @throws {ConflictError} If table name already exists
    */
   async createTable(data: CreateTableInput) {
     // Check if table name already exists
@@ -59,7 +71,15 @@ export class TableService {
   }
 
   /**
-   * Update table
+   * Updates an existing table with validation
+   * 
+   * Validates table exists and name uniqueness if name is being updated.
+   * 
+   * @param id - Table ID
+   * @param data - Update data
+   * @returns Updated table with DTO transformation
+   * @throws {NotFoundError} If table doesn't exist
+   * @throws {ConflictError} If new name already exists
    */
   async updateTable(id: number, data: UpdateTableInput) {
     // Check table exists
@@ -80,7 +100,14 @@ export class TableService {
   }
 
   /**
-   * Delete table
+   * Deletes a table with safety checks
+   * 
+   * Validates table is not occupied before deletion.
+   * 
+   * @param id - Table ID
+   * @returns Success message
+   * @throws {NotFoundError} If table doesn't exist
+   * @throws {ConflictError} If table is occupied
    */
   async deleteTable(id: number) {
     // Check table exists
@@ -97,7 +124,11 @@ export class TableService {
   }
 
   /**
-   * Toggle table availability
+   * Toggles table availability status
+   * 
+   * @param id - Table ID
+   * @returns Updated table with DTO transformation
+   * @throws {NotFoundError} If table doesn't exist
    */
   async toggleAvailability(id: number) {
     const table = await this.getTableById(id);
@@ -110,7 +141,12 @@ export class TableService {
   }
 
   /**
-   * Update call staff status
+   * Updates call staff status for a table
+   * 
+   * @param id - Table ID
+   * @param isCallingStaff - New call staff status
+   * @returns Updated table with DTO transformation
+   * @throws {NotFoundError} If table doesn't exist
    */
   async updateCallStaffStatus(id: number, isCallingStaff: boolean) {
     await this.getTableById(id);

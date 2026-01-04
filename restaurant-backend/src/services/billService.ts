@@ -32,7 +32,13 @@ interface CheckoutInput {
  */
 export class BillService {
   /**
-   * Get table bill
+   * Retrieves the current bill for a table
+   * 
+   * Returns bill with all items and calculated total.
+   * Returns empty bill structure if no active bill exists.
+   * 
+   * @param tableId - Table ID
+   * @returns Bill data with items and total amount
    */
   async getTableBill(tableId: number) {
     const activeBill = await billRepository.findActiveBillByTable(
@@ -60,7 +66,17 @@ export class BillService {
   }
 
   /**
-   * Checkout table
+   * Processes table checkout and closes the bill
+   * 
+   * Workflow:
+   * 1. Finds active bill
+   * 2. Calculates final total
+   * 3. Updates bill status to PAID
+   * 4. Resets table status
+   * 
+   * @param data - Checkout data with tableId and paymentMethod
+   * @returns Success message
+   * @throws {NotFoundError} If no active bill exists
    */
   async checkoutTable(data: CheckoutInput) {
     const activeBill = await billRepository.findActiveBillByTable(
@@ -92,7 +108,13 @@ export class BillService {
   }
 
   /**
-   * Calculate bill data
+   * Calculates bill total and formats items
+   * 
+   * Excludes cancelled items from total calculation.
+   * 
+   * @param orders - Orders with items and menu relations
+   * @returns Calculated total and formatted items array
+   * @private
    */
   private calculateBillData(orders: OrderWithRelations[]) {
     let total = 0;

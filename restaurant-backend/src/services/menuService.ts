@@ -12,7 +12,14 @@ import { MenuDto, CategoryDto } from '../dtos/menuDto.js';
  */
 export class MenuService {
   /**
-   * Get all menus with optional filtering and pagination
+   * Retrieves all menus with optional filtering and pagination
+   * 
+   * Supports two modes:
+   * - scope='all': Returns paginated list of all menus
+   * - default: Returns menus grouped by categories for customer view
+   * 
+   * @param options - Query options with scope, page, and limit
+   * @returns Paginated menus or categories with menus
    */
   async getMenus(options: {
     scope?: string;
@@ -52,7 +59,11 @@ export class MenuService {
   }
 
   /**
-   * Get menu by ID
+   * Retrieves a single menu by ID
+   * 
+   * @param id - Menu ID
+   * @returns Menu data with DTO transformation
+   * @throws {NotFoundError} If menu doesn't exist or is deleted
    */
   async getMenuById(id: number) {
     const menu = await menuRepository.findById(id);
@@ -65,7 +76,13 @@ export class MenuService {
   }
 
   /**
-   * Create new menu
+   * Creates a new menu item with validation
+   * 
+   * Validates that the category exists before creating the menu.
+   * 
+   * @param data - Menu creation data
+   * @returns Created menu with DTO transformation
+   * @throws {NotFoundError} If category doesn't exist
    */
   async createMenu(data: CreateMenuInput) {
     // Validate category exists
@@ -93,7 +110,14 @@ export class MenuService {
   }
 
   /**
-   * Update menu
+   * Updates an existing menu with validation
+   * 
+   * Validates menu exists and category exists if being updated.
+   * 
+   * @param id - Menu ID
+   * @param data - Update data
+   * @returns Updated menu with DTO transformation
+   * @throws {NotFoundError} If menu or category doesn't exist
    */
   async updateMenu(id: number, data: UpdateMenuInput) {
     // Check menu exists
@@ -114,7 +138,13 @@ export class MenuService {
   }
 
   /**
-   * Soft delete menu
+   * Soft deletes a menu item
+   * 
+   * Sets deletedAt timestamp instead of permanent deletion.
+   * 
+   * @param id - Menu ID
+   * @returns Deleted menu with DTO transformation
+   * @throws {NotFoundError} If menu doesn't exist
    */
   async deleteMenu(id: number) {
     // Check menu exists
@@ -126,7 +156,13 @@ export class MenuService {
   }
 
   /**
-   * Toggle menu availability
+   * Toggles menu availability status
+   * 
+   * Controls whether customers can order this item.
+   * 
+   * @param id - Menu ID
+   * @returns Updated menu with DTO transformation
+   * @throws {NotFoundError} If menu doesn't exist
    */
   async toggleAvailability(id: number) {
     const menu = await this.getMenuById(id);
@@ -139,7 +175,13 @@ export class MenuService {
   }
 
   /**
-   * Toggle menu visibility
+   * Toggles menu visibility status
+   * 
+   * Controls whether this item appears in the menu list.
+   * 
+   * @param id - Menu ID
+   * @returns Updated menu with DTO transformation
+   * @throws {NotFoundError} If menu doesn't exist
    */
   async toggleVisibility(id: number) {
     const menu = await this.getMenuById(id);

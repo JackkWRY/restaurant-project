@@ -9,8 +9,18 @@ import { sendSuccess, sendCreated } from '../utils/apiResponse.js';
  */
 
 /**
- * GET /api/menus
- * Get all menus with optional filtering
+ * Retrieves all menus with optional filtering and pagination
+ * 
+ * Supports two response formats:
+ * - Grouped by categories (default)
+ * - Paginated list (when scope=all)
+ * 
+ * @param req - Express request with optional query params (scope, page, limit)
+ * @param res - Express response
+ * @returns 200 with menus grouped by categories or paginated list
+ * 
+ * @example
+ * GET /api/menus?scope=all&page=1&limit=10
  */
 export const getMenus = asyncHandler(async (req: Request, res: Response) => {
   const { scope } = req.query;
@@ -32,8 +42,11 @@ export const getMenus = asyncHandler(async (req: Request, res: Response) => {
 });
 
 /**
- * GET /api/menus/:id
- * Get menu by ID
+ * Retrieves a single menu item by ID
+ * 
+ * @param req - Express request with menu ID in params
+ * @param res - Express response
+ * @returns 200 with menu data or 404 if not found
  */
 export const getMenuById = asyncHandler(async (req: Request, res: Response) => {
   const id = Number(req.params.id);
@@ -43,8 +56,11 @@ export const getMenuById = asyncHandler(async (req: Request, res: Response) => {
 });
 
 /**
- * POST /api/menus
- * Create new menu
+ * Creates a new menu item
+ * 
+ * @param req - Express request with menu data in body
+ * @param res - Express response
+ * @returns 201 with created menu
  */
 export const createMenu = asyncHandler(async (req: Request, res: Response) => {
   const menu = await menuService.createMenu(req.body);
@@ -53,8 +69,11 @@ export const createMenu = asyncHandler(async (req: Request, res: Response) => {
 });
 
 /**
- * PUT /api/menus/:id
- * Update menu
+ * Updates an existing menu item
+ * 
+ * @param req - Express request with menu ID in params and update data in body
+ * @param res - Express response
+ * @returns 200 with updated menu
  */
 export const updateMenu = asyncHandler(async (req: Request, res: Response) => {
   const id = Number(req.params.id);
@@ -64,8 +83,13 @@ export const updateMenu = asyncHandler(async (req: Request, res: Response) => {
 });
 
 /**
- * DELETE /api/menus/:id
- * Soft delete menu
+ * Soft deletes a menu item
+ * 
+ * Sets deletedAt timestamp instead of permanent deletion.
+ * 
+ * @param req - Express request with menu ID in params
+ * @param res - Express response
+ * @returns 200 with success message
  */
 export const deleteMenu = asyncHandler(async (req: Request, res: Response) => {
   const id = Number(req.params.id);
@@ -75,8 +99,13 @@ export const deleteMenu = asyncHandler(async (req: Request, res: Response) => {
 });
 
 /**
- * PATCH /api/menus/:id/toggle-availability
- * Toggle menu availability
+ * Toggles menu item availability status
+ * 
+ * Controls whether customers can order this item.
+ * 
+ * @param req - Express request with menu ID in params
+ * @param res - Express response
+ * @returns 200 with updated menu
  */
 export const toggleAvailability = asyncHandler(async (req: Request, res: Response) => {
   const id = Number(req.params.id);
@@ -86,8 +115,13 @@ export const toggleAvailability = asyncHandler(async (req: Request, res: Respons
 });
 
 /**
- * PATCH /api/menus/:id/toggle-visibility
- * Toggle menu visibility
+ * Toggles menu item visibility status
+ * 
+ * Controls whether this item appears in the menu list.
+ * 
+ * @param req - Express request with menu ID in params
+ * @param res - Express response
+ * @returns 200 with updated menu
  */
 export const toggleVisibility = asyncHandler(async (req: Request, res: Response) => {
   const id = Number(req.params.id);

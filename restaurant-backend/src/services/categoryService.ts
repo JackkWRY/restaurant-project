@@ -8,14 +8,20 @@ import { NotFoundError, ConflictError } from '../errors/AppError.js';
  */
 export class CategoryService {
   /**
-   * Get all categories
+   * Retrieves all categories
+   * 
+   * @returns Array of all categories
    */
   async getCategories() {
     return await categoryRepository.findAll();
   }
 
   /**
-   * Get category by ID
+   * Retrieves a single category by ID
+   * 
+   * @param id - Category ID
+   * @returns Category data
+   * @throws {NotFoundError} If category doesn't exist
    */
   async getCategoryById(id: number) {
     const category = await categoryRepository.findById(id, true);
@@ -28,7 +34,13 @@ export class CategoryService {
   }
 
   /**
-   * Create new category
+   * Creates a new category with validation
+   * 
+   * Validates that category name is unique before creation.
+   * 
+   * @param data - Category creation data
+   * @returns Created category
+   * @throws {ConflictError} If category name already exists
    */
   async createCategory(data: { name: string }) {
     // Check if category name already exists
@@ -44,7 +56,15 @@ export class CategoryService {
   }
 
   /**
-   * Update category
+   * Updates an existing category with validation
+   * 
+   * Validates category exists and name uniqueness if name is being updated.
+   * 
+   * @param id - Category ID
+   * @param data - Update data
+   * @returns Updated category
+   * @throws {NotFoundError} If category doesn't exist
+   * @throws {ConflictError} If new name already exists
    */
   async updateCategory(id: number, data: { name?: string }) {
     // Check category exists
@@ -63,7 +83,14 @@ export class CategoryService {
   }
 
   /**
-   * Delete category
+   * Deletes a category with safety checks
+   * 
+   * Validates category has no associated menus before deletion.
+   * 
+   * @param id - Category ID
+   * @returns Success message
+   * @throws {NotFoundError} If category doesn't exist
+   * @throws {ConflictError} If category has menus
    */
   async deleteCategory(id: number) {
     // Check category exists

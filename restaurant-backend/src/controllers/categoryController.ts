@@ -7,6 +7,15 @@ import { sendSuccess, sendCreated, sendError, sendBadRequest } from '../utils/ap
 
 type CategoryInput = z.infer<typeof createCategorySchema>;
 
+/**
+ * Retrieves all categories with menu count
+ * 
+ * Includes count of non-deleted menus in each category.
+ * 
+ * @param req - Express request
+ * @param res - Express response
+ * @returns 200 with array of categories
+ */
 export const getCategories = async (req: Request, res: Response) => {
   try {
     const categories = await prisma.category.findMany({
@@ -29,6 +38,13 @@ export const getCategories = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Creates a new category
+ * 
+ * @param req - Express request with category name in body
+ * @param res - Express response
+ * @returns 201 with created category
+ */
 export const createCategory = async (req: Request, res: Response) => {
   try {
     const { name } = req.body as CategoryInput;
@@ -44,6 +60,13 @@ export const createCategory = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Updates an existing category
+ * 
+ * @param req - Express request with category ID in params and name in body
+ * @param res - Express response
+ * @returns 200 with updated category
+ */
 export const updateCategory = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -60,6 +83,16 @@ export const updateCategory = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Deletes a category if it has no associated menus
+ * 
+ * Validates that no menus exist in this category before deletion
+ * to maintain referential integrity.
+ * 
+ * @param req - Express request with category ID in params
+ * @param res - Express response
+ * @returns 200 on success, 400 if category has menus
+ */
 export const deleteCategory = async (req: Request, res: Response) => {
   const { id } = req.params;
   

@@ -18,6 +18,18 @@ type BillWithRelations = Prisma.BillGetPayload<{
     }
 }>;
 
+/**
+ * Retrieves analytics summary with sales trends and top items
+ * 
+ * Provides:
+ * - Today's total sales and bill count
+ * - 7-day sales trend chart data
+ * - Top 5 most ordered menu items
+ * 
+ * @param req - Express request
+ * @param res - Express response
+ * @returns 200 with analytics summary data
+ */
 export const getAnalyticsSummary = async (req: Request, res: Response) => {
     try {
         const today = dayjs().startOf('day').toDate();
@@ -89,6 +101,18 @@ export const getAnalyticsSummary = async (req: Request, res: Response) => {
     }
 };
 
+/**
+ * Retrieves all bills for today (open and closed)
+ * 
+ * Returns detailed bill information including:
+ * - Bill status and timestamps
+ * - All order items with menu details
+ * - Calculated totals (live for open bills, final for paid bills)
+ * 
+ * @param req - Express request
+ * @param res - Express response
+ * @returns 200 with array of today's bills
+ */
 export const getDailyBills = async (req: Request, res: Response) => {
     try {
         const today = dayjs().startOf('day').toDate();
@@ -152,6 +176,19 @@ export const getDailyBills = async (req: Request, res: Response) => {
     }
 };
 
+/**
+ * Retrieves paginated bill history with date range filtering
+ * 
+ * Features:
+ * - Date range filtering (defaults to current month)
+ * - Pagination support
+ * - Total sales summary
+ * - Detailed item breakdown per bill
+ * 
+ * @param req - Express request with optional startDate, endDate, page, limit query params
+ * @param res - Express response
+ * @returns 200 with paginated bills and summary
+ */
 export const getBillHistory = async (req: Request, res: Response) => {
     try {
         const { startDate, endDate } = req.query;

@@ -23,7 +23,19 @@ interface CreateOrderInput {
  */
 export class OrderService {
   /**
-   * Create new order
+   * Creates a new order with multiple items in a database transaction
+   * 
+   * Workflow:
+   * 1. Validates table exists and is available
+   * 2. Calculates order total from menu prices
+   * 3. Finds or creates active bill for the table
+   * 4. Creates order and order items
+   * 5. Updates table occupation status
+   * 
+   * @param data - Order data with tableId and items array
+   * @returns Created order with all items and bill information
+   * @throws {NotFoundError} If table or menu items don't exist
+   * @throws {ValidationError} If table is not available
    */
   async createOrder(data: CreateOrderInput) {
     return await prisma.$transaction(async (tx) => {

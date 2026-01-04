@@ -19,6 +19,17 @@ type UpdateCallStaffInput = z.infer<typeof updateCallStaffSchema>;
 
 const FRONTEND_URL = CLIENT_URL;
 
+/**
+ * Creates a new table with auto-generated QR code
+ * 
+ * @param req - Express request with table name in body
+ * @param res - Express response
+ * @returns 201 with created table including QR code URL
+ * 
+ * @example
+ * POST /api/tables
+ * Body: { "name": "Table 1" }
+ */
 export const createTable = async (req: Request, res: Response) => {
   try {
     const body = req.body as CreateTableInput;
@@ -43,6 +54,13 @@ export const createTable = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Updates table name
+ * 
+ * @param req - Express request with table ID in params and new name in body
+ * @param res - Express response
+ * @returns 200 with updated table
+ */
 export const updateTable = async (req: Request, res: Response) => {
   const { id } = req.params;
   
@@ -61,6 +79,16 @@ export const updateTable = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Deletes a table and all associated orders
+ * 
+ * Cascades deletion to remove all orders and order items for this table
+ * to maintain data integrity.
+ * 
+ * @param req - Express request with table ID in params
+ * @param res - Express response
+ * @returns 200 on successful deletion
+ */
 export const deleteTable = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -89,6 +117,13 @@ export const deleteTable = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Toggles table availability status
+ * 
+ * @param req - Express request with table ID in params and isAvailable boolean in body
+ * @param res - Express response
+ * @returns 200 with updated table
+ */
 export const toggleAvailability = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -105,6 +140,13 @@ export const toggleAvailability = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Retrieves a single table by ID
+ * 
+ * @param req - Express request with table ID in params
+ * @param res - Express response
+ * @returns 200 with table data or 404 if not found
+ */
 export const getTableById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -121,6 +163,16 @@ export const getTableById = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Updates call staff status and broadcasts via Socket.IO
+ * 
+ * Emits real-time updates to both authenticated (staff/kitchen) and
+ * public (customer) namespaces for immediate notification.
+ * 
+ * @param req - Express request with table ID in params and isCalling boolean in body
+ * @param res - Express response
+ * @returns 200 with updated table
+ */
 export const updateCallStaff = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -158,6 +210,20 @@ export const updateCallStaff = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Closes a table and finalizes the bill
+ * 
+ * Workflow:
+ * 1. Validates all items are served/completed
+ * 2. Closes active bill with final total
+ * 3. Marks all orders as completed
+ * 4. Resets table status
+ * 5. Broadcasts updates via Socket.IO
+ * 
+ * @param req - Express request with table ID in params
+ * @param res - Express response
+ * @returns 200 on success, 400 if items are unserved
+ */
 export const closeTable = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -260,6 +326,16 @@ export const closeTable = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Retrieves status of all tables with order information
+ * 
+ * Returns comprehensive table data including active orders,
+ * occupation status, and call staff indicators.
+ * 
+ * @param req - Express request
+ * @param res - Express response
+ * @returns 200 with array of tables and their status
+ */
 export const getTablesStatus = async (req: Request, res: Response) => {
   try {
     const tables = await prisma.table.findMany({

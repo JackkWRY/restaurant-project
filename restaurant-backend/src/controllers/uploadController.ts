@@ -10,6 +10,24 @@ cloudinary.config({
   api_secret: CLOUDINARY_CONFIG.apiSecret,
 });
 
+/**
+ * Uploads an image to Cloudinary with validation
+ * 
+ * Validation steps:
+ * 1. Checks file exists
+ * 2. Validates image dimensions (100x100 to 4000x4000)
+ * 3. Validates file format (jpg, jpeg, png, webp)
+ * 4. Checks file size (max 5MB)
+ * 
+ * @param req - Express request with file in multipart/form-data
+ * @param res - Express response
+ * @returns 200 with Cloudinary URL or 400 if validation fails
+ * 
+ * @example
+ * POST /api/upload
+ * Content-Type: multipart/form-data
+ * Body: file=image.jpg
+ */
 export const uploadImage = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.file) {
