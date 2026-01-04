@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import type { JwtPayload } from 'jsonwebtoken';
 import logger from '../config/logger.js';
+import { JWT_CONFIG } from '../config/index.js';
 import { sendUnauthorized, sendError, sendForbidden } from '../utils/apiResponse.js';
 
 // Extend Express Request type
@@ -31,14 +32,7 @@ export const verifyToken = (
 
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      logger.error('JWT_SECRET is not defined in environment variables');
-      sendError(res, 'Server configuration error');
-      return;
-    }
-
-    const decoded = jwt.verify(token, secret) as {
+    const decoded = jwt.verify(token, JWT_CONFIG.accessTokenSecret) as {
       userId: number;
       username: string;
       role: string;

@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { z } from 'zod';
 import prisma from '../prisma.js';
 import logger from '../config/logger.js';
+import { CLIENT_URL } from '../config/index.js';
 import { OrderStatus, BillStatus } from '../config/enums.js';
 import { sendSuccess, sendCreated, sendError, sendBadRequest, sendNotFound } from '../utils/apiResponse.js';
 import { 
@@ -16,7 +17,7 @@ type UpdateTableInput = z.infer<typeof updateTableSchema>;
 type ToggleAvailabilityInput = z.infer<typeof toggleAvailabilitySchema>;
 type UpdateCallStaffInput = z.infer<typeof updateCallStaffSchema>;
 
-const FRONTEND_URL = process.env.CLIENT_URL || 'http://localhost:3000';
+const FRONTEND_URL = CLIENT_URL;
 
 export const createTable = async (req: Request, res: Response) => {
   try {

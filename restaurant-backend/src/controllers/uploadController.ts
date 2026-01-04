@@ -1,12 +1,13 @@
 import { Request, Response } from 'express';
 import { v2 as cloudinary } from 'cloudinary';
 import sharp from 'sharp';
+import { CLOUDINARY_CONFIG } from '../config/index.js';
 import { sendSuccess, sendBadRequest, sendError } from '../utils/apiResponse.js';
 
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: CLOUDINARY_CONFIG.cloudName,
+  api_key: CLOUDINARY_CONFIG.apiKey,
+  api_secret: CLOUDINARY_CONFIG.apiSecret,
 });
 
 export const uploadImage = async (req: Request, res: Response): Promise<void> => {
