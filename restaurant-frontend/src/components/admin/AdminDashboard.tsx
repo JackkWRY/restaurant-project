@@ -32,15 +32,15 @@ const HistoryDashboard = dynamic(() => import("./HistoryDashboard"), {
 });
 
 // Import extracted admin components
-const SettingsManager = dynamic(() => import("./admin/SettingsManager"), {
+const SettingsManager = dynamic(() => import("./SettingsManager"), {
   ssr: false,
 });
 
-const CategoryManager = dynamic(() => import("./admin/CategoryManager"), {
+const CategoryManager = dynamic(() => import("./CategoryManager"), {
   ssr: false,
 });
 
-const MenuManager = dynamic(() => import("./admin/MenuManager"), {
+const MenuManager = dynamic(() => import("./MenuManager"), {
   ssr: false,
 });
 

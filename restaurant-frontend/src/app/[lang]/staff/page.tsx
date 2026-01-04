@@ -1,5 +1,5 @@
 import { getDictionary } from "@/locales/dictionary";
-import StaffDashboard from "@/components/StaffDashboard";
+import StaffDashboard from "@/components/staff/StaffDashboard";
 
 interface Props {
   params: Promise<{ lang: string }>;

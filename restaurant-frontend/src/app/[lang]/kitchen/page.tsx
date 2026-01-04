@@ -1,5 +1,5 @@
 import { getDictionary } from "@/locales/dictionary";
-import KitchenDashboard from "@/components/KitchenDashboard";
+import KitchenDashboard from "@/components/kitchen/KitchenDashboard";
 
 interface Props {
   params: Promise<{ lang: string }>;

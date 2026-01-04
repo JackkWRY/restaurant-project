@@ -2,7 +2,7 @@
 
 import { Suspense } from "react";
 import { useParams } from "next/navigation";
-import CustomerOrder from "@/components/CustomerOrder";
+import CustomerOrder from "@/components/customer/CustomerOrder";
 import en from "@/locales/en";
 import th from "@/locales/th";
 import type { Dictionary } from "@/locales/dictionary";

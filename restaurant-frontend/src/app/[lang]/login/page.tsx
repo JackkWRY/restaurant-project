@@ -1,5 +1,5 @@
 import { getDictionary } from "@/locales/dictionary";
-import LoginForm from "@/components/LoginForm";
+import LoginForm from "@/components/common/LoginForm";
 
 interface Props {
   params: Promise<{ lang: string }>;

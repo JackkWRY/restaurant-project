@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import LandingPage from "@/components/LandingPage";
+import LandingPage from "@/components/common/LandingPage";
 import en from "@/locales/en";
 import th from "@/locales/th";
 import type { Dictionary } from "@/locales/dictionary";

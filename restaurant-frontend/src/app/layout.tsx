@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Kanit } from "next/font/google";
 import { Toaster } from "sonner";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import "./globals.css";
 
 const kanit = Kanit({ 
