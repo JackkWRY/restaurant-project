@@ -26,8 +26,16 @@ export const getTableBill = asyncHandler(async (req: Request, res: Response) => 
 export const checkoutTable = asyncHandler(async (req: Request, res: Response) => {
   const result = await billService.checkoutTable(req.body);
 
-  const io = req.app.get('io');
-  io.emit('table_updated', { id: req.body.tableId, isOccupied: false });
+  // Emit to authenticated namespace (Staff/Kitchen)
+  const authenticatedNs = req.app.get('authenticatedNamespace');
+  authenticatedNs.emit('table_updated', { id: req.body.tableId, isOccupied: false });
+
+  // Emit to public namespace (Customer at specific table)
+  const publicNs = req.app.get('publicNamespace');
+  publicNs.to(`table-${req.body.tableId}`).emit('table_updated', {
+    id: req.body.tableId,
+    isOccupied: false
+  });
 
   res.json({ status: 'success', ...result });
 });

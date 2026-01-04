@@ -134,7 +134,8 @@ export default function KitchenDashboard({ dict, lang }: KitchenDashboardProps) 
     if (!token) return;
 
     if (!socketRef.current) {
-        socketRef.current = io(API_URL, {
+        // Connect to authenticated namespace with JWT token
+        socketRef.current = io(API_URL + '/authenticated', {
           auth: {
             token: token
           }

@@ -140,8 +140,16 @@ export const updateCallStaff = async (req: Request, res: Response) => {
       isOccupied: updatedTable.orders.length > 0
     }
 
-    const io = req.app.get('io');
-    io.emit('table_updated', payload); 
+    // Emit to authenticated namespace (Staff/Kitchen)
+    const authenticatedNs = req.app.get('authenticatedNamespace');
+    authenticatedNs.emit('table_updated', payload);
+
+    // Emit to public namespace (Customer at specific table)
+    const publicNs = req.app.get('publicNamespace');
+    publicNs.to(`table-${id}`).emit('table_updated', {
+      id: Number(id),
+      isCallingStaff: body.isCalling
+    });
 
     sendSuccess(res, payload);
   } catch (error) {
@@ -232,8 +240,17 @@ export const closeTable = async (req: Request, res: Response) => {
       }
     });
 
-    const io = req.app.get('io');
-    io.emit('table_updated', { id: Number(id) }); 
+    // Emit to authenticated namespace (Staff/Kitchen)
+    const authenticatedNs = req.app.get('authenticatedNamespace');
+    authenticatedNs.emit('table_updated', { id: Number(id) });
+
+    // Emit to public namespace (Customer at specific table)
+    const publicNs = req.app.get('publicNamespace');
+    publicNs.to(`table-${id}`).emit('table_updated', {
+      id: Number(id),
+      isOccupied: false,
+      isAvailable: false
+    });
 
     sendSuccess(res, undefined, 'Table and Bill closed successfully');
 

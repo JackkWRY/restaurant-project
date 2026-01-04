@@ -131,7 +131,8 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
     if (!token) return;
 
     if (!socketRef.current) {
-        socketRef.current = io(API_URL, {
+        // Connect to authenticated namespace with JWT token
+        socketRef.current = io(API_URL + '/authenticated', {
           auth: {
             token: token
           }

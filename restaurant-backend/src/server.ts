@@ -35,15 +35,19 @@ dotenv.config();
 const app = express();
 const httpServer = createServer(app);
 
-// Setup Socket.io
+// Setup Socket.io with Namespaces
 const io = new Server(httpServer, SOCKET_CONFIG);
 
-// Socket.IO Authentication Middleware
-io.use((socket, next) => {
+// ============================================
+// Namespace 1: /authenticated (Staff, Kitchen, Admin)
+// ============================================
+const authenticatedNamespace = io.of('/authenticated');
+
+authenticatedNamespace.use((socket, next) => {
   const token = socket.handshake.auth.token;
 
   if (!token) {
-    logger.warn("Socket connection attempt without token", {
+    logger.warn("Authenticated socket connection attempt without token", {
       socketId: socket.id,
     });
     return next(new Error("Authentication error: No token provided"));
@@ -62,7 +66,7 @@ io.use((socket, next) => {
     };
     socket.data.user = decoded;
 
-    logger.debug("Socket authenticated", {
+    logger.debug("Authenticated socket connected", {
       socketId: socket.id,
       userId: decoded.userId,
       role: decoded.role,
@@ -77,6 +81,11 @@ io.use((socket, next) => {
     return next(new Error("Authentication error: Invalid token"));
   }
 });
+
+// ============================================
+// Namespace 2: /public (Customers - No Auth Required)
+// ============================================
+const publicNamespace = io.of('/public');
 
 // Security Middleware
 app.use(
@@ -107,12 +116,16 @@ app.use(
 app.use(express.json());
 app.use(requestLogger); // Add request logging
 app.set("io", io);
+app.set("authenticatedNamespace", authenticatedNamespace);
+app.set("publicNamespace", publicNamespace);
 
-// Socket.IO Connection Handler
-io.on("connection", (socket) => {
+// ============================================
+// Authenticated Namespace Connection Handler
+// ============================================
+authenticatedNamespace.on("connection", (socket) => {
   const user = socket.data.user;
 
-  logger.info("User connected via Socket.IO", {
+  logger.info("Authenticated user connected via Socket.IO", {
     socketId: socket.id,
     userId: user.userId,
     role: user.role,
@@ -130,10 +143,46 @@ io.on("connection", (socket) => {
   }
 
   socket.on("disconnect", () => {
-    logger.info("User disconnected", {
+    logger.info("Authenticated user disconnected", {
       socketId: socket.id,
       userId: user.userId,
       role: user.role,
+    });
+  });
+});
+
+// ============================================
+// Public Namespace Connection Handler
+// ============================================
+publicNamespace.on("connection", (socket) => {
+  logger.info("Public user connected via Socket.IO", {
+    socketId: socket.id,
+  });
+
+  // Allow customers to join table-specific rooms
+  socket.on("join_table", (tableId: number) => {
+    const roomName = `table-${tableId}`;
+    socket.join(roomName);
+    logger.debug("Customer joined table room", { 
+      socketId: socket.id, 
+      tableId,
+      roomName 
+    });
+  });
+
+  socket.on("leave_table", (tableId: number) => {
+    const roomName = `table-${tableId}`;
+    socket.leave(roomName);
+    logger.debug("Customer left table room", { 
+      socketId: socket.id, 
+      tableId,
+      roomName 
+    });
+  });
+
+  socket.on("disconnect", () => {
+    logger.info("Public user disconnected", {
+      socketId: socket.id,
     });
   });
 });

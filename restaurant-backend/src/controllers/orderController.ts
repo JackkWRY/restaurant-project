@@ -15,8 +15,17 @@ import { sendSuccess, sendCreated } from '../utils/apiResponse.js';
 export const createOrder = asyncHandler(async (req: Request, res: Response) => {
   const newOrder = await orderService.createOrder(req.body);
 
-  const io = req.app.get('io');
-  io.emit('new_order', newOrder);
+  // Emit to authenticated namespace (Staff/Kitchen)
+  const authenticatedNs = req.app.get('authenticatedNamespace');
+  authenticatedNs.emit('new_order', newOrder);
+
+  // Emit to public namespace (Customer at specific table)
+  const publicNs = req.app.get('publicNamespace');
+  publicNs.to(`table-${newOrder.tableId}`).emit('order_status_updated', {
+    tableId: newOrder.tableId,
+    orderId: newOrder.id,
+    status: newOrder.status
+  });
 
   sendCreated(res, newOrder);
 });
@@ -40,8 +49,17 @@ export const updateOrderStatus = asyncHandler(async (req: Request, res: Response
 
   const updatedOrder = await orderService.updateOrderStatus(Number(id), status);
 
-  const io = req.app.get('io');
-  io.emit('order_status_updated', updatedOrder);
+  // Emit to authenticated namespace (Staff/Kitchen)
+  const authenticatedNs = req.app.get('authenticatedNamespace');
+  authenticatedNs.emit('order_status_updated', updatedOrder);
+
+  // Emit to public namespace (Customer at specific table)
+  const publicNs = req.app.get('publicNamespace');
+  publicNs.to(`table-${updatedOrder.tableId}`).emit('order_status_updated', {
+    tableId: updatedOrder.tableId,
+    orderId: updatedOrder.id,
+    status: updatedOrder.status
+  });
 
   sendSuccess(res, updatedOrder);
 });
@@ -56,20 +74,31 @@ export const updateOrderItemStatus = asyncHandler(async (req: Request, res: Resp
 
   const updatedItem = await orderService.updateOrderItemStatus(Number(itemId), status);
 
-  const io = req.app.get('io');
-
   const payload = {
     id: updatedItem.id,
     orderId: updatedItem.orderId,
     status: updatedItem.status,
     menuName: updatedItem.menu.nameTH,
     tableName: updatedItem.order?.table.name || '',
+    tableId: updatedItem.order?.tableId,
     quantity: updatedItem.quantity,
     note: updatedItem.note,
     createdAt: updatedItem.order?.createdAt
   };
 
-  io.emit('item_status_updated', payload);
+  // Emit to authenticated namespace (Staff/Kitchen)
+  const authenticatedNs = req.app.get('authenticatedNamespace');
+  authenticatedNs.emit('item_status_updated', payload);
+
+  // Emit to public namespace (Customer at specific table)
+  const publicNs = req.app.get('publicNamespace');
+  if (updatedItem.order?.tableId) {
+    publicNs.to(`table-${updatedItem.order.tableId}`).emit('item_status_updated', {
+      itemId: updatedItem.id,
+      orderId: updatedItem.orderId,
+      status: updatedItem.status
+    });
+  }
 
   sendSuccess(res, updatedItem);
 });

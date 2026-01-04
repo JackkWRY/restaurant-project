@@ -84,9 +84,14 @@ export default function CustomerOrder({ dict, lang }: CustomerOrderProps) {
   useEffect(() => {
     if (!tableIdParam) return;
 
-    const socket = io(API_URL);
+    // Connect to public namespace (no authentication required)
+    const socket = io(API_URL + '/public');
     
-    socket.on("connect", () => { logger.debug("Customer connected to socket"); });
+    socket.on("connect", () => { 
+      logger.debug("Customer connected to public socket");
+      // Join table-specific room for targeted updates
+      socket.emit("join_table", Number(tableIdParam));
+    });
     
     socket.on("table_updated", (updatedTable: TableInfo) => {
         if (String(updatedTable.id) === String(tableIdParam)) {
@@ -102,7 +107,11 @@ export default function CustomerOrder({ dict, lang }: CustomerOrderProps) {
         if (showHistory) mutateHistory();
     });
 
-    return () => { socket.disconnect(); };
+    return () => { 
+      // Leave table room before disconnecting
+      socket.emit("leave_table", Number(tableIdParam));
+      socket.disconnect(); 
+    };
   }, [tableIdParam, showHistory, mutateTable, mutateHistory]);
 
   // --- Handlers ---
