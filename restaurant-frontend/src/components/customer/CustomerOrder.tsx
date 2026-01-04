@@ -51,6 +51,21 @@ interface CustomerOrderProps {
 }
 
 // --- Main Component ---
+/**
+ * Customer Order Component
+ * 
+ * Main ordering interface for customers to browse menu and place orders.
+ * 
+ * Features:
+ * - Browse menu by categories with accordion UI
+ * - Add items to cart with notes
+ * - View order history and status in real-time
+ * - Call staff button with Socket.IO notification
+ * - Multi-language support (TH/EN)
+ * 
+ * @param dict - Localized dictionary for translations
+ * @param lang - Current language (th/en)
+ */
 export default function CustomerOrder({ dict, lang }: CustomerOrderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();

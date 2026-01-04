@@ -27,6 +27,22 @@ interface CartStore {
   totalItems: () => number;
 }
 
+/**
+ * Global cart store hook using Zustand
+ * 
+ * Manages shopping cart state for customer orders including:
+ * - Cart items with quantities and notes
+ * - Table ID association
+ * - CRUD operations for cart items
+ * - Total price and items calculations
+ * 
+ * @example
+ * ```typescript
+ * const { items, addItem, totalPrice } = useCartStore();
+ * addItem({ id: 1, nameTH: 'ข้าวผัด', price: 50 });
+ * const total = totalPrice();
+ * ```
+ */
 export const useCartStore = create<CartStore>((set, get) => ({
   items: [],
   tableId: 0,

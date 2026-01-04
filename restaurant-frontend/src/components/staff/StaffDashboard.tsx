@@ -47,6 +47,21 @@ interface StaffDashboardProps {
   lang: string;
 }
 
+/**
+ * Staff Dashboard Component
+ * 
+ * Main dashboard for restaurant staff to manage tables and orders.
+ * 
+ * Features:
+ * - Real-time table status monitoring via Socket.IO
+ * - Order management (view, update status, cancel)
+ * - Table CRUD operations (create, update, delete, toggle availability)
+ * - Bill checkout and payment processing
+ * - Audio notifications for new orders and staff calls
+ * 
+ * @param dict - Localized dictionary for translations
+ * @param lang - Current language (th/en)
+ */
 export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
   const router = useRouter();
   

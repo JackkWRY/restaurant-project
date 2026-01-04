@@ -4,11 +4,21 @@ import { logger } from "./logger";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
+/**
+ * Merges Tailwind CSS classes with clsx
+ * 
+ * @param inputs - Class values to merge
+ * @returns Merged class string
+ */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// Get access token from localStorage
+/**
+ * Retrieves access token from localStorage
+ * 
+ * @returns Access token or null if not found or not in browser
+ */
 export const getToken = () => {
   if (typeof window !== 'undefined') {
     return localStorage.getItem('token');
@@ -16,7 +26,11 @@ export const getToken = () => {
   return null;
 };
 
-// Get refresh token from localStorage
+/**
+ * Retrieves refresh token from localStorage
+ * 
+ * @returns Refresh token or null if not found or not in browser
+ */
 export const getRefreshToken = () => {
   if (typeof window !== 'undefined') {
     return localStorage.getItem('refreshToken');
@@ -24,7 +38,15 @@ export const getRefreshToken = () => {
   return null;
 };
 
-// Refresh access token using refresh token
+/**
+ * Refreshes access token using refresh token
+ * 
+ * Attempts to get a new access token from the server using the refresh token.
+ * Automatically saves the new token to localStorage on success.
+ * 
+ * @returns New access token or null if refresh failed
+ * @private
+ */
 const refreshAccessToken = async (): Promise<string | null> => {
   const refreshToken = getRefreshToken();
   
@@ -60,9 +82,25 @@ const refreshAccessToken = async (): Promise<string | null> => {
   }
 };
 
-// Authenticated fetch wrapper with auto-refresh
+/**
+ * Authenticated fetch wrapper with automatic token refresh
+ * 
+ * Features:
+ * - Automatically adds Authorization header
+ * - Retries request with refreshed token on 401
+ * - Redirects to login if refresh fails
+ * 
+ * @param url - API endpoint URL
+ * @param options - Fetch options
+ * @returns Fetch response
+ * 
+ * @example
+ * ```typescript
+ * const res = await authFetch('/api/orders', { method: 'POST', body: JSON.stringify(data) });
+ * ```
+ */
 export const authFetch = async (url: string, options: RequestInit = {}) => {
-  let token = getToken();
+  const token = getToken();
   const headers: Record<string, string> = {
     ...(options.headers as Record<string, string> || {}),
   };
@@ -96,9 +134,23 @@ export const authFetch = async (url: string, options: RequestInit = {}) => {
   return res;
 };
 
-// Authenticated fetcher for SWR with auto-refresh
+/**
+ * Authenticated fetcher for SWR with automatic token refresh
+ * 
+ * Designed for use with SWR's useSWR hook.
+ * Automatically handles authentication and token refresh.
+ * 
+ * @param url - API endpoint URL
+ * @returns Parsed JSON response
+ * @throws {Error} If authentication fails or API returns error
+ * 
+ * @example
+ * ```typescript
+ * const { data } = useSWR('/api/menus', authFetcher);
+ * ```
+ */
 export const authFetcher = async (url: string) => {
-  let token = getToken();
+  const token = getToken();
   const headers: Record<string, string> = {};
   
   if (token) {
@@ -135,5 +187,10 @@ export const authFetcher = async (url: string) => {
   return res.json();
 };
 
-// Regular fetcher (no auth)
+/**
+ * Simple fetcher for public endpoints (no authentication)
+ * 
+ * @param url - API endpoint URL
+ * @returns Parsed JSON response
+ */
 export const fetcher = (url: string) => fetch(url).then((res) => res.json());

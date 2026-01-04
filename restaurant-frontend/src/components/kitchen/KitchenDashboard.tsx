@@ -51,6 +51,20 @@ interface KitchenDashboardProps {
   lang: string;
 }
 
+/**
+ * Kitchen Dashboard Component
+ * 
+ * Kanban-style dashboard for kitchen staff to manage order preparation.
+ * 
+ * Features:
+ * - Three-column layout (Pending → Cooking → Ready)
+ * - Real-time order updates via Socket.IO
+ * - Audio notifications for new orders
+ * - Drag-and-drop style status updates
+ * 
+ * @param dict - Localized dictionary for translations
+ * @param lang - Current language (th/en)
+ */
 export default function KitchenDashboard({ dict, lang }: KitchenDashboardProps) {
   const router = useRouter(); 
   const [userRole, setUserRole] = useState("");
