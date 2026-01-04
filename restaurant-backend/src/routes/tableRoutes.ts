@@ -13,6 +13,7 @@ import {
 
 import { validateRequest } from '../middlewares/validateRequest.js';
 import { requireRole } from '../middlewares/authMiddleware.js';
+import { sanitizeBody } from '../middlewares/sanitizeMiddleware.js';
 import { 
     createTableSchema, 
     updateTableSchema, 
@@ -23,8 +24,18 @@ import {
 const router = Router();
 
 // Admin only routes
-router.post('/tables', requireRole(['ADMIN']), validateRequest(createTableSchema), createTable);
-router.put('/tables/:id', requireRole(['ADMIN']), validateRequest(updateTableSchema), updateTable);
+router.post('/tables', 
+    requireRole(['ADMIN']), 
+    sanitizeBody(['name']),
+    validateRequest(createTableSchema), 
+    createTable
+);
+router.put('/tables/:id', 
+    requireRole(['ADMIN']), 
+    sanitizeBody(['name']),
+    validateRequest(updateTableSchema), 
+    updateTable
+);
 router.delete('/tables/:id', requireRole(['ADMIN']), deleteTable);
 
 // Staff/Admin routes

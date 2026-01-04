@@ -7,6 +7,7 @@ import {
 
 import { validateRequest } from '../middlewares/validateRequest.js';
 import { requireRole } from '../middlewares/authMiddleware.js';
+import { sanitizeBodyArray } from '../middlewares/sanitizeMiddleware.js';
 import { 
     createOrderSchema, 
     updateOrderItemStatusSchema 
@@ -14,8 +15,16 @@ import {
 
 const router = Router();
 
-router.post('/orders', validateRequest(createOrderSchema), createOrder);
+router.post('/orders', 
+    sanitizeBodyArray('items', ['note']),
+    validateRequest(createOrderSchema), 
+    createOrder
+);
 router.get('/orders/active', requireRole(['ADMIN', 'STAFF']), getActiveOrders);
-router.patch('/orders/items/:itemId/status', requireRole(['ADMIN', 'STAFF']), validateRequest(updateOrderItemStatusSchema), updateOrderItemStatus);
+router.patch('/orders/items/:itemId/status', 
+    requireRole(['ADMIN', 'STAFF']), 
+    validateRequest(updateOrderItemStatusSchema), 
+    updateOrderItemStatus
+);
 
 export default router;

@@ -8,13 +8,24 @@ import {
 
 import { validateRequest } from '../middlewares/validateRequest.js';
 import { requireRole } from '../middlewares/authMiddleware.js';
+import { sanitizeBody } from '../middlewares/sanitizeMiddleware.js';
 import { createMenuSchema, updateMenuSchema } from '../schemas/menuSchema.js';
 
 const router = Router();
 
 router.get('/menus', getMenus);
-router.post('/menus', requireRole(['ADMIN']), validateRequest(createMenuSchema), createMenu);
-router.put('/menus/:id', requireRole(['ADMIN']), validateRequest(updateMenuSchema), updateMenu);
+router.post('/menus', 
+    requireRole(['ADMIN']), 
+    sanitizeBody(['nameTH', 'nameEN', 'description']),
+    validateRequest(createMenuSchema), 
+    createMenu
+);
+router.put('/menus/:id', 
+    requireRole(['ADMIN']), 
+    sanitizeBody(['nameTH', 'nameEN', 'description']),
+    validateRequest(updateMenuSchema), 
+    updateMenu
+);
 router.delete('/menus/:id', requireRole(['ADMIN']), deleteMenu);
 
 export default router;

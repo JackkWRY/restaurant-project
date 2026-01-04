@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { getRestaurantName, updateRestaurantName } from '../controllers/settingController.js';
 import { validateRequest } from '../middlewares/validateRequest.js';
 import { requireRole } from '../middlewares/authMiddleware.js';
+import { sanitizeBody } from '../middlewares/sanitizeMiddleware.js';
 import { updateSettingSchema } from '../schemas/settingSchema.js';
 
 const router = Router();
@@ -10,6 +11,11 @@ const router = Router();
 router.get('/settings/name', getRestaurantName);
 
 // Protected route - only admin can update
-router.post('/settings/name', requireRole(['ADMIN']), validateRequest(updateSettingSchema), updateRestaurantName);
+router.post('/settings/name', 
+    requireRole(['ADMIN']), 
+    sanitizeBody(['name']),
+    validateRequest(updateSettingSchema), 
+    updateRestaurantName
+);
 
 export default router;
