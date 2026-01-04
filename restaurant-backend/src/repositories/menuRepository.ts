@@ -7,7 +7,12 @@ import type { Menu, Prisma } from '@prisma/client';
  */
 export class MenuRepository {
   /**
-   * Find all menus with optional filters
+   * Retrieves all menus with optional filtering
+   * 
+   * Includes category information.
+   * 
+   * @param filters - Optional Prisma where clause
+   * @returns Array of menus with category, ordered by ID descending
    */
   async findAll(filters?: Prisma.MenuWhereInput) {
     return await prisma.menu.findMany({
@@ -18,7 +23,10 @@ export class MenuRepository {
   }
 
   /**
-   * Find menus with pagination
+   * Retrieves menus with pagination support
+   * 
+   * @param options - Pagination options with where, skip, and take
+   * @returns Object with menus array and total count
    */
   async findManyPaginated(options: {
     where?: Prisma.MenuWhereInput;
@@ -42,7 +50,10 @@ export class MenuRepository {
   }
 
   /**
-   * Find menu by ID
+   * Retrieves a single menu by ID
+   * 
+   * @param id - Menu ID
+   * @returns Menu with category, or null if not found
    */
   async findById(id: number) {
     return await prisma.menu.findUnique({
@@ -52,7 +63,10 @@ export class MenuRepository {
   }
 
   /**
-   * Create new menu
+   * Creates a new menu
+   * 
+   * @param data - Prisma menu creation data
+   * @returns Created menu with category
    */
   async create(data: Prisma.MenuCreateInput) {
     return await prisma.menu.create({
@@ -62,7 +76,11 @@ export class MenuRepository {
   }
 
   /**
-   * Update menu
+   * Updates an existing menu
+   * 
+   * @param id - Menu ID
+   * @param data - Prisma menu update data
+   * @returns Updated menu with category
    */
   async update(id: number, data: Prisma.MenuUpdateInput) {
     return await prisma.menu.update({
@@ -73,7 +91,10 @@ export class MenuRepository {
   }
 
   /**
-   * Delete menu (hard delete)
+   * Permanently deletes a menu
+   * 
+   * @param id - Menu ID
+   * @returns Deleted menu
    */
   async delete(id: number) {
     return await prisma.menu.delete({
@@ -82,7 +103,10 @@ export class MenuRepository {
   }
 
   /**
-   * Soft delete menu
+   * Soft deletes a menu by setting deletedAt timestamp
+   * 
+   * @param id - Menu ID
+   * @returns Updated menu with deletedAt set
    */
   async softDelete(id: number) {
     return await prisma.menu.update({
@@ -92,7 +116,10 @@ export class MenuRepository {
   }
 
   /**
-   * Count menus
+   * Counts menus with optional filtering
+   * 
+   * @param where - Optional Prisma where clause
+   * @returns Total count of menus
    */
   async count(where?: Prisma.MenuWhereInput) {
     return await prisma.menu.count({ where });

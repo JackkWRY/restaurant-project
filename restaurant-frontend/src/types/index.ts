@@ -1,5 +1,13 @@
-// Central type definitions for the application
-// Import and re-export all types from individual type files
+/**
+ * Central type definitions for the application
+ * 
+ * Re-exports all types from individual type files for convenient importing.
+ * 
+ * @example
+ * ```typescript
+ * import { Menu, Order, Table, User } from '@/types';
+ * ```
+ */
 
 export * from './menu.js';
 export * from './order.js';

@@ -7,7 +7,10 @@ import type { Table, Prisma } from '@prisma/client';
  */
 export class TableRepository {
   /**
-   * Find all tables
+   * Retrieves all tables with optional filtering
+   * 
+   * @param where - Optional Prisma where clause
+   * @returns Array of tables ordered by ID
    */
   async findAll(where?: Prisma.TableWhereInput) {
     return await prisma.table.findMany({
@@ -17,7 +20,10 @@ export class TableRepository {
   }
 
   /**
-   * Find table by ID
+   * Retrieves a single table by ID
+   * 
+   * @param id - Table ID
+   * @returns Table or null if not found
    */
   async findById(id: number) {
     return await prisma.table.findUnique({
@@ -26,7 +32,10 @@ export class TableRepository {
   }
 
   /**
-   * Find table by name
+   * Retrieves a table by name (unique constraint)
+   * 
+   * @param name - Table name
+   * @returns Table or null if not found
    */
   async findByName(name: string) {
     return await prisma.table.findUnique({
@@ -35,7 +44,10 @@ export class TableRepository {
   }
 
   /**
-   * Create table
+   * Creates a new table
+   * 
+   * @param data - Prisma table creation data
+   * @returns Created table
    */
   async create(data: Prisma.TableCreateInput) {
     return await prisma.table.create({
@@ -44,7 +56,11 @@ export class TableRepository {
   }
 
   /**
-   * Update table
+   * Updates an existing table
+   * 
+   * @param id - Table ID
+   * @param data - Prisma table update data
+   * @returns Updated table
    */
   async update(id: number, data: Prisma.TableUpdateInput) {
     return await prisma.table.update({
@@ -54,7 +70,10 @@ export class TableRepository {
   }
 
   /**
-   * Delete table
+   * Deletes a table
+   * 
+   * @param id - Table ID
+   * @returns Deleted table
    */
   async delete(id: number) {
     return await prisma.table.delete({
@@ -63,7 +82,11 @@ export class TableRepository {
   }
 
   /**
-   * Update table occupied status
+   * Updates table occupied status
+   * 
+   * @param id - Table ID
+   * @param isOccupied - New occupied status
+   * @returns Updated table
    */
   async updateOccupiedStatus(id: number, isOccupied: boolean) {
     return await prisma.table.update({
@@ -73,7 +96,11 @@ export class TableRepository {
   }
 
   /**
-   * Update call staff status
+   * Updates call staff status
+   * 
+   * @param id - Table ID
+   * @param isCallingStaff - New call staff status
+   * @returns Updated table
    */
   async updateCallStaffStatus(id: number, isCallingStaff: boolean) {
     return await prisma.table.update({

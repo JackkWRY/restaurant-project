@@ -1,3 +1,11 @@
+/**
+ * Application configuration constants
+ * 
+ * Contains:
+ * - Currency symbol
+ * - Sound file paths for notifications
+ * - Chart color palette
+ */
 export const APP_CONFIG = {
   CURRENCY: "฿",
   SOUNDS: {

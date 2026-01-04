@@ -8,7 +8,12 @@ import { BillStatus } from '../config/enums.js';
  */
 export class BillRepository {
   /**
-   * Find all bills
+   * Retrieves all bills with optional filtering
+   * 
+   * Includes table and orders with items.
+   * 
+   * @param where - Optional Prisma where clause
+   * @returns Array of bills with full relations
    */
   async findAll(where?: Prisma.BillWhereInput) {
     return await prisma.bill.findMany({
@@ -27,7 +32,10 @@ export class BillRepository {
   }
 
   /**
-   * Find bill by ID
+   * Retrieves a single bill by ID
+   * 
+   * @param id - Bill ID (string UUID)
+   * @returns Bill with table and orders, or null if not found
    */
   async findById(id: string) {
     return await prisma.bill.findUnique({
@@ -46,7 +54,11 @@ export class BillRepository {
   }
 
   /**
-   * Find active bill by table
+   * Retrieves active bill for a specific table
+   * 
+   * @param tableId - Table ID
+   * @param status - Bill status to filter
+   * @returns Active bill or null if not found
    */
   async findActiveBillByTable(tableId: number, status: BillStatus) {
     return await prisma.bill.findFirst({

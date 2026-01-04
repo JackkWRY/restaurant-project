@@ -8,7 +8,12 @@ import { OrderStatus } from '../config/enums.js';
  */
 export class OrderRepository {
   /**
-   * Find all orders with filters
+   * Retrieves all orders with optional filtering
+   * 
+   * Includes related items with menu details and table information.
+   * 
+   * @param where - Optional Prisma where clause for filtering
+   * @returns Array of orders with items and table
    */
   async findAll(where?: Prisma.OrderWhereInput) {
     return await prisma.order.findMany({
@@ -24,7 +29,10 @@ export class OrderRepository {
   }
 
   /**
-   * Find order by ID
+   * Retrieves a single order by ID
+   * 
+   * @param id - Order ID
+   * @returns Order with items and table, or null if not found
    */
   async findById(id: number) {
     return await prisma.order.findUnique({
@@ -39,7 +47,10 @@ export class OrderRepository {
   }
 
   /**
-   * Create order
+   * Creates a new order
+   * 
+   * @param data - Prisma order creation data
+   * @returns Created order with items and table
    */
   async create(data: Prisma.OrderCreateInput) {
     return await prisma.order.create({
@@ -54,7 +65,11 @@ export class OrderRepository {
   }
 
   /**
-   * Update order
+   * Updates an existing order
+   * 
+   * @param id - Order ID
+   * @param data - Prisma order update data
+   * @returns Updated order with items and table
    */
   async update(id: number, data: Prisma.OrderUpdateInput) {
     return await prisma.order.update({
@@ -70,7 +85,10 @@ export class OrderRepository {
   }
 
   /**
-   * Delete order
+   * Deletes an order
+   * 
+   * @param id - Order ID
+   * @returns Deleted order
    */
   async delete(id: number) {
     return await prisma.order.delete({
@@ -79,7 +97,12 @@ export class OrderRepository {
   }
 
   /**
-   * Find active orders
+   * Retrieves active orders by status
+   * 
+   * Excludes cancelled items from results.
+   * 
+   * @param statuses - Array of order statuses to filter
+   * @returns Array of active orders with non-cancelled items
    */
   async findActiveOrders(statuses: OrderStatus[]) {
     return await prisma.order.findMany({
