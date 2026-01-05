@@ -68,8 +68,11 @@ export const createTable = async (req: Request, res: Response) => {
       }
     });
 
+    // Generate QR code URL pointing to customer order page
+    // Customers scan this QR code to access the menu and place orders
     const qrCodeUrl = `${FRONTEND_URL}/order?tableId=${newTable.id}`;
 
+    // Update table with generated QR code URL
     const updatedTable = await prisma.table.update({
       where: { id: newTable.id },
       data: { qrCode: qrCodeUrl }
@@ -388,6 +391,8 @@ export const getTablesStatus = async (req: Request, res: Response) => {
     });
 
     const tableData = tables.map(table => {
+      // Calculate total amount from all non-cancelled orders and items
+      // This gives real-time bill preview for each table
       const totalAmount = table.orders.reduce((orderSum, order) => {
         if (order.status === OrderStatus.CANCELLED) return orderSum;
 
@@ -399,6 +404,8 @@ export const getTablesStatus = async (req: Request, res: Response) => {
         return orderSum + itemsTotal;
       }, 0);
       
+      // Count items that are ready to be served
+      // This helps staff prioritize which tables to serve
       const readyCount = table.orders.reduce((count, order) => {
         const readyItemsInOrder = order.items.filter(item => item.status === OrderStatus.READY).length;
         return count + readyItemsInOrder;
@@ -423,6 +430,25 @@ export const getTablesStatus = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Retrieves detailed table information with all active order items
+ * 
+ * Returns comprehensive table data including:
+ * - Table basic information
+ * - All non-completed orders
+ * - Flattened list of order items with menu details
+ * - Item-level pricing and status
+ * 
+ * @param req - Express request with table ID in params
+ * @param res - Express response
+ * @returns 200 with table details and items array, or 404 if not found
+ * @throws {Error} If database query fails
+ * 
+ * @example
+ * GET /api/tables/1/details
+ * 
+ * @see {@link getTablesStatus} for summary view of all tables
+ */
 export const getTableDetails = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -442,6 +468,8 @@ export const getTableDetails = async (req: Request, res: Response) => {
       return;
     }
 
+    // Flatten all order items from all orders into a single array
+    // This provides a complete view of everything ordered at this table
     const allItems = table.orders.flatMap(order => 
       order.items.map(item => ({
         id: item.id,

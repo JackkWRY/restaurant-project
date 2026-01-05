@@ -2,10 +2,25 @@
  * @file Order Item Repository
  * @description Data access layer for order item-related database operations
  * 
+ * This repository handles:
+ * - Individual order item queries
+ * - Item status updates
+ * - Relation loading for bill calculations
+ * 
+ * Database schema:
+ * - OrderItem: id, orderId, menuId, quantity, status, note
+ * - Relations: menu (N:1), order (N:1)
+ * 
+ * Performance considerations:
+ * - Always loads menu relation for price calculations
+ * - Loads order.table for status broadcasting
+ * 
  * @module repositories/orderItemRepository
  * @requires @prisma/client
  * @requires prisma
- * @see {@link ../services/orderService.ts}
+ * @requires config/enums
+ * 
+ * @see {@link ../services/orderService.ts} for business logic
  */
 
 import prisma from '../prisma.js';
@@ -37,7 +52,19 @@ export class OrderItemRepository {
   }
 
   /**
-   * Update order item
+   * Updates an order item
+   * 
+   * Generic update method for any order item field.
+   * 
+   * @param id - Order item ID
+   * @param data - Prisma order item update data
+   * @returns Updated order item with menu, order, and table
+   * 
+   * @example
+   * await orderItemRepository.update(itemId, {
+   *   quantity: 3,
+   *   note: "Extra spicy"
+   * });
    */
   async update(id: number, data: Prisma.OrderItemUpdateInput) {
     return await prisma.orderItem.update({

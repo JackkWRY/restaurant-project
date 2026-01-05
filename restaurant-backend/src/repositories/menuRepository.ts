@@ -2,10 +2,26 @@
  * @file Menu Repository
  * @description Data access layer for menu-related database operations
  * 
+ * This repository handles:
+ * - Menu retrieval with category relations
+ * - Pagination support for admin views
+ * - Soft delete implementation
+ * - Menu CRUD operations
+ * 
+ * Database schema:
+ * - Menu: id, nameTH, nameEN, price, categoryId, imageUrl, flags, deletedAt
+ * - Relations: category (N:1)
+ * 
+ * Soft delete pattern:
+ * - Uses deletedAt timestamp instead of hard delete
+ * - Allows data recovery and audit trail
+ * - Filters applied at query level
+ * 
  * @module repositories/menuRepository
  * @requires @prisma/client
  * @requires prisma
- * @see {@link ../services/menuService.ts}
+ * 
+ * @see {@link ../services/menuService.ts} for business logic
  */
 
 import prisma from '../prisma.js';
@@ -119,8 +135,19 @@ export class MenuRepository {
   /**
    * Soft deletes a menu by setting deletedAt timestamp
    * 
+   * Preserves data for audit trail and potential recovery.
+   * Menu will be filtered out from customer views but remains in database.
+   * 
    * @param id - Menu ID
    * @returns Updated menu with deletedAt set
+   * 
+   * @example
+   * // Soft delete menu (can be recovered)
+   * await menuRepository.softDelete(menuId);
+   * 
+   * @example
+   * // To recover: update deletedAt to null
+   * await menuRepository.update(menuId, { deletedAt: null });
    */
   async softDelete(id: number) {
     return await prisma.menu.update({

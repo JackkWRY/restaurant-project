@@ -5,13 +5,19 @@
  * This controller handles:
  * - Category CRUD operations
  * - Category retrieval with menu counts
- * - Category validation
+ * - Category validation and referential integrity
+ * 
+ * Business rules:
+ * - Cannot delete categories with existing menus
+ * - Category names should be unique (enforced at service layer)
  * 
  * @module controllers/categoryController
  * @requires prisma
  * @requires schemas/categorySchema
+ * @requires utils/apiResponse
  * 
  * @see {@link ../services/categoryService.ts} for alternative service-based approach
+ * @see {@link ../schemas/categorySchema.ts} for validation schemas
  */
 
 import type { Request, Response } from 'express';
@@ -40,11 +46,13 @@ export const getCategories = async (req: Request, res: Response) => {
   try {
     const categories = await prisma.category.findMany({
       include: {
+        // Include count of non-deleted menus for each category
+        // This helps admins see which categories are in use
         _count: {
           select: {
             menus: {
               where: {
-                deletedAt: null
+                deletedAt: null  // Exclude soft-deleted menus from count
               }
             }
           }
@@ -64,6 +72,11 @@ export const getCategories = async (req: Request, res: Response) => {
  * @param req - Express request with category name in body
  * @param res - Express response
  * @returns 201 with created category
+ * @throws {Error} If category creation fails
+ * 
+ * @example
+ * POST /api/categories
+ * Body: { "name": "Appetizers" }
  */
 export const createCategory = async (req: Request, res: Response) => {
   try {
@@ -86,6 +99,11 @@ export const createCategory = async (req: Request, res: Response) => {
  * @param req - Express request with category ID in params and name in body
  * @param res - Express response
  * @returns 200 with updated category
+ * @throws {Error} If category doesn't exist or update fails
+ * 
+ * @example
+ * PUT /api/categories/1
+ * Body: { "name": "Main Dishes" }
  */
 export const updateCategory = async (req: Request, res: Response) => {
   try {
@@ -117,6 +135,8 @@ export const deleteCategory = async (req: Request, res: Response) => {
   const { id } = req.params;
   
   try {
+    // Check if category has any menus (including soft-deleted ones)
+    // This prevents orphaned menus and maintains data integrity
     const menuCount = await prisma.menu.count({
       where: { categoryId: Number(id) }
     });

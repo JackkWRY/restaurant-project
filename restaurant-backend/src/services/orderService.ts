@@ -168,7 +168,8 @@ export class OrderService {
       OrderStatus.READY,
     ]);
 
-    // Filter out orders with no items
+    // Filter out orders with no items (edge case from cancelled orders)
+    // This prevents empty orders from appearing in kitchen/staff dashboards
     const validOrders = orders.filter((order) => order.items.length > 0);
 
     return validOrders;
@@ -257,7 +258,18 @@ export class OrderService {
   }
 
   /**
-   * Recalculate bill total
+   * Recalculates bill total from all orders
+   * 
+   * Called after order status changes to ensure bill accuracy.
+   * Excludes cancelled items from the total.
+   * 
+   * @param billId - Bill ID to recalculate
+   * @returns void
+   * @private
+   * 
+   * @example
+   * // Automatically called when order item is cancelled
+   * await this.recalculateBill(billId);
    */
   private async recalculateBill(billId: string) {
     const bill = await billRepository.findById(billId);

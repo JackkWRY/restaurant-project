@@ -2,10 +2,25 @@
  * @file Table Repository
  * @description Data access layer for table-related database operations
  * 
+ * This repository handles:
+ * - Table CRUD operations
+ * - Table status management (occupied, available, calling staff)
+ * - Name uniqueness validation
+ * 
+ * Database schema:
+ * - Table: id, name (unique), qrCode, isOccupied, isAvailable, isCallingStaff
+ * - Constraints: UNIQUE(name)
+ * 
+ * Performance considerations:
+ * - Primary key lookups for O(1) access
+ * - Unique index on name for fast duplicate checks
+ * - Simple queries without relations
+ * 
  * @module repositories/tableRepository
  * @requires @prisma/client
  * @requires prisma
- * @see {@link ../services/tableService.ts}
+ * 
+ * @see {@link ../services/tableService.ts} for business logic
  */
 
 import prisma from '../prisma.js';
@@ -100,9 +115,15 @@ export class TableRepository {
   /**
    * Updates table occupied status
    * 
+   * Called when customers arrive or leave the table.
+   * 
    * @param id - Table ID
-   * @param isOccupied - New occupied status
+   * @param isOccupied - New occupied status (true when customers seated)
    * @returns Updated table
+   * 
+   * @example
+   * // Mark table as occupied when order is placed
+   * await tableRepository.updateOccupiedStatus(tableId, true);
    */
   async updateOccupiedStatus(id: number, isOccupied: boolean) {
     return await prisma.table.update({
@@ -114,9 +135,16 @@ export class TableRepository {
   /**
    * Updates call staff status
    * 
+   * Used when customers request staff assistance.
+   * Triggers real-time notifications to staff dashboard.
+   * 
    * @param id - Table ID
-   * @param isCallingStaff - New call staff status
+   * @param isCallingStaff - New call staff status (true when customer calls)
    * @returns Updated table
+   * 
+   * @example
+   * // Customer presses "Call Staff" button
+   * await tableRepository.updateCallStaffStatus(tableId, true);
    */
   async updateCallStaffStatus(id: number, isCallingStaff: boolean) {
     return await prisma.table.update({

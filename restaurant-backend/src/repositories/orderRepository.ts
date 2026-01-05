@@ -2,10 +2,27 @@
  * @file Order Repository
  * @description Data access layer for order-related database operations
  * 
+ * This repository handles:
+ * - Order retrieval with items and menu details
+ * - Active order queries for kitchen dashboard
+ * - Order CRUD operations
+ * - FIFO queue ordering for kitchen
+ * 
+ * Database schema:
+ * - Order: id, tableId, billId, status, totalPrice, createdAt
+ * - Relations: items (1:N), table (N:1), bill (N:1)
+ * 
+ * Performance considerations:
+ * - Uses eager loading to prevent N+1 queries
+ * - Orders by createdAt ASC for FIFO kitchen queue
+ * - Filters cancelled items at query level
+ * 
  * @module repositories/orderRepository
  * @requires @prisma/client
  * @requires prisma
- * @see {@link ../services/orderService.ts}
+ * @requires config/enums
+ * 
+ * @see {@link ../services/orderService.ts} for business logic
  */
 
 import prisma from '../prisma.js';
@@ -117,12 +134,21 @@ export class OrderRepository {
   }
 
   /**
-   * Retrieves active orders by status
+   * Retrieves active orders by status for kitchen dashboard
    * 
-   * Excludes cancelled items from results.
+   * Excludes cancelled items from results to show only items
+   * that need to be prepared. Orders returned in FIFO order.
    * 
-   * @param statuses - Array of order statuses to filter
+   * @param statuses - Array of order statuses to filter (e.g., PENDING, COOKING, READY)
    * @returns Array of active orders with non-cancelled items
+   * 
+   * @example
+   * // Get all orders in kitchen queue
+   * const orders = await orderRepository.findActiveOrders([
+   *   OrderStatus.PENDING,
+   *   OrderStatus.COOKING,
+   *   OrderStatus.READY
+   * ]);
    */
   async findActiveOrders(statuses: OrderStatus[]) {
     return await prisma.order.findMany({

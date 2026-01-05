@@ -34,8 +34,11 @@ export class MenuService {
    * Retrieves all menus with optional filtering and pagination
    * 
    * Supports two modes:
-   * - scope='all': Returns paginated list of all menus
-   * - default: Returns menus grouped by categories for customer view
+   * - scope='all': Returns paginated list of all menus (for admin management)
+   * - default: Returns menus grouped by categories (for customer ordering)
+   * 
+   * The grouped view improves customer browsing experience by organizing
+   * items into logical categories (Appetizers, Main Dishes, etc.)
    * 
    * @param options - Query options with scope, page, and limit
    * @returns Paginated menus or categories with menus
@@ -108,10 +111,23 @@ export class MenuService {
    * Creates a new menu item with validation
    * 
    * Validates that the category exists before creating the menu.
+   * Sets default values for optional fields.
    * 
    * @param data - Menu creation data
    * @returns Created menu with DTO transformation
    * @throws {NotFoundError} If category doesn't exist
+   * 
+   * @example
+   * const menu = await menuService.createMenu({
+   *   nameTH: "ข้าวผัด",
+   *   nameEN: "Fried Rice",
+   *   price: 50,
+   *   categoryId: 1,
+   *   imageUrl: "https://...",
+   *   isRecommended: true,
+   *   isAvailable: true,
+   *   isVisible: true
+   * });
    */
   async createMenu(data: CreateMenuInput) {
     // Validate category exists

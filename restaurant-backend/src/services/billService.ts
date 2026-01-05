@@ -70,6 +70,8 @@ export class BillService {
       BillStatus.OPEN
     );
 
+    // Return empty bill structure if no active bill exists
+    // This allows frontend to display "No orders yet" state
     if (!activeBill) {
       return {
         billId: null,
@@ -79,6 +81,8 @@ export class BillService {
       };
     }
 
+    // Calculate current bill total from all orders
+    // This provides real-time bill preview to customers and staff
     const { total, items } = this.calculateBillData(activeBill.orders);
 
     return {
@@ -155,6 +159,7 @@ export class BillService {
       order.items.forEach((item) => {
         const itemTotal = Number(item.menu.price) * item.quantity;
 
+        // Add all items to the list for display purposes
         items.push({
           id: item.id,
           menuName: item.menu.nameTH,
@@ -165,6 +170,8 @@ export class BillService {
           note: item.note || ''
         });
 
+        // Only include non-cancelled items in total calculation
+        // Cancelled items are shown but not charged
         if (item.status !== OrderStatus.CANCELLED) {
           total += itemTotal;
         }
