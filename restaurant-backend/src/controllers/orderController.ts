@@ -1,12 +1,26 @@
+/**
+ * @file Order Controller
+ * @description HTTP request handlers for order management endpoints
+ * 
+ * This controller handles:
+ * - Order creation with real-time notifications
+ * - Order status updates across multiple channels
+ * - Individual order item status management
+ * - Socket.IO broadcasting to staff, kitchen, and customers
+ * 
+ * @module controllers/orderController
+ * @requires services/orderService
+ * @requires middlewares/errorHandler
+ * @requires utils/apiResponse
+ * 
+ * @see {@link ../services/orderService.ts} for business logic
+ * @see {@link ../schemas/orderSchema.ts} for validation schemas
+ */
+
 import type { Request, Response } from 'express';
 import { asyncHandler } from '../middlewares/errorHandler.js';
 import { orderService } from '../services/orderService.js';
 import { sendSuccess, sendCreated } from '../utils/apiResponse.js';
-
-/**
- * Order Controller
- * Handles HTTP requests for orders
- */
 
 /**
  * Creates a new order with multiple items in a transaction
@@ -17,6 +31,8 @@ import { sendSuccess, sendCreated } from '../utils/apiResponse.js';
  * @param req - Express request with tableId and items array in body
  * @param res - Express response
  * @returns 201 with created order including all items
+ * @throws {NotFoundError} If table or menu items don't exist
+ * @throws {ValidationError} If table is not available
  * 
  * @example
  * POST /api/orders
@@ -24,15 +40,19 @@ import { sendSuccess, sendCreated } from '../utils/apiResponse.js';
  *   "tableId": 1,
  *   "items": [{ "menuId": 5, "quantity": 2, "note": "No spicy" }]
  * }
+ * 
+ * @see {@link ../services/orderService.ts#createOrder} for business logic
  */
 export const createOrder = asyncHandler(async (req: Request, res: Response) => {
   const newOrder = await orderService.createOrder(req.body);
 
-  // Emit to authenticated namespace (Staff/Kitchen)
+  // Broadcast to authenticated namespace (Staff/Kitchen)
+  // This notifies all staff and kitchen displays about the new order
   const authenticatedNs = req.app.get('authenticatedNamespace');
   authenticatedNs.emit('new_order', newOrder);
 
-  // Emit to public namespace (Customer at specific table)
+  // Notify customer at their table via public namespace
+  // Only the specific table room receives this update
   const publicNs = req.app.get('publicNamespace');
   publicNs.to(`table-${newOrder.tableId}`).emit('order_status_updated', {
     tableId: newOrder.tableId,
@@ -67,6 +87,9 @@ export const getActiveOrders = asyncHandler(async (req: Request, res: Response) 
  * @param req - Express request with order ID in params and status in body
  * @param res - Express response
  * @returns 200 with updated order
+ * @throws {NotFoundError} If order doesn't exist
+ * 
+ * @see {@link ../services/orderService.ts#updateOrderStatus}
  */
 export const updateOrderStatus = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
@@ -98,6 +121,9 @@ export const updateOrderStatus = asyncHandler(async (req: Request, res: Response
  * @param req - Express request with itemId in params and status in body
  * @param res - Express response
  * @returns 200 with updated order item
+ * @throws {NotFoundError} If order item doesn't exist
+ * 
+ * @see {@link ../services/orderService.ts#updateOrderItemStatus}
  */
 export const updateOrderItemStatus = asyncHandler(async (req: Request, res: Response) => {
   const { itemId } = req.params;

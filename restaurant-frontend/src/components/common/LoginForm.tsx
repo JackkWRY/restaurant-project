@@ -1,3 +1,38 @@
+/**
+ * @file Login Form Component
+ * @description Authentication form for staff/admin login
+ * 
+ * This component handles:
+ * - User authentication via username/password
+ * - JWT token storage (access + refresh tokens)
+ * - Role-based routing (admin/kitchen/staff)
+ * - Language switching
+ * - Error handling and display
+ * - Loading states
+ * 
+ * State management:
+ * - Local state for form inputs
+ * - Local state for error and loading
+ * - localStorage for token persistence
+ * - Cookie for SSR token access
+ * 
+ * Features:
+ * - Form validation
+ * - Role-based redirect
+ * - Token storage (localStorage + cookie)
+ * - Language toggle
+ * - Error messages
+ * 
+ * @module components/common/LoginForm
+ * @requires react
+ * @requires next/navigation
+ * @requires lucide-react
+ * 
+ * @see {@link AdminDashboard} for admin destination
+ * @see {@link StaffDashboard} for staff destination
+ * @see {@link KitchenDashboard} for kitchen destination
+ */
+
 "use client";
 
 import { API_URL } from "@/lib/utils";
@@ -9,6 +44,20 @@ import type { Dictionary } from "@/locales/dictionary";
 import Link from "next/link";
 import { ROLE } from "@/config/enums";
 
+/**
+ * Login Form Component
+ * 
+ * Handles user authentication and role-based routing.
+ * Stores JWT tokens for session management.
+ * 
+ * @param props - Component props
+ * @param props.dict - Internationalization dictionary
+ * @param props.lang - Current language code
+ * @returns JSX.Element
+ * 
+ * @example
+ * <LoginForm dict={dictionary} lang="th" />
+ */
 export default function LoginForm({ 
   dict, 
   lang 
@@ -16,14 +65,21 @@ export default function LoginForm({
   dict: Dictionary, 
   lang: string 
 }) {
+  // Router for navigation after login
   const router = useRouter();
+  // Form state
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Language toggle
   const toggleLang = lang === 'en' ? 'th' : 'en';
 
+  /**
+   * Handle login form submission
+   * Authenticates user and redirects based on role
+   */
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");

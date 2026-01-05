@@ -1,3 +1,26 @@
+/**
+ * @file Table Service
+ * @description Business logic layer for table management
+ * 
+ * This service handles:
+ * - Table CRUD operations
+ * - Table availability management
+ * - Call staff status updates
+ * - Business rule validation
+ * 
+ * Business rules:
+ * - Table names must be unique
+ * - Cannot delete occupied tables
+ * - Maintains referential integrity
+ * 
+ * @module services/tableService
+ * @requires repositories/tableRepository
+ * @requires errors/AppError
+ * @requires dtos/tableDto
+ * 
+ * @see {@link ../controllers/tableController.ts} for HTTP handlers
+ */
+
 import { tableRepository } from '../repositories/tableRepository.js';
 import { NotFoundError, ConflictError } from '../errors/AppError.js';
 import { TableDto } from '../dtos/tableDto.js';
@@ -13,10 +36,6 @@ interface UpdateTableInput {
   isAvailable?: boolean;
 }
 
-/**
- * Table Service
- * Handles all business logic related to tables
- */
 export class TableService {
   /**
    * Retrieves all tables with their current status
@@ -53,9 +72,13 @@ export class TableService {
    * @param data - Table creation data
    * @returns Created table with DTO transformation
    * @throws {ConflictError} If table name already exists
+   * @throws {Error} If database operation fails
+   * 
+   * @example
+   * const table = await tableService.createTable({ name: "Table 1" });
    */
   async createTable(data: CreateTableInput) {
-    // Check if table name already exists
+    // Business rule: Table names must be unique across the restaurant
     const existing = await tableRepository.findByName(data.name);
 
     if (existing) {
@@ -86,6 +109,7 @@ export class TableService {
     await this.getTableById(id);
 
     // If name is being updated, check for duplicates
+    // Allow same name if it's the same table (id matches)
     if (data.name) {
       const existing = await tableRepository.findByName(data.name);
 
@@ -113,7 +137,8 @@ export class TableService {
     // Check table exists
     const table = await this.getTableById(id);
 
-    // Check if table is occupied
+    // Business rule: Cannot delete tables with active customers
+    // This prevents data loss and maintains referential integrity
     if (table.isOccupied) {
       throw new ConflictError('Cannot delete occupied table');
     }

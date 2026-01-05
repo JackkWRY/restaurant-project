@@ -1,3 +1,22 @@
+/**
+ * @file API Response Utility
+ * @description Standardized HTTP response helpers for consistent API responses
+ * 
+ * This utility provides:
+ * - Type-safe response interfaces
+ * - Consistent success/error response format
+ * - HTTP status code helpers (200, 201, 204, 400, 401, 403, 404, 500)
+ * - Validation error formatting
+ * 
+ * Response format:
+ * - Success: { status: 'success', data?, message? }
+ * - Error: { status: 'error', message, errors? }
+ * 
+ * @module utils/apiResponse
+ * @see {@link ../middlewares/errorHandler.ts} for error handling
+ * @see {@link ../controllers} for usage in controllers
+ */
+
 import type { Response } from 'express';
 
 /**

@@ -1,32 +1,55 @@
+/**
+ * @file Category Repository
+ * @description Data access layer for category-related database operations
+ * 
+ * @module repositories/categoryRepository
+ * @requires @prisma/client
+ * @requires prisma
+ * @see {@link ../services/categoryService.ts}
+ */
+
 import prisma from '../prisma.js';
 import type { Category, Prisma } from '@prisma/client';
 
-/**
- * Category Repository
- * Handles all database operations for Category model
- */
 export class CategoryRepository {
   /**
    * Find all categories
+   * 
+   * Performance: Conditionally loads menus to avoid unnecessary data.
+   * Validation: Filters out soft-deleted menus when included.
+   * 
+   * @param options - Optional includeMenus and orderBy
+   * @returns Array of categories with optional menu relations
    */
   async findAll(options?: {
     includeMenus?: boolean;
     orderBy?: Prisma.CategoryOrderByWithRelationInput;
   }) {
+    // Conditionally include menus to optimize query performance
+    // Only load menus when needed (e.g., customer menu view)
     return await prisma.category.findMany({
       include: options?.includeMenus ? {
         menus: {
+          // Filter out soft-deleted menus
           where: { deletedAt: null }
         }
       } : undefined,
+      // Default to ID ascending for consistent category ordering
       orderBy: options?.orderBy || { id: 'asc' }
     });
   }
 
   /**
    * Find category by ID
+   * 
+   * Performance: Uses primary key for O(1) lookup.
+   * 
+   * @param id - Category ID
+   * @param includeMenus - Whether to include related menus
+   * @returns Category with optional menus, or null if not found
    */
   async findById(id: number, includeMenus = false) {
+    // Primary key lookup with optional menu relation
     return await prisma.category.findUnique({
       where: { id },
       include: includeMenus ? {

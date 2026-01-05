@@ -1,3 +1,32 @@
+/**
+ * @file Category Manager Component
+ * @description CRUD operations for menu categories
+ * 
+ * This component handles:
+ * - Create new categories
+ * - Update existing category names
+ * - Delete categories (with confirmation)
+ * - Display category list with menu count
+ * 
+ * State management:
+ * - SWR for data fetching and cache management
+ * - Local state for new category input
+ * 
+ * Features:
+ * - Real-time category list updates
+ * - Menu count per category
+ * - Inline editing with prompts
+ * - Delete confirmation dialog
+ * 
+ * @module components/admin/CategoryManager
+ * @requires react
+ * @requires swr
+ * @requires lucide-react
+ * 
+ * @see {@link AdminDashboard} for parent dashboard
+ * @see {@link MenuManager} for menu management
+ */
+
 "use client";
 
 import { API_URL, authFetch, authFetcher } from "@/lib/utils";
@@ -7,19 +36,41 @@ import { List, Plus, Pencil, Trash2 } from "lucide-react";
 import useSWR from "swr";
 import type { Dictionary } from "@/locales/dictionary";
 
+/**
+ * Category data structure
+ * @property {number} id - Category ID
+ * @property {string} name - Category name
+ * @property {object} [_count] - Menu count in this category
+ */
 interface Category {
   id: number;
   name: string;
   _count?: { menus: number };
 }
 
+/**
+ * Props for CategoryManager component
+ * 
+ * @property {Dictionary} dict - Internationalization dictionary
+ * 
+ * @example
+ * <CategoryManager dict={dictionary} />
+ */
 interface CategoryManagerProps {
   dict: Dictionary;
 }
 
 /**
- * CategoryManager Component
- * Manages menu categories (CRUD operations)
+ * Category Manager Component
+ * 
+ * Manages menu categories with full CRUD operations.
+ * Displays menu count per category for reference.
+ * 
+ * @param props - Component props
+ * @returns JSX.Element
+ * 
+ * @example
+ * <CategoryManager dict={dictionary} />
  */
 export default function CategoryManager({ dict }: CategoryManagerProps) {
   const [newCategoryName, setNewCategoryName] = useState("");

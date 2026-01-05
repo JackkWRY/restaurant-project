@@ -1,26 +1,84 @@
+/**
+ * @file Error Boundary Component
+ * @description React Error Boundary for catching and displaying errors
+ * 
+ * This component handles:
+ * - Catch React component errors
+ * - Display user-friendly error UI
+ * - Log errors for debugging
+ * - Provide reset functionality
+ * - Show error details in development
+ * - Custom fallback support
+ * 
+ * State management:
+ * - Class component state for error tracking
+ * 
+ * Features:
+ * - Error catching via componentDidCatch
+ * - Custom fallback UI option
+ * - Error reset functionality
+ * - Development-only error details
+ * - Home page navigation
+ * 
+ * @module components/common/ErrorBoundary
+ * @requires react
+ * @requires lucide-react
+ * 
+ * @see {@link https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary}
+ */
+
 'use client';
 
 import React from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { logger } from '@/lib/logger';
 
+/**
+ * Props for ErrorBoundary component
+ * @property {React.ReactNode} children - Child components to wrap
+ * @property {React.ReactNode} [fallback] - Optional custom fallback UI
+ */
 interface Props {
   children: React.ReactNode;
   fallback?: React.ReactNode;
 }
 
+/**
+ * Error boundary state
+ * @property {boolean} hasError - Whether an error has been caught
+ * @property {Error} [error] - The caught error object
+ * @property {React.ErrorInfo} [errorInfo] - React error info
+ */
 interface State {
   hasError: boolean;
   error?: Error;
   errorInfo?: React.ErrorInfo;
 }
 
+/**
+ * Error Boundary Class Component
+ * 
+ * Catches errors in child components and displays fallback UI.
+ * Provides error reset and navigation options.
+ * 
+ * @example
+ * <ErrorBoundary>
+ *   <App />
+ * </ErrorBoundary>
+ * 
+ * @example
+ * // With custom fallback
+ * <ErrorBoundary fallback={<CustomErrorUI />}>
+ *   <App />
+ * </ErrorBoundary>
+ */
 export class ErrorBoundary extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false };
   }
 
+  // Derive state from error
   static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }

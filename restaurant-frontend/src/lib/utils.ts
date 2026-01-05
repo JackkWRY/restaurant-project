@@ -1,3 +1,28 @@
+/**
+ * @file Utility Functions
+ * @description Common utility functions and API helpers
+ * 
+ * This module provides:
+ * - Class name merging utilities (cn)
+ * - Token management (get, refresh)
+ * - Authenticated fetch wrapper (authFetch)
+ * - SWR fetcher with auth (fetcher, authFetcher)
+ * - Date formatting utilities
+ * 
+ * Features:
+ * - Automatic token refresh on 401
+ * - Type-safe API calls
+ * - Tailwind CSS class merging
+ * - SSR-safe localStorage access
+ * 
+ * @module lib/utils
+ * @requires clsx
+ * @requires tailwind-merge
+ * @requires ./logger
+ * 
+ * @see {@link logger} for logging utilities
+ */
+
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { logger } from "./logger";

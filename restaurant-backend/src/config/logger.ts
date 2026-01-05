@@ -1,3 +1,29 @@
+/**
+ * @file Winston Logger Configuration
+ * @description Centralized logging setup with file rotation and console output
+ * 
+ * This file provides:
+ * - Winston logger instance
+ * - Daily log file rotation
+ * - Separate error and combined logs
+ * - Environment-specific log levels
+ * - Colored console output for development
+ * 
+ * Log files:
+ * - logs/error-YYYY-MM-DD.log: Error level only
+ * - logs/combined-YYYY-MM-DD.log: All levels
+ * 
+ * Rotation:
+ * - Max size: 20MB per file
+ * - Max age: 14 days
+ * - Format: JSON for production, colored for development
+ * 
+ * @module config/logger
+ * @requires winston
+ * @requires winston-daily-rotate-file
+ * @see {@link ../middlewares/requestLogger.ts} for HTTP request logging
+ */
+
 import winston from "winston";
 import DailyRotateFile from "winston-daily-rotate-file";
 import path from "path";

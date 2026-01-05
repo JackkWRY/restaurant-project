@@ -1,11 +1,26 @@
+/**
+ * @file Category Service
+ * @description Business logic layer for category management
+ * 
+ * This service handles:
+ * - Category CRUD operations
+ * - Category name uniqueness validation
+ * - Referential integrity checks
+ * - Menu relationship validation
+ * 
+ * Business rules:
+ * - Category names must be unique
+ * - Cannot delete categories with existing menus
+ * 
+ * @module services/categoryService
+ * @requires repositories/categoryRepository
+ * @requires errors/AppError
+ * 
+ * @see {@link ../controllers/categoryController.ts} for HTTP handlers
+ */
+
 import { categoryRepository } from '../repositories/categoryRepository.js';
 import { NotFoundError, ConflictError } from '../errors/AppError.js';
-
-/**
- * Category Service
- * Handles all business logic related to categories
- * Now uses Repository for data access
- */
 export class CategoryService {
   /**
    * Retrieves all categories
@@ -41,6 +56,9 @@ export class CategoryService {
    * @param data - Category creation data
    * @returns Created category
    * @throws {ConflictError} If category name already exists
+   * 
+   * @example
+   * const category = await categoryService.createCategory({ name: "Appetizers" });
    */
   async createCategory(data: { name: string }) {
     // Check if category name already exists
@@ -96,9 +114,10 @@ export class CategoryService {
     // Check category exists
     await this.getCategoryById(id);
 
-    // Check if category has menus
+    // Business rule: Maintain referential integrity
+    // Cannot delete categories that have menu items
     const hasMenus = await categoryRepository.hasMenus(id);
-
+    
     if (hasMenus) {
       throw new ConflictError('Cannot delete category with existing menus');
     }

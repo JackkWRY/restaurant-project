@@ -1,3 +1,27 @@
+/**
+ * @file Environment Variables Configuration
+ * @description Validates and exports type-safe environment variables using Zod
+ * 
+ * This file provides:
+ * - Runtime validation of environment variables
+ * - Type-safe access to configuration
+ * - Default values for optional variables
+ * - Automatic application exit on validation failure
+ * 
+ * Environment variables:
+ * - NODE_ENV: Application environment (development/production/test)
+ * - PORT: Server port (default: 3001)
+ * - DATABASE_URL: PostgreSQL connection string (required)
+ * - JWT_SECRET: Access token secret (min 32 chars, required)
+ * - REFRESH_TOKEN_SECRET: Refresh token secret (min 32 chars, required)
+ * - CLIENT_URL: Frontend URL for CORS (default: http://localhost:3000)
+ * - CLOUDINARY_*: Image upload service credentials
+ * 
+ * @module config/env
+ * @requires zod
+ * @see {@link ./index.ts} for configuration usage
+ */
+
 import { z } from 'zod';
 import logger from './logger.js';
 

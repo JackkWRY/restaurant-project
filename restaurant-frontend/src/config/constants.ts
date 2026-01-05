@@ -1,4 +1,18 @@
 /**
+ * @file Application Configuration Constants
+ * @description Central configuration constants for the application
+ * 
+ * This module provides:
+ * - Currency symbol configuration
+ * - Sound file paths for notifications
+ * - Chart color palette for analytics
+ * 
+ * @module config/constants
+ * 
+ * @see {@link enums} for enum definitions
+ */
+
+/**
  * Application configuration constants
  * 
  * Contains:

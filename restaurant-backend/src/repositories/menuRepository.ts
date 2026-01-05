@@ -1,20 +1,29 @@
+/**
+ * @file Menu Repository
+ * @description Data access layer for menu-related database operations
+ * 
+ * @module repositories/menuRepository
+ * @requires @prisma/client
+ * @requires prisma
+ * @see {@link ../services/menuService.ts}
+ */
+
 import prisma from '../prisma.js';
 import type { Menu, Prisma } from '@prisma/client';
 
-/**
- * Menu Repository
- * Handles all database operations for Menu model
- */
 export class MenuRepository {
   /**
    * Retrieves all menus with optional filtering
    * 
    * Includes category information.
+   * Performance: Uses eager loading for category relation.
    * 
    * @param filters - Optional Prisma where clause
    * @returns Array of menus with category, ordered by ID descending
    */
   async findAll(filters?: Prisma.MenuWhereInput) {
+    // Include category for menu grouping and display
+    // Newest menus first for admin dashboard
     return await prisma.menu.findMany({
       where: filters,
       include: { category: true },
@@ -24,6 +33,9 @@ export class MenuRepository {
 
   /**
    * Retrieves menus with pagination support
+   * 
+   * Performance: Uses skip/take for efficient pagination.
+   * Validation: Filters out soft-deleted items via where clause.
    * 
    * @param options - Pagination options with where, skip, and take
    * @returns Object with menus array and total count
@@ -35,6 +47,7 @@ export class MenuRepository {
   }) {
     const { where, skip, take } = options;
     
+    // Parallel queries for data and count (more efficient than sequential)
     const [menus, total] = await Promise.all([
       prisma.menu.findMany({
         where,
@@ -43,6 +56,7 @@ export class MenuRepository {
         skip,
         take
       }),
+      // Count query for pagination metadata
       prisma.menu.count({ where })
     ]);
 

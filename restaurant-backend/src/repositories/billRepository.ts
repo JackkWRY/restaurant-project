@@ -1,21 +1,31 @@
+/**
+ * @file Bill Repository
+ * @description Data access layer for bill-related database operations
+ * 
+ * @module repositories/billRepository
+ * @requires @prisma/client
+ * @requires prisma
+ * @see {@link ../services/billService.ts}
+ */
+
 import prisma from '../prisma.js';
 import type { Bill, Prisma } from '@prisma/client';
 import { BillStatus } from '../config/enums.js';
 
-/**
- * Bill Repository
- * Handles all database operations for Bill model
- */
 export class BillRepository {
   /**
    * Retrieves all bills with optional filtering
    * 
    * Includes table and orders with items.
+   * Performance: Uses eager loading to avoid N+1 queries.
    * 
    * @param where - Optional Prisma where clause
    * @returns Array of bills with full relations
    */
   async findAll(where?: Prisma.BillWhereInput) {
+    // Eager load all relations for complete bill details
+    // - table: For table identification
+    // - orders.items.menu: For bill item details and pricing
     return await prisma.bill.findMany({
       where,
       include: {

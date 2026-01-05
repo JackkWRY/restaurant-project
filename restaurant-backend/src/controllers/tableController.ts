@@ -1,3 +1,24 @@
+/**
+ * @file Table Controller
+ * @description HTTP request handlers for table management endpoints
+ * 
+ * This controller handles:
+ * - Table CRUD operations with QR code generation
+ * - Table availability and status management
+ * - Call staff functionality
+ * - Table closure with bill finalization
+ * - Real-time updates via Socket.IO
+ * 
+ * @module controllers/tableController
+ * @requires prisma
+ * @requires config/logger
+ * @requires utils/apiResponse
+ * @requires schemas/tableSchema
+ * 
+ * @see {@link ../services/tableService.ts} for alternative service-based approach
+ * @see {@link ../schemas/tableSchema.ts} for validation schemas
+ */
+
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import prisma from '../prisma.js';
@@ -22,13 +43,19 @@ const FRONTEND_URL = CLIENT_URL;
 /**
  * Creates a new table with auto-generated QR code
  * 
+ * Generates a QR code URL pointing to the customer order page
+ * for this specific table.
+ * 
  * @param req - Express request with table name in body
  * @param res - Express response
  * @returns 201 with created table including QR code URL
+ * @throws {Error} If table creation fails
  * 
  * @example
  * POST /api/tables
  * Body: { "name": "Table 1" }
+ * 
+ * @see {@link ../schemas/tableSchema.ts#createTableSchema}
  */
 export const createTable = async (req: Request, res: Response) => {
   try {
@@ -60,6 +87,7 @@ export const createTable = async (req: Request, res: Response) => {
  * @param req - Express request with table ID in params and new name in body
  * @param res - Express response
  * @returns 200 with updated table
+ * @throws {Error} If table doesn't exist or update fails
  */
 export const updateTable = async (req: Request, res: Response) => {
   const { id } = req.params;
@@ -88,6 +116,9 @@ export const updateTable = async (req: Request, res: Response) => {
  * @param req - Express request with table ID in params
  * @param res - Express response
  * @returns 200 on successful deletion
+ * @throws {Error} If table doesn't exist or has active orders
+ * 
+ * @see {@link closeTable} for proper table closure workflow
  */
 export const deleteTable = async (req: Request, res: Response) => {
   try {
@@ -258,6 +289,8 @@ export const closeTable = async (req: Request, res: Response) => {
     });
 
     if (activeBill) {
+        // Recalculate final total excluding cancelled items
+        // This ensures accuracy even if items were cancelled after bill creation
         let finalTotal = 0;
         
         activeBill.orders.forEach(order => {

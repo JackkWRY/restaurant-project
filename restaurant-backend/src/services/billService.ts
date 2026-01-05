@@ -1,3 +1,30 @@
+/**
+ * @file Bill Service
+ * @description Business logic layer for bill management
+ * 
+ * This service handles:
+ * - Bill retrieval for tables
+ * - Bill calculation excluding cancelled items
+ * - Table checkout workflow
+ * - Payment processing
+ * - Table status reset after payment
+ * 
+ * Workflow:
+ * 1. Find active bill for table
+ * 2. Calculate total from non-cancelled items
+ * 3. Update bill status to PAID
+ * 4. Reset table to available state
+ * 
+ * @module services/billService
+ * @requires repositories/billRepository
+ * @requires repositories/tableRepository
+ * @requires errors/AppError
+ * @requires dtos/billDto
+ * @requires config/enums
+ * 
+ * @see {@link ../controllers/billController.ts} for HTTP handlers
+ */
+
 import { billRepository } from '../repositories/billRepository.js';
 import { tableRepository } from '../repositories/tableRepository.js';
 import { NotFoundError } from '../errors/AppError.js';
@@ -26,10 +53,6 @@ interface CheckoutInput {
   paymentMethod: string;
 }
 
-/**
- * Bill Service
- * Handles all business logic related to bills
- */
 export class BillService {
   /**
    * Retrieves the current bill for a table
@@ -39,6 +62,7 @@ export class BillService {
    * 
    * @param tableId - Table ID
    * @returns Bill data with items and total amount
+   * @throws {Error} If database query fails
    */
   async getTableBill(tableId: number) {
     const activeBill = await billRepository.findActiveBillByTable(
@@ -77,6 +101,13 @@ export class BillService {
    * @param data - Checkout data with tableId and paymentMethod
    * @returns Success message
    * @throws {NotFoundError} If no active bill exists
+   * @throws {Error} If database operation fails
+   * 
+   * @example
+   * await billService.checkoutTable({
+   *   tableId: 1,
+   *   paymentMethod: "cash"
+   * });
    */
   async checkoutTable(data: CheckoutInput) {
     const activeBill = await billRepository.findActiveBillByTable(
@@ -90,7 +121,7 @@ export class BillService {
 
     const { total } = this.calculateBillData(activeBill.orders);
 
-    // Update bill
+    // Close the bill and record payment
     await billRepository.update(activeBill.id, {
       status: BillStatus.PAID,
       closedAt: new Date(),
@@ -98,7 +129,7 @@ export class BillService {
       paymentMethod: data.paymentMethod
     });
 
-    // Update table
+    // Reset table to available state for next customers
     await tableRepository.update(data.tableId, {
       isOccupied: false,
       isCallingStaff: false

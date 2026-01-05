@@ -1,3 +1,29 @@
+/**
+ * @file Category Routes
+ * @description Defines category management API endpoints
+ * 
+ * Routes:
+ * - GET /api/categories - Get all categories (Public)
+ * - POST /api/categories - Create new category (Admin only)
+ * - PUT /api/categories/:id - Update category (Admin only)
+ * - DELETE /api/categories/:id - Delete category (Admin only)
+ * 
+ * Middleware:
+ * - requireRole - Role-based access control
+ * - sanitizeBody - Input sanitization
+ * - validateRequest - Schema validation
+ * 
+ * @module routes/categoryRoutes
+ * @requires express
+ * @requires controllers/categoryController
+ * @requires middlewares/validateRequest
+ * @requires middlewares/authMiddleware
+ * @requires middlewares/sanitizeMiddleware
+ * @requires schemas/categorySchema
+ * 
+ * @see {@link categoryController} for route handlers
+ */
+
 import { Router } from 'express';
 import { 
     getCategories, 

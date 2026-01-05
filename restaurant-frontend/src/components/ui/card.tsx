@@ -1,7 +1,50 @@
+/**
+ * @file Card Component
+ * @description Reusable card component with composable sub-components
+ * 
+ * This component provides:
+ * - Card container with consistent styling
+ * - CardHeader for title and actions
+ * - CardTitle for heading text
+ * - CardDescription for subtitle text
+ * - CardAction for header actions
+ * - CardContent for main content
+ * - CardFooter for bottom actions
+ * 
+ * Features:
+ * - Composable architecture
+ * - Flexible layout with CSS Grid
+ * - Consistent spacing and borders
+ * - Shadow and rounded corners
+ * - Dark mode support
+ * - Container queries for responsive design
+ * 
+ * @module components/ui/card
+ * @requires react
+ * 
+ * @see {@link https://ui.shadcn.com/docs/components/card}
+ */
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Card Component
+ * 
+ * Main card container with border, shadow, and padding.
+ * 
+ * @param props - Card props
+ * @returns JSX.Element
+ * 
+ * @example
+ * <Card>
+ *   <CardHeader>
+ *     <CardTitle>Title</CardTitle>
+ *   </CardHeader>
+ *   <CardContent>Content</CardContent>
+ * </Card>
+ */
 function Card({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -15,6 +58,14 @@ function Card({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/**
+ * CardHeader Component
+ * 
+ * Header section with grid layout for title and actions.
+ * 
+ * @param props - CardHeader props
+ * @returns JSX.Element
+ */
 function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -28,6 +79,14 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/**
+ * CardTitle Component
+ * 
+ * Title text with semibold font.
+ * 
+ * @param props - CardTitle props
+ * @returns JSX.Element
+ */
 function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -38,6 +97,14 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/**
+ * CardDescription Component
+ * 
+ * Subtitle text with muted color.
+ * 
+ * @param props - CardDescription props
+ * @returns JSX.Element
+ */
 function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -48,6 +115,14 @@ function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/**
+ * CardAction Component
+ * 
+ * Action buttons positioned in header top-right.
+ * 
+ * @param props - CardAction props
+ * @returns JSX.Element
+ */
 function CardAction({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -61,6 +136,14 @@ function CardAction({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/**
+ * CardContent Component
+ * 
+ * Main content area with horizontal padding.
+ * 
+ * @param props - CardContent props
+ * @returns JSX.Element
+ */
 function CardContent({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -71,6 +154,14 @@ function CardContent({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/**
+ * CardFooter Component
+ * 
+ * Footer section for actions, typically with border-top.
+ * 
+ * @param props - CardFooter props
+ * @returns JSX.Element
+ */
 function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div

@@ -1,3 +1,38 @@
+/**
+ * @file Menu Manager Component
+ * @description Comprehensive menu item management with CRUD operations and image upload
+ * 
+ * This component handles:
+ * - Create new menu items with image upload
+ * - Update existing menu items
+ * - Delete menu items with confirmation
+ * - Quick toggle features (recommended, available, visible)
+ * - Image upload to Cloudinary
+ * - Category assignment
+ * 
+ * State management:
+ * - SWR for menu and category data fetching
+ * - Local state for form inputs and modal
+ * - Local state for image upload
+ * 
+ * Features:
+ * - Full CRUD operations
+ * - Image upload with preview
+ * - Quick toggle buttons for flags
+ * - Real-time updates with SWR
+ * - Form validation
+ * - Edit modal with pre-filled data
+ * 
+ * @module components/admin/MenuManager
+ * @requires react
+ * @requires swr
+ * @requires next/image
+ * @requires lucide-react
+ * 
+ * @see {@link AdminDashboard} for parent dashboard
+ * @see {@link CategoryManager} for category management
+ */
+
 "use client";
 
 import { API_URL, authFetch, authFetcher } from "@/lib/utils";
@@ -18,11 +53,28 @@ import {
 import useSWR from "swr";
 import type { Dictionary } from "@/locales/dictionary";
 
+/**
+ * Category data structure
+ * @property {number} id - Category ID
+ * @property {string} name - Category name
+ */
 interface Category {
   id: number;
   name: string;
 }
 
+/**
+ * Menu item data structure
+ * @property {number} id - Menu ID
+ * @property {string} nameTH - Thai menu name
+ * @property {number} price - Menu price
+ * @property {string | null} imageUrl - Menu image URL
+ * @property {number} categoryId - Category ID
+ * @property {object} [category] - Category details
+ * @property {boolean} [isRecommended] - Recommended flag
+ * @property {boolean} [isAvailable] - Availability flag
+ * @property {boolean} [isVisible] - Visibility flag
+ */
 interface Menu {
   id: number;
   nameTH: string;
@@ -35,14 +87,29 @@ interface Menu {
   isVisible?: boolean;
 }
 
+/**
+ * Props for MenuManager component
+ * 
+ * @property {Dictionary} dict - Internationalization dictionary
+ * 
+ * @example
+ * <MenuManager dict={dictionary} />
+ */
 interface MenuManagerProps {
   dict: Dictionary;
 }
 
 /**
- * MenuManager Component
- * Manages menu items with create, update, delete operations
- * Includes image upload and quick toggle features
+ * Menu Manager Component
+ * 
+ * Manages menu items with full CRUD operations including image upload.
+ * Provides quick toggle features for menu flags.
+ * 
+ * @param props - Component props
+ * @returns JSX.Element
+ * 
+ * @example
+ * <MenuManager dict={dictionary} />
  */
 export default function MenuManager({ dict }: MenuManagerProps) {
   const { data: menusData, mutate: mutateMenus } = useSWR(
@@ -105,7 +172,8 @@ export default function MenuManager({ dict }: MenuManagerProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Client-side validation
+    // Client-side validation before upload
+    // Server will also validate, but this provides immediate feedback
     const MAX_SIZE = 5 * 1024 * 1024; // 5MB
     const ALLOWED_TYPES = [
       "image/jpeg",
@@ -114,12 +182,14 @@ export default function MenuManager({ dict }: MenuManagerProps) {
       "image/webp",
     ];
 
+    // Validate file type
     if (!ALLOWED_TYPES.includes(file.type)) {
       alert("Invalid file type. Only JPEG, PNG, and WebP images are allowed.");
       e.target.value = "";
       return;
     }
 
+    // Validate file size
     if (file.size > MAX_SIZE) {
       const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
       alert(`File too large (${sizeMB}MB). Maximum size is 5MB.`);

@@ -1,3 +1,30 @@
+/**
+ * @file Thai Translations
+ * @description Thai language dictionary for the application
+ * 
+ * This module provides:
+ * - Complete Thai translations
+ * - Organized by feature sections
+ * - Type-safe translation keys
+ * 
+ * Sections:
+ * - common: ข้อความทั่วไป
+ * - auth: การยืนยันตัวตน
+ * - menu: หมวดหมู่เมนู
+ * - admin: แดชบอร์ดแอดมิน
+ * - staff: แดชบอร์ดพนักงาน
+ * - kitchen: จอแสดงผลครัว
+ * - customer: การสั่งอาหารลูกค้า
+ * - landing: หน้าแรก
+ * - dashboard: วิเคราะห์ข้อมูล
+ * - history: ประวัติการขาย
+ * 
+ * @module locales/th
+ * @requires @/config/constants
+ * 
+ * @see {@link en} for English translations
+ */
+
 import { APP_CONFIG } from "@/config/constants";
 
 const th = {

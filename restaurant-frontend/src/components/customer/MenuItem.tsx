@@ -1,3 +1,36 @@
+/**
+ * @file Menu Item Component
+ * @description Individual menu item card with cart integration
+ * 
+ * This component handles:
+ * - Display menu item with image and details
+ * - Add to cart functionality
+ * - Quantity adjustment (increase/decrease)
+ * - Remove from cart
+ * - Sold out state visualization
+ * - Recommended badge display
+ * 
+ * State management:
+ * - Zustand cart store for cart operations
+ * - Local quantity derived from cart state
+ * 
+ * Features:
+ * - Image with fallback
+ * - Sold out overlay
+ * - Recommended badge
+ * - Quantity controls with animations
+ * - Delete on quantity = 1
+ * 
+ * @module components/customer/MenuItem
+ * @requires react
+ * @requires next/image
+ * @requires store/useCartStore
+ * @requires lucide-react
+ * 
+ * @see {@link CustomerOrder} for parent component
+ * @see {@link FloatingCart} for cart display
+ */
+
 "use client";
 
 import Image from "next/image";
@@ -6,6 +39,28 @@ import { useCartStore } from "@/store/useCartStore";
 import { Plus, Minus, Trash2 } from "lucide-react";
 import type { Dictionary } from "@/locales/dictionary";
 
+/**
+ * Props for MenuItem component
+ * 
+ * @property {number} id - Menu item ID
+ * @property {string} nameTH - Thai menu name
+ * @property {number} price - Menu price
+ * @property {string | null} imageUrl - Menu image URL
+ * @property {boolean} isRecommended - Recommended flag
+ * @property {boolean} [isAvailable=true] - Availability flag
+ * @property {Dictionary} dict - Internationalization dictionary
+ * 
+ * @example
+ * <MenuItem 
+ *   id={1}
+ *   nameTH="ข้าวผัด"
+ *   price={50}
+ *   imageUrl="/images/fried-rice.jpg"
+ *   isRecommended={true}
+ *   isAvailable={true}
+ *   dict={dictionary}
+ * />
+ */
 interface MenuItemProps {
   id: number;
   nameTH: string;
@@ -16,12 +71,27 @@ interface MenuItemProps {
   dict: Dictionary;
 }
 
+/**
+ * Menu Item Component
+ * 
+ * Displays individual menu item with cart integration.
+ * Handles add/remove/quantity adjustments.
+ * 
+ * @param props - Component props
+ * @returns JSX.Element
+ * 
+ * @example
+ * <MenuItem {...menuData} dict={dictionary} />
+ */
 export default function MenuItem({ id, nameTH, price, imageUrl, isRecommended, isAvailable = true, dict }: MenuItemProps) {
+  // Get cart operations from store
   const { addItem, items, increaseQuantity, decreaseQuantity, removeItem } = useCartStore();
   
+  // Find current item in cart to get quantity
   const currentItem = items.find((item) => item.id === id);
   const quantity = currentItem ? currentItem.quantity : 0;
 
+  // Apply sold out styling
   const soldOutStyle = !isAvailable ? "opacity-60 grayscale pointer-events-none" : "";
 
   return (

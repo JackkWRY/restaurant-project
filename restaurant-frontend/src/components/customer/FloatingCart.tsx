@@ -1,3 +1,38 @@
+/**
+ * @file Floating Cart Component
+ * @description Floating cart button and modal for order management
+ * 
+ * This component handles:
+ * - Floating cart button with item count and total
+ * - Cart modal with item list
+ * - Quantity adjustment for cart items
+ * - Item removal from cart
+ * - Customer notes for each item
+ * - Order submission to backend
+ * 
+ * State management:
+ * - Zustand cart store for cart operations
+ * - Local state for modal open/close
+ * 
+ * Features:
+ * - Floating button at bottom of screen
+ * - Full-screen modal on mobile
+ * - Quantity controls per item
+ * - Note input with character limit (100)
+ * - Order confirmation dialog
+ * - Auto-hide when cart is empty
+ * 
+ * @module components/customer/FloatingCart
+ * @requires react
+ * @requires next/navigation
+ * @requires store/useCartStore
+ * @requires lucide-react
+ * @requires sonner
+ * 
+ * @see {@link CustomerOrder} for parent component
+ * @see {@link MenuItem} for adding items
+ */
+
 "use client";
 
 import { API_URL } from "@/lib/utils";
@@ -8,20 +43,48 @@ import { ShoppingCart, X, Plus, Minus, Trash2, Utensils, MessageSquare } from "l
 import { useCartStore } from "@/store/useCartStore";
 import type { Dictionary } from "@/locales/dictionary";
 
+/**
+ * Props for FloatingCart component
+ * 
+ * @property {Dictionary} dict - Internationalization dictionary
+ * 
+ * @example
+ * <FloatingCart dict={dictionary} />
+ */
 interface FloatingCartProps {
   dict: Dictionary;
 }
 
+/**
+ * Floating Cart Component
+ * 
+ * Displays floating cart button and modal for order management.
+ * Handles cart operations and order submission.
+ * 
+ * @param props - Component props
+ * @returns JSX.Element | null (null when cart is empty)
+ * 
+ * @example
+ * <FloatingCart dict={dictionary} />
+ */
 export default function FloatingCart({ dict }: FloatingCartProps) {
+  // Get cart operations from Zustand store
   const { items, removeItem, increaseQuantity, decreaseQuantity, updateNote, clearCart, totalPrice, totalItems } = useCartStore();
   
+  // Modal open/close state
   const [isOpen, setIsOpen] = useState(false);
   
+  // Get table ID from URL
   const searchParams = useSearchParams();
   const tableId = searchParams.get("tableId");
 
+  // Hide cart if empty
   if (items.length === 0) return null;
 
+  /**
+   * Handle order submission to backend
+   * Validates table ID and sends order data
+   */
   const handleSendOrder = async () => {
     if (!tableId) return alert(dict.customer.tableNotFound);
     if (!confirm(dict.customer.confirmOrderQuestion)) return;

@@ -1,3 +1,40 @@
+/**
+ * @file Customer Order Component
+ * @description Main ordering interface for customers with menu browsing and cart
+ * 
+ * This component handles:
+ * - Menu browsing by categories with accordion UI
+ * - Add items to cart via MenuItem component
+ * - Real-time order history display
+ * - Call staff button functionality
+ * - Order history modal
+ * - Language switching
+ * - Socket.IO real-time updates
+ * 
+ * State management:
+ * - SWR for menu and table data fetching
+ * - Zustand cart store for cart operations
+ * - Local state for UI (accordion, modals)
+ * - Socket.IO for real-time order updates
+ * 
+ * Real-time features:
+ * - Order status updates via Socket.IO
+ * - Table status updates (calling staff)
+ * - Auto-refresh on order changes
+ * 
+ * @module components/customer/CustomerOrder
+ * @requires react
+ * @requires next/navigation
+ * @requires swr
+ * @requires socket.io-client
+ * @requires sonner
+ * @requires lucide-react
+ * 
+ * @see {@link MenuItem} for menu item display
+ * @see {@link FloatingCart} for cart management
+ * @see {@link TableDetector} for table ID detection
+ */
+
 "use client";
 
 import { API_URL, fetcher } from "@/lib/utils";
@@ -15,7 +52,17 @@ import { useCartStore } from "@/store/useCartStore";
 import type { Dictionary } from "@/locales/dictionary";
 import { logger } from "@/lib/logger";
 
-// --- Types ---
+// --- Type Definitions ---
+
+/**
+ * Menu item data structure
+ * @property {number} id - Menu ID
+ * @property {string} nameTH - Thai menu name
+ * @property {number} price - Menu price
+ * @property {string | null} imageUrl - Menu image URL
+ * @property {boolean} isRecommended - Recommended flag
+ * @property {boolean} isAvailable - Availability flag
+ */
 interface Menu {
   id: number;
   nameTH: string;
@@ -24,11 +71,29 @@ interface Menu {
   isRecommended: boolean;
   isAvailable: boolean;
 }
+
+/**
+ * Category with menus
+ * @property {number} id - Category ID
+ * @property {string} name - Category name
+ * @property {Menu[]} menus - Array of menus in category
+ */
 interface Category {
   id: number;
   name: string;
   menus: Menu[];
 }
+
+/**
+ * Order history item
+ * @property {number} id - Order item ID
+ * @property {string} menuName - Menu name
+ * @property {number} price - Item price
+ * @property {number} quantity - Item quantity
+ * @property {string} status - Order status
+ * @property {number} total - Item total
+ * @property {string} [note] - Customer note
+ */
 interface HistoryItem {
   id: number;
   menuName: string;
@@ -38,6 +103,14 @@ interface HistoryItem {
   total: number;
   note?: string;
 }
+
+/**
+ * Table information
+ * @property {number} id - Table ID
+ * @property {string} name - Table name
+ * @property {boolean} isAvailable - Table availability
+ * @property {boolean} isCallingStaff - Staff call status
+ */
 interface TableInfo {
     id: number; 
     name: string;
@@ -45,6 +118,15 @@ interface TableInfo {
     isCallingStaff: boolean;
 }
 
+/**
+ * Props for CustomerOrder component
+ * 
+ * @property {Dictionary} dict - Internationalization dictionary
+ * @property {string} lang - Current language code
+ * 
+ * @example
+ * <CustomerOrder dict={dictionary} lang="th" />
+ */
 interface CustomerOrderProps {
   dict: Dictionary;
   lang: string;
@@ -142,6 +224,8 @@ export default function CustomerOrder({ dict, lang }: CustomerOrderProps) {
     
     const newStatus = !tableInfo.isCallingStaff;
     
+    // Optimistic update: Update UI immediately for better UX
+    // Server will send Socket.IO event to confirm the change
     mutateTable({
         ...tableData,
         data: { ...tableInfo, isCallingStaff: newStatus }

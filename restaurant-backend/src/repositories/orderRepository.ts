@@ -1,21 +1,31 @@
+/**
+ * @file Order Repository
+ * @description Data access layer for order-related database operations
+ * 
+ * @module repositories/orderRepository
+ * @requires @prisma/client
+ * @requires prisma
+ * @see {@link ../services/orderService.ts}
+ */
+
 import prisma from '../prisma.js';
 import type { Order, OrderItem, Prisma } from '@prisma/client';
 import { OrderStatus } from '../config/enums.js';
 
-/**
- * Order Repository
- * Handles all database operations for Order model
- */
 export class OrderRepository {
   /**
    * Retrieves all orders with optional filtering
    * 
    * Includes related items with menu details and table information.
+   * Performance: Uses eager loading to avoid N+1 queries.
    * 
    * @param where - Optional Prisma where clause for filtering
    * @returns Array of orders with items and table
    */
   async findAll(where?: Prisma.OrderWhereInput) {
+    // Eager load relations to prevent N+1 query problem
+    // - items.menu: Required for displaying order contents with prices
+    // - table: Required for table identification and status
     return await prisma.order.findMany({
       where,
       include: {
@@ -24,6 +34,7 @@ export class OrderRepository {
         },
         table: true
       },
+      // Oldest orders first (FIFO for kitchen queue)
       orderBy: { createdAt: 'asc' }
     });
   }
@@ -31,10 +42,13 @@ export class OrderRepository {
   /**
    * Retrieves a single order by ID
    * 
+   * Performance: Single query with eager loading.
+   * 
    * @param id - Order ID
    * @returns Order with items and table, or null if not found
    */
   async findById(id: number) {
+    // Include all relations for complete order details
     return await prisma.order.findUnique({
       where: { id },
       include: {
@@ -49,10 +63,13 @@ export class OrderRepository {
   /**
    * Creates a new order
    * 
+   * Validation: Relies on database constraints and service layer validation.
+   * 
    * @param data - Prisma order creation data
    * @returns Created order with items and table
    */
   async create(data: Prisma.OrderCreateInput) {
+    // Return created order with full relations for immediate use
     return await prisma.order.create({
       data,
       include: {
@@ -67,11 +84,14 @@ export class OrderRepository {
   /**
    * Updates an existing order
    * 
+   * Performance: Single update query with eager loading.
+   * 
    * @param id - Order ID
    * @param data - Prisma order update data
    * @returns Updated order with items and table
    */
   async update(id: number, data: Prisma.OrderUpdateInput) {
+    // Return updated order with relations for consistency
     return await prisma.order.update({
       where: { id },
       data,

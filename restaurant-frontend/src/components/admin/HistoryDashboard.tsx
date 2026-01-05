@@ -1,3 +1,32 @@
+/**
+ * @file History Dashboard Component
+ * @description Bill history viewer with date filtering and pagination
+ * 
+ * This component handles:
+ * - Display historical bills with date range filtering
+ * - Pagination for large datasets (20 bills per page)
+ * - Summary statistics (total sales, bill count)
+ * - Bill detail modal with item breakdown
+ * - Cancelled item visualization
+ * 
+ * State management:
+ * - Local state for date filters and pagination
+ * - Local state for selected bill modal
+ * 
+ * Features:
+ * - Date range picker (default: current month)
+ * - Real-time search on date change
+ * - Bill detail modal with payment method
+ * - Cancelled items marked with strikethrough
+ * 
+ * @module components/admin/HistoryDashboard
+ * @requires react
+ * @requires dayjs
+ * @requires lucide-react
+ * 
+ * @see {@link AdminDashboard} for parent dashboard
+ */
+
 "use client";
 
 import { API_URL, authFetch } from "@/lib/utils";
@@ -8,6 +37,16 @@ import dayjs from "dayjs";
 import { ORDER_STATUS } from "@/config/enums";
 import type { Dictionary } from "@/locales/dictionary";
 
+/**
+ * Bill item details
+ * @property {number} id - Item ID
+ * @property {string} name - Menu item name
+ * @property {number} price - Item price
+ * @property {number} quantity - Item quantity
+ * @property {number} subtotal - Item subtotal
+ * @property {string} status - Item status (for cancelled items)
+ * @property {string | null} note - Customer note
+ */
 interface BillItem {
   id: number;
   name: string;
@@ -18,6 +57,16 @@ interface BillItem {
   note: string | null;
 }
 
+/**
+ * Bill summary data
+ * @property {string} id - Bill ID (UUID)
+ * @property {string} date - Bill date/time
+ * @property {string} tableName - Table name
+ * @property {number} total - Bill total amount
+ * @property {string} paymentMethod - Payment method used
+ * @property {number} itemsCount - Number of items in bill
+ * @property {BillItem[]} items - Bill items array
+ */
 interface Bill {
   id: string;
   date: string;
@@ -28,6 +77,11 @@ interface Bill {
   items: BillItem[];
 }
 
+/**
+ * History data structure
+ * @property {object} summary - Summary statistics
+ * @property {Bill[]} bills - Array of bills
+ */
 interface HistoryData {
   summary: {
     totalSales: number;
@@ -36,11 +90,32 @@ interface HistoryData {
   bills: Bill[];
 }
 
+/**
+ * Props for HistoryDashboard component
+ * 
+ * @property {Dictionary} dict - Internationalization dictionary
+ * 
+ * @example
+ * <HistoryDashboard dict={dictionary} />
+ */
 interface HistoryDashboardProps {
   dict: Dictionary;
 }
 
+/**
+ * History Dashboard Component
+ * 
+ * Displays historical bills with date filtering and pagination.
+ * Allows viewing detailed bill information in a modal.
+ * 
+ * @param props - Component props
+ * @returns JSX.Element
+ * 
+ * @example
+ * <HistoryDashboard dict={dictionary} />
+ */
 export default function HistoryDashboard({ dict }: HistoryDashboardProps) {
+  // Date range state (default: current month)
   const [startDate, setStartDate] = useState(dayjs().startOf('month').format('YYYY-MM-DD'));
   const [endDate, setEndDate] = useState(dayjs().format('YYYY-MM-DD'));
   

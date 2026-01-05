@@ -1,3 +1,17 @@
+/**
+ * @file User Type Definitions
+ * @description Type definitions for users and authentication
+ * 
+ * This module provides:
+ * - User interface for user data
+ * - AuthResponse interface for login response
+ * - LoginCredentials interface for login form
+ * 
+ * @module types/user
+ * 
+ * @see {@link components/common/LoginForm} for usage
+ */
+
 // User-related types
 
 export interface User {

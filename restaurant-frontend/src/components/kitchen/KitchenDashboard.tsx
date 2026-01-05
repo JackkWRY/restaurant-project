@@ -1,3 +1,35 @@
+/**
+ * @file Kitchen Dashboard Component
+ * @description Kanban-style dashboard for kitchen staff to manage order preparation
+ * 
+ * This component handles:
+ * - Display orders in 3-column Kanban (Pending → Cooking → Ready)
+ * - Update order item status via drag-and-drop or buttons
+ * - Real-time order updates via Socket.IO
+ * - Audio notifications for new orders
+ * - Filter and sort orders
+ * - Authentication and role verification
+ * 
+ * State management:
+ * - SWR for initial data fetching
+ * - Socket.IO for real-time updates
+ * - Local state for UI (selected items, audio)
+ * 
+ * Real-time features:
+ * - New order notifications with sound
+ * - Order status updates across all clients
+ * - Auto-refresh on changes
+ * 
+ * @module components/kitchen/KitchenDashboard
+ * @requires react
+ * @requires next/navigation
+ * @requires swr
+ * @requires socket.io-client
+ * @requires lucide-react
+ * 
+ * @see {@link StaffDashboard} for staff interface
+ */
+
 "use client";
 
 import { API_URL, authFetch, authFetcher } from "@/lib/utils";
@@ -13,9 +45,21 @@ import { Clock, ChefHat, BellRing, LogOut, LayoutDashboard, Globe } from "lucide
 import type { Dictionary } from "@/locales/dictionary";
 import { logger } from "@/lib/logger";
 
-// --- Types ---
+// --- Type Definitions ---
+
+/**
+ * Order item status type
+ */
 type ItemStatus = ORDER_STATUS;
 
+/**
+ * Raw order item from API
+ * @property {number} id - Item ID
+ * @property {number} quantity - Item quantity
+ * @property {string} [note] - Customer note
+ * @property {ItemStatus} status - Item status
+ * @property {object} menu - Menu details
+ */
 interface RawOrderItem {
   id: number;
   quantity: number;
@@ -26,6 +70,13 @@ interface RawOrderItem {
   };
 }
 
+/**
+ * Raw order from API
+ * @property {number} id - Order ID
+ * @property {object} table - Table details
+ * @property {string} createdAt - Order creation time
+ * @property {RawOrderItem[]} items - Order items
+ */
 interface RawOrder {
   id: number;
   table: {
@@ -35,6 +86,17 @@ interface RawOrder {
   items: RawOrderItem[];
 }
 
+/**
+ * Kitchen item for Kanban display
+ * @property {number} id - Item ID
+ * @property {number} orderId - Parent order ID
+ * @property {string} tableName - Table name
+ * @property {string} menuName - Menu item name
+ * @property {number} quantity - Item quantity
+ * @property {string} [note] - Customer note
+ * @property {ItemStatus} status - Item status
+ * @property {string} createdAt - Creation timestamp
+ */
 interface KitchenItem {
   id: number;          
   orderId: number;     
@@ -46,6 +108,15 @@ interface KitchenItem {
   createdAt: string;   
 }
 
+/**
+ * Props for KitchenDashboard component
+ * 
+ * @property {Dictionary} dict - Internationalization dictionary
+ * @property {string} lang - Current language code
+ * 
+ * @example
+ * <KitchenDashboard dict={dictionary} lang="th" />
+ */
 interface KitchenDashboardProps {
   dict: Dictionary;
   lang: string;

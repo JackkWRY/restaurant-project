@@ -1,3 +1,29 @@
+/**
+ * @file Settings Manager Component
+ * @description Restaurant settings management (name configuration)
+ * 
+ * This component handles:
+ * - Fetch current restaurant name
+ * - Update restaurant name
+ * - Form validation
+ * - Loading states during save
+ * 
+ * State management:
+ * - Local state for restaurant name input
+ * - Local state for loading indicator
+ * 
+ * Features:
+ * - Auto-fetch settings on mount
+ * - Form submission with validation
+ * - Success/error alerts
+ * 
+ * @module components/admin/SettingsManager
+ * @requires react
+ * @requires lucide-react
+ * 
+ * @see {@link AdminDashboard} for parent dashboard
+ */
+
 "use client";
 
 import { API_URL, authFetch } from "@/lib/utils";
@@ -6,13 +32,29 @@ import { useState, useEffect } from "react";
 import { Settings, Save } from "lucide-react";
 import type { Dictionary } from "@/locales/dictionary";
 
+/**
+ * Props for SettingsManager component
+ * 
+ * @property {Dictionary} dict - Internationalization dictionary
+ * 
+ * @example
+ * <SettingsManager dict={dictionary} />
+ */
 interface SettingsManagerProps {
   dict: Dictionary;
 }
 
 /**
- * SettingsManager Component
- * Manages restaurant settings (name, etc.)
+ * Settings Manager Component
+ * 
+ * Manages restaurant settings including restaurant name.
+ * Provides simple form interface for updating settings.
+ * 
+ * @param props - Component props
+ * @returns JSX.Element
+ * 
+ * @example
+ * <SettingsManager dict={dictionary} />
  */
 export default function SettingsManager({ dict }: SettingsManagerProps) {
   const [restaurantName, setRestaurantName] = useState("");

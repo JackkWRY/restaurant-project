@@ -1,3 +1,35 @@
+/**
+ * @file Analytics Dashboard Component
+ * @description Real-time analytics and statistics dashboard for administrators
+ * 
+ * This component handles:
+ * - Display of today's sales and order count statistics
+ * - Sales trend visualization with bar charts (7-day history)
+ * - Top-selling items visualization with pie charts
+ * - Recent orders table with real-time updates
+ * - Order detail modal with item breakdown
+ * 
+ * State management:
+ * - SWR for data fetching with auto-refresh intervals
+ * - Local state for selected order modal
+ * 
+ * Real-time updates:
+ * - Summary data refreshes every 30 seconds
+ * - Orders data refreshes every 10 seconds
+ * 
+ * Performance optimizations:
+ * - Recharts for efficient chart rendering
+ * - Responsive container for adaptive sizing
+ * 
+ * @module components/admin/AnalyticsDashboard
+ * @requires react
+ * @requires swr
+ * @requires recharts
+ * @requires lucide-react
+ * 
+ * @see {@link AdminDashboard} for parent dashboard
+ */
+
 "use client";
 
 import { API_URL, authFetcher } from "@/lib/utils";
@@ -12,19 +44,37 @@ import {
 import { DollarSign, ShoppingBag, TrendingUp, Award, Clock, Receipt, Eye, X, MessageSquareText } from 'lucide-react';
 import type { Dictionary } from "@/locales/dictionary";
 
-// --- Types ---
+// --- Type Definitions ---
+
+/**
+ * Top-selling item data structure
+ * @property {string} name - Menu item name
+ * @property {number} value - Quantity sold
+ */
 interface TopItem {
   name: string;
   value: number;
   [key: string]: string | number | undefined; 
 }
 
+/**
+ * Sales trend data point
+ * @property {string} name - Date label
+ * @property {number} total - Total sales amount
+ */
 interface SalesTrend {
   name: string;
   total: number;
   [key: string]: string | number | undefined;
 }
 
+/**
+ * Analytics summary data
+ * @property {number} todayTotal - Today's total sales
+ * @property {number} todayCount - Today's order count
+ * @property {SalesTrend[]} salesTrend - 7-day sales trend
+ * @property {TopItem[]} topItems - Top-selling items
+ */
 interface AnalyticsData {
   todayTotal: number;
   todayCount: number;
@@ -32,6 +82,9 @@ interface AnalyticsData {
   topItems: TopItem[];
 }
 
+/**
+ * Order item details
+ */
 interface OrderItem {
     id: number;
     menuName: string;
@@ -41,6 +94,9 @@ interface OrderItem {
     status: string;
 }
 
+/**
+ * Order details
+ */
 interface Order {
     id: string;
     tableId: number;
@@ -50,26 +106,56 @@ interface Order {
     items: OrderItem[];
 }
 
+/**
+ * API response wrapper for analytics data
+ */
 interface ApiResponse {
   status: string;
   data: AnalyticsData;
 }
 
+/**
+ * API response wrapper for order history
+ */
 interface OrderHistoryResponse {
     status: string;
     data: Order[];
 }
 
+/**
+ * Props for AnalyticsDashboard component
+ * 
+ * @property {Dictionary} dict - Internationalization dictionary
+ * 
+ * @example
+ * <AnalyticsDashboard dict={dictionary} />
+ */
 interface AnalyticsDashboardProps {
   dict: Dictionary;
 }
 
+// Chart color palette from app config
 const COLORS = APP_CONFIG.CHART_COLORS;
 
+/**
+ * Analytics Dashboard Component
+ * 
+ * Displays real-time restaurant analytics including sales trends,
+ * top-selling items, and recent order history with auto-refresh.
+ * 
+ * @param props - Component props
+ * @returns JSX.Element
+ * 
+ * @example
+ * <AnalyticsDashboard dict={dictionary} />
+ */
 export default function AnalyticsDashboard({ dict }: AnalyticsDashboardProps) {
+    // Modal state for order details view
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
+    // Fetch summary data with 30-second auto-refresh for real-time stats
     const { data: summaryData, isLoading: summaryLoading, error: summaryError } = useSWR<ApiResponse>(`${API_URL}/api/analytics/summary`, authFetcher, { refreshInterval: 30000 });
+    // Fetch recent orders with 10-second auto-refresh
     const { data: ordersData, isLoading: ordersLoading } = useSWR<OrderHistoryResponse>(`${API_URL}/api/analytics/orders`, authFetcher, { refreshInterval: 10000 });
 
     if (summaryError) return <div className="p-8 text-red-500 text-center">{dict.dashboard.error}</div>;

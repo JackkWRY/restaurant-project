@@ -1,3 +1,25 @@
+/**
+ * @file Bill Routes
+ * @description Defines bill-related API endpoints
+ * 
+ * Routes:
+ * - GET /api/bills/table/:tableId - Get bill for specific table (Public)
+ * - POST /api/bills/checkout - Process checkout and payment (Admin/Staff)
+ * 
+ * Middleware:
+ * - requireRole - Role-based access control
+ * - validateRequest - Schema validation
+ * 
+ * @module routes/billRoutes
+ * @requires express
+ * @requires controllers/billController
+ * @requires middlewares/validateRequest
+ * @requires middlewares/authMiddleware
+ * @requires schemas/billSchema
+ * 
+ * @see {@link billController} for route handlers
+ */
+
 import { Router } from 'express';
 import { getTableBill, checkoutTable } from '../controllers/billController.js';
 import { validateRequest } from '../middlewares/validateRequest.js';

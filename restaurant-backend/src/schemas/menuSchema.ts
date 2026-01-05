@@ -1,5 +1,35 @@
+/**
+ * @file Menu Validation Schemas
+ * @description Zod validation schemas for menu-related operations
+ * 
+ * This file provides:
+ * - Menu creation validation
+ * - Menu update validation (partial)
+ * - Field-level validation rules
+ * - Type coercion for numbers and booleans
+ * 
+ * Validation rules:
+ * - nameTH: Required, 1-100 chars
+ * - nameEN: Optional, max 100 chars
+ * - price: Required, positive number, max 999999
+ * - categoryId: Required, positive integer
+ * - description: Optional, max 500 chars
+ * - imageUrl: Optional, valid URL or empty string
+ * - isRecommended/isAvailable/isVisible: Optional booleans
+ * 
+ * @module schemas/menuSchema
+ * @requires zod
+ * @see {@link ../controllers/menuController.ts} for usage
+ * @see {@link ../middlewares/validateRequest.ts} for validation middleware
+ */
+
 import { z } from 'zod';
 
+/**
+ * String to Boolean Preprocessor
+ * 
+ * Converts string 'true'/'false' to boolean for form data compatibility.
+ */
 const stringToBoolean = z.preprocess((val) => {
   if (typeof val === 'string') {
     if (val === 'true') return true;
@@ -8,6 +38,20 @@ const stringToBoolean = z.preprocess((val) => {
   return val;
 }, z.boolean().optional());
 
+/**
+ * Menu Creation Schema
+ * 
+ * Validates all required fields for creating a new menu item.
+ * 
+ * @example
+ * const menuData = createMenuSchema.parse({
+ *   nameTH: "ข้าวผัด",
+ *   nameEN: "Fried Rice",
+ *   price: 50,
+ *   categoryId: 1,
+ *   isAvailable: true
+ * });
+ */
 export const createMenuSchema = z.object({
   nameTH: z.string()
     .min(1, "Thai name is required")
@@ -42,4 +86,15 @@ export const createMenuSchema = z.object({
   isVisible: stringToBoolean
 });
 
+/**
+ * Menu Update Schema
+ * 
+ * Allows partial updates - all fields optional.
+ * 
+ * @example
+ * const updates = updateMenuSchema.parse({
+ *   price: 60,
+ *   isAvailable: false
+ * });
+ */
 export const updateMenuSchema = createMenuSchema.partial();

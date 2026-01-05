@@ -1,3 +1,22 @@
+/**
+ * @file Analytics Controller
+ * @description HTTP request handlers for business analytics and reporting
+ * 
+ * This controller handles:
+ * - Sales analytics (daily, weekly, monthly)
+ * - Revenue calculations
+ * - Popular menu items analysis
+ * - Order statistics
+ * - Time-based filtering
+ * 
+ * @module controllers/analyticsController
+ * @requires prisma
+ * @requires dayjs
+ * @requires config/enums
+ * 
+ * @see {@link https://day.js.org/} for date manipulation docs
+ */
+
 import type { Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
 import prisma from '../prisma.js';
@@ -29,6 +48,17 @@ type BillWithRelations = Prisma.BillGetPayload<{
  * @param req - Express request
  * @param res - Express response
  * @returns 200 with analytics summary data
+ * @throws {Error} If database aggregation fails
+ * 
+ * @example
+ * GET /api/analytics/summary
+ * 
+ * @example
+ * // Response includes:
+ * // - todaySales: number
+ * // - todayBills: number
+ * // - salesTrend: Array<{date, total}>
+ * // - topItems: Array<{menuName, quantity, revenue}>
  */
 export const getAnalyticsSummary = async (req: Request, res: Response) => {
     try {

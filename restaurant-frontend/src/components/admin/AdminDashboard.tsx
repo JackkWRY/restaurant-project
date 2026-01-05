@@ -1,3 +1,39 @@
+/**
+ * @file Admin Dashboard Component
+ * @description Main dashboard for restaurant administrators with tabbed navigation
+ * 
+ * This component handles:
+ * - Tab-based navigation between admin features
+ * - Lazy loading of heavy components for performance
+ * - Authentication verification
+ * - Logout functionality
+ * - Language switching
+ * 
+ * Features:
+ * - Analytics: Real-time statistics and charts
+ * - History: Order and bill history
+ * - Categories: Category management
+ * - Menus: Menu item management
+ * - Settings: Restaurant settings
+ * 
+ * State management:
+ * - Local state for active tab selection
+ * - localStorage for authentication tokens
+ * 
+ * Performance optimizations:
+ * - Dynamic imports with loading states
+ * - SSR disabled for client-only components
+ * 
+ * @module components/admin/AdminDashboard
+ * @requires react
+ * @requires next/navigation
+ * @requires next/dynamic
+ * 
+ * @see {@link AnalyticsDashboard} for analytics view
+ * @see {@link MenuManager} for menu management
+ * @see {@link CategoryManager} for category management
+ */
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -17,21 +53,21 @@ import type { Dictionary } from "@/locales/dictionary";
 import { API_URL } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 
-// Lazy load components
+// Lazy load components for better performance
+// Loading states prevent layout shift during component load
 const AnalyticsDashboard = dynamic(() => import("./AnalyticsDashboard"), {
   loading: () => (
     <div className="h-[400px] flex items-center justify-center text-slate-400 bg-slate-50 rounded-xl border border-dashed animate-pulse">
       Loading Charts...
     </div>
   ),
-  ssr: false,
+  ssr: false, // Client-only for chart libraries
 });
 
 const HistoryDashboard = dynamic(() => import("./HistoryDashboard"), {
   ssr: false,
 });
 
-// Import extracted admin components
 const SettingsManager = dynamic(() => import("./SettingsManager"), {
   ssr: false,
 });
@@ -44,15 +80,35 @@ const MenuManager = dynamic(() => import("./MenuManager"), {
   ssr: false,
 });
 
+/**
+ * Props for AdminDashboard component
+ * 
+ * @property {Dictionary} dict - Internationalization dictionary
+ * @property {string} lang - Current language code (en/th)
+ * 
+ * @example
+ * <AdminDashboard dict={dictionary} lang="en" />
+ */
 interface AdminDashboardProps {
   dict: Dictionary;
   lang: string;
 }
 
 /**
- * AdminDashboard Component
- * Main dashboard for admin users with tab navigation
- * Refactored to use separate components for better maintainability
+ * Admin Dashboard Component
+ * 
+ * Main dashboard for admin users with tab navigation.
+ * Provides access to all administrative functions.
+ * 
+ * Authentication:
+ * - Checks for token on mount
+ * - Redirects to login if not authenticated
+ * 
+ * @param props - Component props
+ * @returns JSX.Element
+ * 
+ * @example
+ * <AdminDashboard dict={dictionary} lang="en" />
  */
 export default function AdminDashboard({ dict, lang }: AdminDashboardProps) {
   const router = useRouter();

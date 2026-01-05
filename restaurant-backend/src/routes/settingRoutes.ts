@@ -1,3 +1,27 @@
+/**
+ * @file Setting Routes
+ * @description Defines restaurant settings API endpoints
+ * 
+ * Routes:
+ * - GET /api/settings/name - Get restaurant name (Public)
+ * - POST /api/settings/name - Update restaurant name (Admin only)
+ * 
+ * Middleware:
+ * - requireRole - Role-based access control
+ * - sanitizeBody - Input sanitization
+ * - validateRequest - Schema validation
+ * 
+ * @module routes/settingRoutes
+ * @requires express
+ * @requires controllers/settingController
+ * @requires middlewares/validateRequest
+ * @requires middlewares/authMiddleware
+ * @requires middlewares/sanitizeMiddleware
+ * @requires schemas/settingSchema
+ * 
+ * @see {@link settingController} for route handlers
+ */
+
 import { Router } from 'express';
 import { getRestaurantName, updateRestaurantName } from '../controllers/settingController.js';
 import { validateRequest } from '../middlewares/validateRequest.js';

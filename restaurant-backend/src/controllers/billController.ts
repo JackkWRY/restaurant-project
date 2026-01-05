@@ -1,12 +1,23 @@
+/**
+ * @file Bill Controller
+ * @description HTTP request handlers for bill management endpoints
+ * 
+ * This controller handles:
+ * - Bill retrieval for tables
+ * - Table checkout and bill finalization
+ * - Payment processing
+ * 
+ * @module controllers/billController
+ * @requires services/billService
+ * @requires middlewares/errorHandler
+ * 
+ * @see {@link ../services/billService.ts} for business logic
+ */
+
 import type { Request, Response } from 'express';
 import { asyncHandler } from '../middlewares/errorHandler.js';
 import { billService } from '../services/billService.js';
 import { sendSuccess } from '../utils/apiResponse.js';
-
-/**
- * Bill Controller
- * Handles HTTP requests for bills
- */
 
 /**
  * Retrieves the current bill for a table
@@ -16,6 +27,10 @@ import { sendSuccess } from '../utils/apiResponse.js';
  * @param req - Express request with table ID in params
  * @param res - Express response
  * @returns 200 with bill data or null if no active bill
+ * @throws {Error} If database query fails
+ * 
+ * @example
+ * GET /api/bills/table/1
  */
 export const getTableBill = asyncHandler(async (req: Request, res: Response) => {
   const tableId = Number(req.params.tableId);
@@ -33,6 +48,14 @@ export const getTableBill = asyncHandler(async (req: Request, res: Response) => 
  * @param req - Express request with checkout data in body
  * @param res - Express response
  * @returns 200 with checkout result
+ * @throws {NotFoundError} If no active bill exists for table
+ * 
+ * @example
+ * POST /api/bills/checkout
+ * Body: {
+ *   "tableId": 1,
+ *   "paymentMethod": "cash"
+ * }
  */
 export const checkoutTable = asyncHandler(async (req: Request, res: Response) => {
   const result = await billService.checkoutTable(req.body);

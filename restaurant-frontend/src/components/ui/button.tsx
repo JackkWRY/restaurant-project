@@ -1,9 +1,41 @@
+/**
+ * @file Button Component
+ * @description Reusable button component with variant and size options
+ * 
+ * This component provides:
+ * - Multiple button variants (default, destructive, outline, secondary, ghost, link)
+ * - Multiple size options (default, sm, lg, icon variants)
+ * - Polymorphic rendering via Radix UI Slot
+ * - Full accessibility support
+ * - Consistent styling with CVA (class-variance-authority)
+ * 
+ * Features:
+ * - Variant-based styling
+ * - Size variations
+ * - Icon button support
+ * - Disabled state handling
+ * - Focus and hover states
+ * - Dark mode support
+ * - Can render as child component (asChild)
+ * 
+ * @module components/ui/button
+ * @requires react
+ * @requires @radix-ui/react-slot
+ * @requires class-variance-authority
+ * 
+ * @see {@link https://ui.shadcn.com/docs/components/button}
+ */
+
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Button variant styles using CVA
+ * Defines all possible button variants and sizes
+ */
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
   {
@@ -36,6 +68,36 @@ const buttonVariants = cva(
   }
 )
 
+/**
+ * Button Component
+ * 
+ * Polymorphic button component with multiple variants and sizes.
+ * Can render as different elements using the asChild prop.
+ * 
+ * @param props - Button props
+ * @param props.variant - Button variant style
+ * @param props.size - Button size
+ * @param props.asChild - Render as child component (Slot)
+ * @returns JSX.Element
+ * 
+ * @example
+ * // Default button
+ * <Button>Click me</Button>
+ * 
+ * @example
+ * // Destructive button
+ * <Button variant="destructive">Delete</Button>
+ * 
+ * @example
+ * // Icon button
+ * <Button size="icon"><Icon /></Button>
+ * 
+ * @example
+ * // As Link component
+ * <Button asChild>
+ *   <Link href="/path">Navigate</Link>
+ * </Button>
+ */
 function Button({
   className,
   variant,

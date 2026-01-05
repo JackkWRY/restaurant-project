@@ -1,3 +1,37 @@
+/**
+ * @file Staff Dashboard Component
+ * @description Main dashboard for restaurant staff to manage tables, orders, and bills
+ * 
+ * This component handles:
+ * - Real-time table status monitoring
+ * - Order management (view, update, cancel)
+ * - Table CRUD operations
+ * - Bill checkout and payment processing
+ * - Staff call notifications
+ * - Audio alerts for new orders
+ * 
+ * State management:
+ * - SWR for table data fetching
+ * - Socket.IO for real-time updates
+ * - Local state for modals and UI
+ * 
+ * Real-time features:
+ * - New order notifications with sound
+ * - Staff call alerts
+ * - Table status updates
+ * - Order status changes
+ * 
+ * @module components/staff/StaffDashboard
+ * @requires react
+ * @requires next/navigation
+ * @requires swr
+ * @requires socket.io-client
+ * @requires sonner
+ * @requires lucide-react
+ * 
+ * @see {@link KitchenDashboard} for kitchen interface
+ */
+
 "use client";
 
 import { API_URL, fetcher, authFetch } from "@/lib/utils";
@@ -14,7 +48,19 @@ import { Pencil, Trash2, Plus, X, Check, Eye, UtensilsCrossed, Bell, Ban, Shoppi
 import type { Dictionary } from "@/locales/dictionary";
 import { logger } from "@/lib/logger";
 
-// --- Types ---
+// --- Type Definitions ---
+
+/**
+ * Table status data
+ * @property {number} id - Table ID
+ * @property {string} name - Table name
+ * @property {boolean} isOccupied - Occupied status
+ * @property {number} totalAmount - Total bill amount
+ * @property {number} activeOrders - Active order count
+ * @property {boolean} isAvailable - Availability flag
+ * @property {boolean} isCallingStaff - Staff call status
+ * @property {number} readyOrderCount - Ready order count
+ */
 interface TableStatus {
   id: number;
   name: string;
@@ -26,6 +72,17 @@ interface TableStatus {
   readyOrderCount: number;
 }
 
+/**
+ * Order detail item
+ * @property {number} id - Item ID
+ * @property {number} orderId - Parent order ID
+ * @property {string} menuName - Menu name
+ * @property {number} price - Item price
+ * @property {number} quantity - Item quantity
+ * @property {number} total - Item total
+ * @property {string} status - Item status
+ * @property {string} [note] - Customer note
+ */
 interface OrderDetailItem {
   id: number;
   orderId: number;
@@ -37,11 +94,25 @@ interface OrderDetailItem {
   note?: string;
 }
 
+/**
+ * New order Socket.IO payload
+ * @property {number} id - Order ID
+ * @property {number} tableId - Table ID
+ */
 interface NewOrderPayload {
   id: number;
   tableId: number;
 }
 
+/**
+ * Props for StaffDashboard component
+ * 
+ * @property {Dictionary} dict - Internationalization dictionary
+ * @property {string} lang - Current language code
+ * 
+ * @example
+ * <StaffDashboard dict={dictionary} lang="th" />
+ */
 interface StaffDashboardProps {
   dict: Dictionary;
   lang: string;
@@ -162,13 +233,21 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
         });
         
         socketRef.current.on("new_order", (newOrder: NewOrderPayload) => {
+            // Refresh table data to show new order
             mutateTables(); 
+            
+            // Add visual alert badge to the table card
+            // Prevent duplicate alerts for the same table
             setNewOrderAlerts((prev) => {
                 if (prev.includes(newOrder.tableId)) return prev;
                 return [...prev, newOrder.tableId];
             });
+            
+            // Track new order IDs to show "NEW" badge in details modal
             setNewOrderIds((prev) => [...prev, newOrder.id]); 
 
+            // Play audio notification
+            // Note: Browser may block autoplay until user interacts with page
             try {
                 const audio = new Audio(APP_CONFIG.SOUNDS.NOTIFICATION); 
                 audio.play().catch((err) => logger.warn("Audio play blocked:", err));
@@ -180,6 +259,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
         socketRef.current.on("table_updated", (updatedTable: TableStatus) => {
             mutateTables();
 
+            // Play bell sound when customer calls staff
             if (updatedTable && updatedTable.isCallingStaff) {
                 try {
                     const audio = new Audio(APP_CONFIG.SOUNDS.BELL_1);
@@ -198,6 +278,8 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
         socketRef.current.on("item_status_updated", (item: { status: string }) => {
             mutateTables();
             mutateDetails();
+            
+            // Play notification when food is ready for pickup
             if (item && item.status === 'READY') {
                 try {
                     const audio = new Audio(APP_CONFIG.SOUNDS.BELL_2); 
@@ -242,6 +324,8 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
   };
 
   const closeModal = () => { 
+      // Clear "NEW" badges when user views the details
+      // This prevents showing stale "NEW" indicators
       if (activeModal === 'details' && tableDetails.length > 0) {
           const viewedOrderIds = tableDetails.map(item => item.orderId);
           setNewOrderIds(prev => prev.filter(id => !viewedOrderIds.includes(id)));

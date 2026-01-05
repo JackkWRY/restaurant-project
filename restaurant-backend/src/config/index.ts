@@ -1,36 +1,72 @@
 /**
- * Application Configuration
- * Centralized configuration using validated environment variables
+ * @file Application Configuration
+ * @description Centralized configuration using validated environment variables
+ * 
+ * This file provides:
+ * - Validated environment variables via env.ts
+ * - Typed configuration objects
+ * - Default values for optional settings
+ * - Environment-specific configurations
+ * 
+ * Configuration sections:
+ * - Server: PORT, CLIENT_URL
+ * - JWT: Access/refresh tokens, expiry times
+ * - Rate Limiting: Request throttling
+ * - Pagination: Default/max limits
+ * - Logging: Log levels and rotation
+ * - CORS: Cross-origin settings
+ * - Socket.IO: WebSocket configuration
+ * - Cloudinary: Image upload service
+ * - Database: Connection URL
+ * 
+ * @module config/index
+ * @requires config/env
+ * @see {@link ./env.ts} for environment variable validation
  */
 
 import { env } from './env.js';
 
-// Environment
+// Environment detection for conditional logic
 export const NODE_ENV = env.NODE_ENV;
 export const IS_PRODUCTION = NODE_ENV === 'production';
 export const IS_DEVELOPMENT = NODE_ENV === 'development';
 
-// Server
+// Server configuration
 export const PORT = env.PORT;
 export const CLIENT_URL = env.CLIENT_URL;
 
-// JWT Configuration
+/**
+ * JWT Configuration
+ * 
+ * Security: Access tokens are short-lived (default: 15m)
+ * Refresh tokens are long-lived (default: 7d)
+ */
 export const JWT_CONFIG = {
   accessTokenSecret: env.JWT_SECRET,
   refreshTokenSecret: env.REFRESH_TOKEN_SECRET,
   accessTokenExpiry: env.JWT_ACCESS_EXPIRY,
   refreshTokenExpiry: env.JWT_REFRESH_EXPIRY,
-  refreshTokenExpiryMs: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+  // Milliseconds for cookie expiry calculation
+  refreshTokenExpiryMs: 7 * 24 * 60 * 60 * 1000, // 7 days
 } as const;
 
-// Rate Limiting
+/**
+ * Rate Limiting Configuration
+ * 
+ * Prevents abuse by limiting requests per IP address.
+ * Default: 300 requests per 15 minutes
+ */
 export const RATE_LIMIT_CONFIG = {
   windowMs: env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000, // 15 minutes
   maxRequests: env.RATE_LIMIT_MAX || 300,
   message: 'Too many requests from this IP, please try again later.',
 } as const;
 
-// Pagination
+/**
+ * Pagination Configuration
+ * 
+ * Default limits for list endpoints to prevent performance issues.
+ */
 export const PAGINATION_CONFIG = {
   defaultLimit: env.PAGINATION_DEFAULT_LIMIT || 10,
   maxLimit: env.PAGINATION_MAX_LIMIT || 100,

@@ -1,3 +1,19 @@
+/**
+ * @file Category Controller
+ * @description HTTP request handlers for category management endpoints
+ * 
+ * This controller handles:
+ * - Category CRUD operations
+ * - Category retrieval with menu counts
+ * - Category validation
+ * 
+ * @module controllers/categoryController
+ * @requires prisma
+ * @requires schemas/categorySchema
+ * 
+ * @see {@link ../services/categoryService.ts} for alternative service-based approach
+ */
+
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import prisma from '../prisma.js';
@@ -15,6 +31,10 @@ type CategoryInput = z.infer<typeof createCategorySchema>;
  * @param req - Express request
  * @param res - Express response
  * @returns 200 with array of categories
+ * @throws {Error} If database query fails
+ * 
+ * @example
+ * GET /api/categories
  */
 export const getCategories = async (req: Request, res: Response) => {
   try {

@@ -1,3 +1,25 @@
+/**
+ * @file Upload Controller
+ * @description HTTP request handler for image uploads to Cloudinary
+ * 
+ * This controller handles:
+ * - Image upload with validation (dimensions, format, size)
+ * - Image optimization using Sharp
+ * - Cloudinary integration
+ * 
+ * Validation rules:
+ * - Dimensions: 100x100 to 4000x4000 pixels
+ * - Formats: JPEG, PNG, WebP
+ * - Max size: 5MB
+ * 
+ * @module controllers/uploadController
+ * @requires cloudinary
+ * @requires sharp
+ * @requires config/index
+ * 
+ * @see {@link https://cloudinary.com/documentation} for Cloudinary API docs
+ */
+
 import { Request, Response } from 'express';
 import { v2 as cloudinary } from 'cloudinary';
 import sharp from 'sharp';

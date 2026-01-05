@@ -1,18 +1,27 @@
+/**
+ * @file Table Repository
+ * @description Data access layer for table-related database operations
+ * 
+ * @module repositories/tableRepository
+ * @requires @prisma/client
+ * @requires prisma
+ * @see {@link ../services/tableService.ts}
+ */
+
 import prisma from '../prisma.js';
 import type { Table, Prisma } from '@prisma/client';
 
-/**
- * Table Repository
- * Handles all database operations for Table model
- */
 export class TableRepository {
   /**
    * Retrieves all tables with optional filtering
+   * 
+   * Performance: Simple query, indexed by id for efficient sorting.
    * 
    * @param where - Optional Prisma where clause
    * @returns Array of tables ordered by ID
    */
   async findAll(where?: Prisma.TableWhereInput) {
+    // Order by ID for consistent table numbering display
     return await prisma.table.findMany({
       where,
       orderBy: { id: 'asc' }
@@ -22,10 +31,13 @@ export class TableRepository {
   /**
    * Retrieves a single table by ID
    * 
+   * Performance: Uses primary key for O(1) lookup.
+   * 
    * @param id - Table ID
    * @returns Table or null if not found
    */
   async findById(id: number) {
+    // Primary key lookup - fastest query type
     return await prisma.table.findUnique({
       where: { id }
     });
@@ -34,10 +46,14 @@ export class TableRepository {
   /**
    * Retrieves a table by name (unique constraint)
    * 
+   * Validation: Used for uniqueness checks before create/update.
+   * Performance: Requires unique index on name column.
+   * 
    * @param name - Table name
    * @returns Table or null if not found
    */
   async findByName(name: string) {
+    // Unique constraint check - requires unique index on 'name'
     return await prisma.table.findUnique({
       where: { name }
     });

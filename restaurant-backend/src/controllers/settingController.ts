@@ -1,3 +1,16 @@
+/**
+ * @file Setting Controller
+ * @description HTTP request handlers for application settings
+ * 
+ * This controller handles:
+ * - Restaurant name retrieval and updates
+ * - Application configuration management
+ * 
+ * @module controllers/settingController
+ * @requires prisma
+ * @requires schemas/settingSchema
+ */
+
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import prisma from '../prisma.js';
@@ -12,6 +25,10 @@ type UpdateSettingInput = z.infer<typeof updateSettingSchema>;
  * @param req - Express request
  * @param res - Express response
  * @returns 200 with restaurant name or default value
+ * @throws {Error} If database query fails
+ * 
+ * @example
+ * GET /api/settings/restaurant-name
  */
 export const getRestaurantName = async (req: Request, res: Response) => {
   try {

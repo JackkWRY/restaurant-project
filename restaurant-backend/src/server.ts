@@ -1,3 +1,37 @@
+/**
+ * @file Server Entry Point
+ * @description Main application server with Express and Socket.IO
+ * 
+ * This module provides:
+ * - Express application setup
+ * - Socket.IO server with dual namespaces
+ * - Security middleware (Helmet, Rate Limiting, CORS)
+ * - Route registration
+ * - Error handling
+ * 
+ * Socket.IO Namespaces:
+ * - /authenticated - For staff, kitchen, and admin (requires JWT)
+ * - /public - For customers (no authentication)
+ * 
+ * Middleware Stack:
+ * - Helmet (security headers)
+ * - Rate limiting
+ * - Compression
+ * - CORS
+ * - Request logging
+ * 
+ * @module server
+ * @requires express
+ * @requires socket.io
+ * @requires helmet
+ * @requires express-rate-limit
+ * @requires compression
+ * @requires jsonwebtoken
+ * 
+ * @see {@link config} for configuration
+ * @see {@link routes} for API routes
+ */
+
 import express, { type Request, type Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -35,7 +69,14 @@ dotenv.config();
 const app = express();
 const httpServer = createServer(app);
 
-// Setup Socket.io with Namespaces
+// ============================================
+// Socket.IO Setup with Dual Namespaces
+// ============================================
+
+/**
+ * Socket.IO server instance
+ * Configured with CORS settings from config
+ */
 const io = new Server(httpServer, SOCKET_CONFIG);
 
 // ============================================
@@ -87,7 +128,11 @@ authenticatedNamespace.use((socket, next) => {
 // ============================================
 const publicNamespace = io.of('/public');
 
-// Security Middleware
+// ============================================
+// Express Middleware Configuration
+// ============================================
+
+// Security Middleware - Helmet for HTTP headers protection
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
@@ -102,10 +147,10 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Response Compression (reduces response size by 60-70%)
+// Response Compression - Reduces response size by 60-70%
 app.use(compression());
 
-// Setup Express CORS
+// CORS Configuration - Allow cross-origin requests from frontend
 app.use(
   cors({
     origin: CORS_CONFIG.origins,
@@ -113,8 +158,13 @@ app.use(
   })
 );
 
+// Body Parser - Parse JSON request bodies
 app.use(express.json());
-app.use(requestLogger); // Add request logging
+
+// Request Logging - Log all incoming requests
+app.use(requestLogger);
+
+// Socket.IO Integration - Attach Socket.IO instances to Express app
 app.set("io", io);
 app.set("authenticatedNamespace", authenticatedNamespace);
 app.set("publicNamespace", publicNamespace);
@@ -187,7 +237,9 @@ publicNamespace.on("connection", (socket) => {
   });
 });
 
-// --- Register Routes ---
+// ============================================
+// API Routes Registration
+// ============================================
 app.use("/api", authRoutes);
 app.use("/api", settingRoutes);
 app.use("/api", menuRoutes);
@@ -198,7 +250,9 @@ app.use("/api", billRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/analytics", analyticsRoutes);
 
-// Health Check
+// ============================================
+// Health Check Endpoint
+// ============================================
 app.get("/", (req: Request, res: Response) => {
   res.send(
     `<h1>Restaurant API Running! 🚀</h1><p>Allowed Origins: ${CORS_CONFIG.origins.join(
@@ -207,11 +261,15 @@ app.get("/", (req: Request, res: Response) => {
   );
 });
 
-// Error Handler (must be last!)
+// ============================================
+// Error Handler (Must be last!)
+// ============================================
 import { errorHandler } from "./middlewares/errorHandler.js";
 app.use(errorHandler);
 
-// Start Server
+// ============================================
+// Start HTTP Server with Socket.IO
+// ============================================
 httpServer.listen(PORT, "0.0.0.0", () => {
   logger.info(`Backend running on port ${PORT}`, {
     port: PORT,

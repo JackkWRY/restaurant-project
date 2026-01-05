@@ -1,15 +1,34 @@
+/**
+ * @file Menu Service
+ * @description Business logic layer for menu management
+ * 
+ * This service handles:
+ * - Menu retrieval with filtering and pagination
+ * - Menu CRUD operations
+ * - Category validation
+ * - Soft delete implementation
+ * - Availability and visibility toggles
+ * 
+ * Features:
+ * - Two view modes: customer (grouped by category) and admin (paginated)
+ * - Soft delete with deletedAt timestamp
+ * - Category relationship validation
+ * 
+ * @module services/menuService
+ * @requires repositories/menuRepository
+ * @requires repositories/categoryRepository
+ * @requires errors/AppError
+ * @requires dtos/menuDto
+ * 
+ * @see {@link ../controllers/menuController.ts} for HTTP handlers
+ */
+
 import prisma from '../prisma.js';
 import { menuRepository } from '../repositories/menuRepository.js';
 import { categoryRepository } from '../repositories/categoryRepository.js';
 import { NotFoundError, ValidationError } from '../errors/AppError.js';
 import type { CreateMenuInput, UpdateMenuInput } from '../types/menu.ts';
 import { MenuDto, CategoryDto } from '../dtos/menuDto.js';
-
-/**
- * Menu Service
- * Handles all business logic related to menus
- * Now uses Repository for data access
- */
 export class MenuService {
   /**
    * Retrieves all menus with optional filtering and pagination
@@ -20,6 +39,15 @@ export class MenuService {
    * 
    * @param options - Query options with scope, page, and limit
    * @returns Paginated menus or categories with menus
+   * @throws {Error} If database query fails
+   * 
+   * @example
+   * // Get menus grouped by category (customer view)
+   * const result = await menuService.getMenus({});
+   * 
+   * @example
+   * // Get paginated list (admin view)
+   * const result = await menuService.getMenus({ scope: 'all', page: 1, limit: 10 });
    */
   async getMenus(options: {
     scope?: string;
@@ -49,7 +77,8 @@ export class MenuService {
       };
     }
 
-    // For customer view - grouped by category
+    // For customer view - group menus by category
+    // This provides a better browsing experience
     const categories = await categoryRepository.findAll({
       includeMenus: true,
       orderBy: { id: 'asc' }

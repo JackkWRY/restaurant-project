@@ -1,3 +1,17 @@
+/**
+ * @file Order Type Definitions
+ * @description Type definitions for orders and cart items
+ * 
+ * This module provides:
+ * - OrderItem interface for order line items
+ * - Order interface for complete orders
+ * - CartItem interface for shopping cart
+ * 
+ * @module types/order
+ * 
+ * @see {@link components/customer/CustomerOrder} for usage
+ */
+
 // Order-related types
 
 export interface OrderItem {

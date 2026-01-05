@@ -1,3 +1,23 @@
+/**
+ * @file Authentication Controller
+ * @description HTTP request handlers for authentication endpoints
+ * 
+ * This controller handles:
+ * - User login with JWT token generation
+ * - Token refresh mechanism
+ * - User logout with token revocation
+ * - Password verification and hashing
+ * 
+ * @module controllers/authController
+ * @requires bcryptjs
+ * @requires jsonwebtoken
+ * @requires prisma
+ * @requires schemas/authSchema
+ * 
+ * @see {@link ../middlewares/authMiddleware.ts} for token verification
+ * @see {@link ../schemas/authSchema.ts} for validation schemas
+ */
+
 import type { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -21,10 +41,23 @@ type LogoutInput = z.infer<typeof logoutSchema>;
  * @param req - Express request with username and password in body
  * @param res - Express response
  * @returns 200 with tokens and user data, or 401 if invalid credentials
+ * @throws {UnauthorizedError} If credentials are invalid
+ * @throws {Error} If token generation or database operation fails
  * 
  * @example
  * POST /api/login
  * Body: { "username": "admin", "password": "password123" }
+ * 
+ * @example
+ * // Response
+ * {
+ *   "status": "success",
+ *   "data": {
+ *     "accessToken": "eyJhbGc...",
+ *     "refreshToken": "eyJhbGc...",
+ *     "user": { "id": 1, "username": "admin", "role": "ADMIN" }
+ *   }
+ * }
  */
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -56,13 +89,14 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     const payload = { userId: user.id, username: user.username, role: user.role };
 
-    // Access Token
+    // Generate short-lived access token for API requests
     const accessToken = jwt.sign(payload, secret, { expiresIn: JWT_CONFIG.accessTokenExpiry } as jwt.SignOptions);
 
-    // Refresh Token
+    // Generate long-lived refresh token for obtaining new access tokens
     const refreshToken = jwt.sign(payload, refreshSecret, { expiresIn: JWT_CONFIG.refreshTokenExpiry } as jwt.SignOptions);
 
-    // Store refresh token in database
+    // Store refresh token in database for security
+    // This allows us to revoke tokens if needed (logout, security breach, etc.)
     const expiresAt = new Date(Date.now() + JWT_CONFIG.refreshTokenExpiryMs);
     await prisma.refreshToken.create({
       data: {

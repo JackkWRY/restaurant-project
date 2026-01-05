@@ -1,3 +1,17 @@
+/**
+ * @file Menu Type Definitions
+ * @description Type definitions for menu and category entities
+ * 
+ * This module provides:
+ * - Menu interface for menu items
+ * - Category interface for menu categories
+ * - MenuFormData for form handling
+ * 
+ * @module types/menu
+ * 
+ * @see {@link components/admin/MenuManager} for usage
+ */
+
 // Menu-related types
 
 export interface Menu {

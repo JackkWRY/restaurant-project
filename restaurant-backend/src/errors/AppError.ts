@@ -1,6 +1,25 @@
 /**
- * Custom Error Classes
- * Provides consistent error handling across the application
+ * @file Custom Error Classes
+ * @description Provides consistent error handling across the application
+ * 
+ * This module provides:
+ * - Base AppError class for all custom errors
+ * - HTTP status code-specific error classes
+ * - Operational vs programming error distinction
+ * - Proper error stack traces
+ * 
+ * Error Classes:
+ * - AppError (base class)
+ * - ValidationError (400)
+ * - UnauthorizedError (401)
+ * - ForbiddenError (403)
+ * - NotFoundError (404)
+ * - ConflictError (409)
+ * - InternalServerError (500)
+ * 
+ * @module errors/AppError
+ * 
+ * @see {@link errorHandler} for error handling middleware
  */
 
 /**

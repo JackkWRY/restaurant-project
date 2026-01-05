@@ -1,3 +1,30 @@
+/**
+ * @file English Translations
+ * @description English language dictionary for the application
+ * 
+ * This module provides:
+ * - Complete English translations
+ * - Organized by feature sections
+ * - Type-safe translation keys
+ * 
+ * Sections:
+ * - common: Common UI text
+ * - auth: Authentication
+ * - menu: Menu categories
+ * - admin: Admin dashboard
+ * - staff: Staff dashboard
+ * - kitchen: Kitchen display
+ * - customer: Customer ordering
+ * - landing: Landing page
+ * - dashboard: Analytics
+ * - history: Sales history
+ * 
+ * @module locales/en
+ * @requires @/config/constants
+ * 
+ * @see {@link th} for Thai translations
+ */
+
 import { APP_CONFIG } from "@/config/constants";
 
 const en = {

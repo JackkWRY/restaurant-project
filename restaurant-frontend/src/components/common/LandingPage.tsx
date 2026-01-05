@@ -1,3 +1,30 @@
+/**
+ * @file Landing Page Component
+ * @description Welcome page with QR code instruction and auto-redirect
+ * 
+ * This component handles:
+ * - Display welcome message and QR code instruction
+ * - Auto-redirect to order page if tableId in URL
+ * - Language-aware routing
+ * - Branding display
+ * 
+ * State management:
+ * - URL parameter monitoring for tableId
+ * 
+ * Features:
+ * - Auto-redirect when tableId detected
+ * - QR code visual placeholder
+ * - Responsive design
+ * - Branding footer
+ * 
+ * @module components/common/LandingPage
+ * @requires react
+ * @requires next/navigation
+ * @requires lucide-react
+ * 
+ * @see {@link CustomerOrder} for order page destination
+ */
+
 "use client";
 
 import { useEffect } from "react";
@@ -5,16 +32,39 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { QrCode, UtensilsCrossed } from "lucide-react";
 import type { Dictionary } from "@/locales/dictionary";
 
+/**
+ * Props for LandingPage component
+ * 
+ * @property {Dictionary} dict - Internationalization dictionary
+ * @property {string} lang - Current language code
+ * 
+ * @example
+ * <LandingPage dict={dictionary} lang="th" />
+ */
 interface LandingPageProps {
   dict: Dictionary;
   lang: string;
 }
 
+/**
+ * Landing Page Component
+ * 
+ * Welcome page that displays QR code instruction.
+ * Auto-redirects to order page when tableId is detected in URL.
+ * 
+ * @param props - Component props
+ * @returns JSX.Element
+ * 
+ * @example
+ * <LandingPage dict={dictionary} lang="th" />
+ */
 export default function LandingPage({ dict, lang }: LandingPageProps) {
+  // Router for navigation
   const router = useRouter();
   const searchParams = useSearchParams();
   const tableId = searchParams.get("tableId");
 
+  // Auto-redirect to order page if tableId is present
   useEffect(() => {
     if (tableId) {
       router.replace(`/${lang}/order?tableId=${tableId}`);

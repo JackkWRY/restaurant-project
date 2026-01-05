@@ -1,3 +1,19 @@
+/**
+ * @file Root Layout
+ * @description Root layout component for the Next.js application
+ * 
+ * This component provides:
+ * - Global font configuration (Kanit)
+ * - Error boundary wrapper
+ * - Toast notifications (Sonner)
+ * - HTML lang attribute
+ * 
+ * @module app/layout
+ * @requires next/font/google
+ * @requires sonner
+ * @requires @/components/common/ErrorBoundary
+ */
+
 import type { Metadata } from "next";
 import { Kanit } from "next/font/google";
 import { Toaster } from "sonner";

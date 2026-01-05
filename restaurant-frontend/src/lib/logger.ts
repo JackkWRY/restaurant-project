@@ -1,4 +1,25 @@
 /**
+ * @file Development Logger Utility
+ * @description Logging utility that only works in development mode
+ * 
+ * This module provides:
+ * - Development-only logging (suppressed in production)
+ * - Multiple log levels (debug, info, warn, error)
+ * - Formatted timestamps
+ * - Error object handling
+ * 
+ * Features:
+ * - Automatic production suppression for security
+ * - Timestamp prefixes
+ * - Type-safe logging methods
+ * - Error message extraction
+ * 
+ * @module lib/logger
+ * 
+ * @see {@link utils} for utility functions
+ */
+
+/**
  * Development Logger Utility
  * Provides logging functionality that only works in development mode
  * In production, all logs are suppressed for performance and security

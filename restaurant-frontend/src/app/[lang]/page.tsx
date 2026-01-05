@@ -1,3 +1,33 @@
+/**
+ * @file Landing Page
+ * @description Home page that displays the landing page component
+ * 
+ * This page provides:
+ * - Client-side rendering
+ * - Language detection from URL params
+ * - Dictionary selection based on locale
+ * 
+ * @module app/[lang]/page
+ * @requires next/navigation
+ * @requires @/components/common/LandingPage
+ * @requires @/locales
+ */
+
+/**
+ * @file Landing Page
+ * @description Home page that displays the landing page component
+ * 
+ * This page provides:
+ * - Client-side rendering
+ * - Language detection from URL params
+ * - Dictionary selection based on locale
+ * 
+ * @module app/[lang]/page
+ * @requires next/navigation
+ * @requires @/components/common/LandingPage
+ * @requires @/locales
+ */
+
 "use client";
 
 import { useParams } from "next/navigation";

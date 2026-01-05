@@ -1,3 +1,17 @@
+/**
+ * @file Enum Definitions
+ * @description Central enum definitions for the application
+ * 
+ * This module provides:
+ * - ORDER_STATUS enum for order item states
+ * - BILL_STATUS enum for bill states
+ * - ROLE enum for user roles
+ * 
+ * @module config/enums
+ * 
+ * @see {@link constants} for configuration constants
+ */
+
 export enum ORDER_STATUS {
   PENDING = 'PENDING',
   COOKING = 'COOKING',

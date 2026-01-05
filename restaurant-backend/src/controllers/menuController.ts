@@ -1,12 +1,24 @@
+/**
+ * @file Menu Controller
+ * @description HTTP request handlers for menu management endpoints
+ * 
+ * This controller delegates business logic to MenuService and handles:
+ * - Menu retrieval with filtering and pagination
+ * - Menu CRUD operations
+ * - Menu availability and visibility toggles
+ * 
+ * @module controllers/menuController
+ * @requires services/menuService
+ * @requires middlewares/errorHandler
+ * 
+ * @see {@link ../services/menuService.ts} for business logic
+ * @see {@link ../schemas/menuSchema.ts} for validation schemas
+ */
+
 import type { Request, Response } from 'express';
 import { asyncHandler } from '../middlewares/errorHandler.js';
 import { menuService } from '../services/menuService.js';
 import { sendSuccess, sendCreated } from '../utils/apiResponse.js';
-
-/**
- * Menu Controller
- * Handles HTTP requests and delegates business logic to MenuService
- */
 
 /**
  * Retrieves all menus with optional filtering and pagination
@@ -18,8 +30,14 @@ import { sendSuccess, sendCreated } from '../utils/apiResponse.js';
  * @param req - Express request with optional query params (scope, page, limit)
  * @param res - Express response
  * @returns 200 with menus grouped by categories or paginated list
+ * @throws {Error} If database query fails
  * 
  * @example
+ * // Get menus grouped by category
+ * GET /api/menus
+ * 
+ * @example
+ * // Get paginated menu list
  * GET /api/menus?scope=all&page=1&limit=10
  */
 export const getMenus = asyncHandler(async (req: Request, res: Response) => {
@@ -61,6 +79,17 @@ export const getMenuById = asyncHandler(async (req: Request, res: Response) => {
  * @param req - Express request with menu data in body
  * @param res - Express response
  * @returns 201 with created menu
+ * @throws {NotFoundError} If category doesn't exist
+ * @throws {ValidationError} If menu data is invalid
+ * 
+ * @example
+ * POST /api/menus
+ * Body: {
+ *   "nameTH": "ข้าวผัด",
+ *   "price": 50,
+ *   "categoryId": 1,
+ *   "imageUrl": "https://..."
+ * }
  */
 export const createMenu = asyncHandler(async (req: Request, res: Response) => {
   const menu = await menuService.createMenu(req.body);

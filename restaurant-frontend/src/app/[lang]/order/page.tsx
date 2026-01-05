@@ -1,3 +1,20 @@
+/**
+ * @file Customer Order Page
+ * @description Customer ordering page with Suspense boundary
+ * 
+ * This page provides:
+ * - Client-side rendering
+ * - Suspense for loading state
+ * - Language detection
+ * - Customer order component
+ * 
+ * @module app/[lang]/order/page
+ * @requires react
+ * @requires next/navigation
+ * @requires @/components/customer/CustomerOrder
+ * @requires @/locales
+ */
+
 "use client";
 
 import { Suspense } from "react";

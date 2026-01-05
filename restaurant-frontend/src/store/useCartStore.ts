@@ -51,8 +51,11 @@ export const useCartStore = create<CartStore>((set, get) => ({
 
   addItem: (newItem) => {
     set((state) => {
+      // Check if item already exists in cart
       const existingItem = state.items.find((item) => item.id === newItem.id);
+      
       if (existingItem) {
+        // Item exists: increment quantity instead of adding duplicate
         return {
           items: state.items.map((item) =>
             item.id === newItem.id
@@ -61,6 +64,8 @@ export const useCartStore = create<CartStore>((set, get) => ({
           ),
         };
       }
+      
+      // Item doesn't exist: add new item with quantity 1
       return { items: [...state.items, { ...newItem, quantity: 1, note: '' }] };
     });
   },
@@ -85,6 +90,8 @@ export const useCartStore = create<CartStore>((set, get) => ({
         .map((item) =>
           item.id === id ? { ...item, quantity: item.quantity - 1 } : item
         )
+        // Auto-remove items when quantity reaches 0
+        // This prevents keeping empty items in cart
         .filter((item) => item.quantity > 0),
     }));
   },

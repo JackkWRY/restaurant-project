@@ -1,3 +1,28 @@
+/**
+ * @file Order Routes
+ * @description Defines order management API endpoints
+ * 
+ * Routes:
+ * - POST /api/orders - Create new order (Public)
+ * - GET /api/orders/active - Get active orders (Admin/Staff)
+ * - PATCH /api/orders/items/:itemId/status - Update order item status (Admin/Staff)
+ * 
+ * Middleware:
+ * - requireRole - Role-based access control
+ * - sanitizeBodyArray - Array input sanitization
+ * - validateRequest - Schema validation
+ * 
+ * @module routes/orderRoutes
+ * @requires express
+ * @requires controllers/orderController
+ * @requires middlewares/validateRequest
+ * @requires middlewares/authMiddleware
+ * @requires middlewares/sanitizeMiddleware
+ * @requires schemas/orderSchema
+ * 
+ * @see {@link orderController} for route handlers
+ */
+
 import { Router } from 'express';
 import { 
     createOrder, 

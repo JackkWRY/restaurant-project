@@ -1,3 +1,24 @@
+/**
+ * @file Upload Routes
+ * @description Defines file upload API endpoints
+ * 
+ * Routes:
+ * - POST /api/upload - Upload image file
+ * 
+ * Features:
+ * - Multer middleware for file handling
+ * - File type validation (JPEG, PNG, WebP)
+ * - File size limit (5MB)
+ * - Memory storage for cloud upload
+ * 
+ * @module routes/uploadRoutes
+ * @requires express
+ * @requires multer
+ * @requires controllers/uploadController
+ * 
+ * @see {@link uploadController} for route handlers
+ */
+
 import { Router, Request } from 'express';
 import multer from 'multer';
 import { uploadImage } from '../controllers/uploadController.js';

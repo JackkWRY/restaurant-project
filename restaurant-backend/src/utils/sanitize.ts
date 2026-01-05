@@ -1,3 +1,24 @@
+/**
+ * @file Sanitize Utility
+ * @description HTML sanitization functions to prevent XSS attacks
+ * 
+ * This utility provides:
+ * - HTML tag removal using DOMPurify
+ * - XSS attack prevention
+ * - Object field sanitization
+ * - Array item sanitization
+ * 
+ * Security:
+ * - Removes ALL HTML tags by default
+ * - Prevents script injection
+ * - Protects against stored XSS
+ * - Maintains text content integrity
+ * 
+ * @module utils/sanitize
+ * @requires isomorphic-dompurify
+ * @see {@link ../middlewares/sanitizeMiddleware.ts} for middleware usage
+ */
+
 import DOMPurify from 'isomorphic-dompurify';
 
 /**

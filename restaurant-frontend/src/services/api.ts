@@ -1,3 +1,32 @@
+/**
+ * @file API Service Layer
+ * @description Centralized API service with common HTTP methods
+ * 
+ * This module provides:
+ * - Base ApiService class with CRUD methods
+ * - Type-safe API responses
+ * - Authenticated request handling
+ * - Reusable HTTP methods (GET, POST, PUT, DELETE)
+ * 
+ * Features:
+ * - Generic response types
+ * - Automatic authentication
+ * - Error handling
+ * - Extensible service pattern
+ * 
+ * @module services/api
+ * @requires @/lib/utils
+ * 
+ * @see {@link utils} for authFetch implementation
+ * 
+ * @example
+ * class UserService extends ApiService {
+ *   async getUsers() {
+ *     return this.get('/api/users');
+ *   }
+ * }
+ */
+
 // API service layer
 // Centralized API calls for better organization and reusability
 
