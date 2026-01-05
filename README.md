@@ -53,22 +53,36 @@ A full-stack restaurant management system built with **Next.js**, **Node.js**, *
 - Real-time table status
 - Live kitchen notifications
 
+### 🎯 Additional Features
+
+- **QR Code Generation** - Automatic QR code for each table
+- **Soft Delete** - Menu items can be recovered
+- **Image Upload** - Cloudinary integration for menu images
+- **Bill History** - Complete transaction history with pagination
+- **Order Tracking** - Real-time status updates for each item
+- **FIFO Queue** - Kitchen orders processed in order
+- **N+1 Prevention** - Optimized database queries with eager loading
+- **Atomic Operations** - Race condition prevention for bill totals
+
 ---
 
 ## 🛠️ Tech Stack
 
 ### Backend
 
-- **Runtime:** Node.js
+- **Runtime:** Node.js 18+
 - **Framework:** Express.js
 - **Language:** TypeScript
-- **Database:** PostgreSQL
+- **Database:** PostgreSQL 14+
 - **ORM:** Prisma
 - **Authentication:** JWT (jsonwebtoken)
+- **Password Hashing:** bcrypt
 - **Validation:** Zod
 - **Real-time:** Socket.IO
-- **Security:** Helmet, CORS, Rate Limiting
+- **Security:** Helmet, CORS, express-rate-limit
+- **Logging:** Winston
 - **Image Upload:** Cloudinary
+- **Input Sanitization:** DOMPurify
 
 ### Frontend
 
@@ -80,40 +94,72 @@ A full-stack restaurant management system built with **Next.js**, **Node.js**, *
 - **Data Fetching:** SWR
 - **Real-time:** Socket.IO Client
 - **Internationalization:** i18n (Thai/English)
+- **Icons:** Lucide React
+- **Image Optimization:** next/image
 - **Notifications:** Sonner
 
 ---
 
 ## 📦 Project Structure
 
+### Backend
+
 ```
-restaurant-project/
-├── restaurant-backend/          # Backend API
-│   ├── prisma/                  # Database schema & migrations
-│   │   ├── schema.prisma
-│   │   └── seed.ts
-│   ├── src/
-│   │   ├── config/              # Configuration files
-│   │   ├── controllers/         # Request handlers
-│   │   ├── middlewares/         # Auth, validation, etc.
-│   │   ├── routes/              # API routes
-│   │   ├── schemas/             # Zod validation schemas
-│   │   ├── types/               # TypeScript types
-│   │   ├── prisma.ts            # Prisma client
-│   │   └── server.ts            # Express server
-│   ├── .env.example             # Environment variables template
-│   └── package.json
-│
-└── restaurant-frontend/         # Frontend App
-    ├── src/
-    │   ├── app/                 # Next.js app router
-    │   ├── components/          # React components
-    │   ├── config/              # Configuration
-    │   ├── lib/                 # Utilities
-    │   ├── locales/             # i18n translations
-    │   └── store/               # Zustand stores
-    ├── .env.example             # Environment variables template
-    └── package.json
+restaurant-backend/
+├── prisma/
+│   ├── schema.prisma           # Database schema
+│   └── seed.ts                 # Database seeding
+├── src/
+│   ├── config/                 # Configuration & env validation
+│   ├── controllers/            # Request handlers (HTTP layer)
+│   ├── services/               # Business logic layer
+│   ├── repositories/           # Data access layer (Prisma)
+│   ├── dtos/                   # Data Transfer Objects
+│   ├── middlewares/            # Auth, validation, logging
+│   ├── routes/                 # API route definitions
+│   ├── schemas/                # Zod validation schemas
+│   ├── types/                  # TypeScript type definitions
+│   ├── utils/                  # Utility functions
+│   ├── errors/                 # Custom error classes
+│   ├── prisma.ts               # Prisma client singleton
+│   └── server.ts               # Express app entry point
+├── uploads/                    # Uploaded files (local storage)
+├── .env.example                # Environment variables template
+└── package.json
+```
+
+### Frontend
+
+```
+restaurant-frontend/
+├── src/
+│   ├── app/                    # Next.js App Router
+│   │   ├── [lang]/            # i18n routing
+│   │   │   ├── admin/         # Admin dashboard
+│   │   │   ├── kitchen/       # Kitchen dashboard
+│   │   │   ├── staff/         # Staff dashboard
+│   │   │   ├── order/         # Customer order page
+│   │   │   ├── login/         # Login page
+│   │   │   └── page.tsx       # Landing page
+│   │   └── layout.tsx
+│   ├── components/             # React components
+│   │   ├── admin/             # Admin components
+│   │   ├── customer/          # Customer components
+│   │   ├── kitchen/           # Kitchen components
+│   │   ├── staff/             # Staff components
+│   │   ├── common/            # Shared components
+│   │   └── ui/                # UI primitives
+│   ├── store/                 # Zustand state stores
+│   ├── hooks/                 # Custom React hooks
+│   ├── services/              # API service layer
+│   ├── types/                 # TypeScript types
+│   ├── lib/                   # Utilities
+│   ├── config/                # Configuration
+│   ├── locales/               # i18n translations
+│   └── middleware.ts          # Next.js middleware
+├── public/                     # Static assets
+├── .env.example                # Environment variables template
+└── package.json
 ```
 
 ---
@@ -414,11 +460,12 @@ NEXT_PUBLIC_API_URL=   # Backend API URL
 - [ ] Unit and integration tests
 - [ ] E2E tests with Playwright
 - [ ] API documentation with Swagger
-- [ ] Advanced logging system
-- [ ] Redis caching
-- [ ] Image optimization
+- [ ] Redis caching for performance
 - [ ] Print receipt functionality
-- [ ] QR code for table ordering
+- [ ] Advanced analytics dashboard
+- [ ] Mobile app (React Native)
+- [ ] Inventory management
+- [ ] Employee scheduling
 
 ---
 
