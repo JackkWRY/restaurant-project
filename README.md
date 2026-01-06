@@ -102,7 +102,7 @@ A full-stack restaurant management system built with **Next.js**, **Node.js**, *
 
 ## 📦 Project Structure
 
-### Backend
+### Backend (4-Tier Layered Architecture)
 
 ```
 restaurant-backend/
@@ -110,23 +110,34 @@ restaurant-backend/
 │   ├── schema.prisma           # Database schema
 │   └── seed.ts                 # Database seeding
 ├── src/
-│   ├── config/                 # Configuration & env validation
-│   ├── controllers/            # Request handlers (HTTP layer)
-│   ├── services/               # Business logic layer
-│   ├── repositories/           # Data access layer (Prisma)
-│   ├── dtos/                   # Data Transfer Objects
-│   ├── middlewares/            # Auth, validation, logging
-│   ├── routes/                 # API route definitions
-│   ├── schemas/                # Zod validation schemas
-│   ├── types/                  # TypeScript type definitions
-│   ├── utils/                  # Utility functions
-│   ├── errors/                 # Custom error classes
-│   ├── prisma.ts               # Prisma client singleton
-│   └── server.ts               # Express app entry point
+│   ├── core/                   # Layer 1: Infrastructure & Framework
+│   │   ├── config/            # Configuration & env validation
+│   │   ├── errors/            # Custom error classes
+│   │   ├── middlewares/       # Auth, validation, logging
+│   │   ├── types/             # TypeScript type definitions
+│   │   └── utils/             # Utility functions
+│   ├── database/              # Layer 2: Data Access Layer
+│   │   ├── client/            # Prisma client singleton
+│   │   └── repositories/      # Data access layer (Prisma)
+│   ├── business/              # Layer 3: Business Logic Layer
+│   │   ├── services/          # Business logic & orchestration
+│   │   └── dtos/              # Data Transfer Objects
+│   ├── api/                   # Layer 4: Presentation/API Layer
+│   │   ├── controllers/       # Request handlers (HTTP layer)
+│   │   ├── routes/            # API route definitions
+│   │   └── schemas/           # Zod validation schemas
+│   └── server.ts              # Express app entry point
 ├── uploads/                    # Uploaded files (local storage)
 ├── .env.example                # Environment variables template
 └── package.json
 ```
+
+**Architecture Layers:**
+
+- **Core**: Shared infrastructure (config, errors, middlewares, utils)
+- **Database**: Data persistence and repositories
+- **Business**: Domain logic and business rules
+- **API**: HTTP endpoints and request handling
 
 ### Frontend
 
