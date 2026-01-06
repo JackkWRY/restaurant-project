@@ -1,25 +1,25 @@
 /**
  * @file Server Entry Point
  * @description Main application server with Express and Socket.IO
- * 
+ *
  * This module provides:
  * - Express application setup
  * - Socket.IO server with dual namespaces
  * - Security middleware (Helmet, Rate Limiting, CORS)
  * - Route registration
  * - Error handling
- * 
+ *
  * Socket.IO Namespaces:
  * - /authenticated - For staff, kitchen, and admin (requires JWT)
  * - /public - For customers (no authentication)
- * 
+ *
  * Middleware Stack:
  * - Helmet (security headers)
  * - Rate limiting
  * - Compression
  * - CORS
  * - Request logging
- * 
+ *
  * @module server
  * @requires express
  * @requires socket.io
@@ -27,7 +27,7 @@
  * @requires express-rate-limit
  * @requires compression
  * @requires jsonwebtoken
- * 
+ *
  * @see {@link config} for configuration
  * @see {@link routes} for API routes
  */
@@ -42,24 +42,24 @@ import rateLimit from "express-rate-limit";
 import compression from "compression";
 import jwt from "jsonwebtoken";
 
-import authRoutes from "./routes/authRoutes.js";
-import settingRoutes from "./routes/settingRoutes.js";
-import menuRoutes from "./routes/menuRoutes.js";
-import orderRoutes from "./routes/orderRoutes.js";
-import tableRoutes from "./routes/tableRoutes.js";
-import categoryRoutes from "./routes/categoryRoutes.js";
-import uploadRoutes from "./routes/uploadRoutes.js";
-import analyticsRoutes from "./routes/analyticsRoutes.js";
-import billRoutes from "./routes/billRoutes.js";
-import logger from "./config/logger.js";
-import { requestLogger } from "./middlewares/requestLogger.js";
+import authRoutes from "./api/routes/authRoutes.js";
+import settingRoutes from "./api/routes/settingRoutes.js";
+import menuRoutes from "./api/routes/menuRoutes.js";
+import orderRoutes from "./api/routes/orderRoutes.js";
+import tableRoutes from "./api/routes/tableRoutes.js";
+import categoryRoutes from "./api/routes/categoryRoutes.js";
+import uploadRoutes from "./api/routes/uploadRoutes.js";
+import analyticsRoutes from "./api/routes/analyticsRoutes.js";
+import billRoutes from "./api/routes/billRoutes.js";
+import logger from "./core/config/logger.js";
+import { requestLogger } from "./core/middlewares/requestLogger.js";
 import config, {
   PORT,
   CORS_CONFIG,
   RATE_LIMIT_CONFIG,
   SOCKET_CONFIG,
   JWT_CONFIG,
-} from "./config/index.js";
+} from "./core/config/index.js";
 
 dotenv.config();
 
@@ -82,7 +82,7 @@ const io = new Server(httpServer, SOCKET_CONFIG);
 // ============================================
 // Namespace 1: /authenticated (Staff, Kitchen, Admin)
 // ============================================
-const authenticatedNamespace = io.of('/authenticated');
+const authenticatedNamespace = io.of("/authenticated");
 
 authenticatedNamespace.use((socket, next) => {
   const token = socket.handshake.auth.token;
@@ -126,7 +126,7 @@ authenticatedNamespace.use((socket, next) => {
 // ============================================
 // Namespace 2: /public (Customers - No Auth Required)
 // ============================================
-const publicNamespace = io.of('/public');
+const publicNamespace = io.of("/public");
 
 // ============================================
 // Express Middleware Configuration
@@ -213,20 +213,20 @@ publicNamespace.on("connection", (socket) => {
   socket.on("join_table", (tableId: number) => {
     const roomName = `table-${tableId}`;
     socket.join(roomName);
-    logger.debug("Customer joined table room", { 
-      socketId: socket.id, 
+    logger.debug("Customer joined table room", {
+      socketId: socket.id,
       tableId,
-      roomName 
+      roomName,
     });
   });
 
   socket.on("leave_table", (tableId: number) => {
     const roomName = `table-${tableId}`;
     socket.leave(roomName);
-    logger.debug("Customer left table room", { 
-      socketId: socket.id, 
+    logger.debug("Customer left table room", {
+      socketId: socket.id,
       tableId,
-      roomName 
+      roomName,
     });
   });
 
@@ -264,7 +264,7 @@ app.get("/", (req: Request, res: Response) => {
 // ============================================
 // Error Handler (Must be last!)
 // ============================================
-import { errorHandler } from "./middlewares/errorHandler.js";
+import { errorHandler } from "./core/middlewares/errorHandler.js";
 app.use(errorHandler);
 
 // ============================================
