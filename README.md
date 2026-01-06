@@ -139,7 +139,7 @@ restaurant-backend/
 - **Business**: Domain logic and business rules
 - **API**: HTTP endpoints and request handling
 
-### Frontend
+### Frontend (Service Layer Architecture)
 
 ```
 restaurant-frontend/
@@ -154,15 +154,24 @@ restaurant-frontend/
 │   │   │   └── page.tsx       # Landing page
 │   │   └── layout.tsx
 │   ├── components/             # React components
-│   │   ├── admin/             # Admin components
-│   │   ├── customer/          # Customer components
-│   │   ├── kitchen/           # Kitchen components
-│   │   ├── staff/             # Staff components
-│   │   ├── common/            # Shared components
-│   │   └── ui/                # UI primitives
+│   │   ├── admin/             # Admin components (6 files)
+│   │   ├── customer/          # Customer components (4 files)
+│   │   ├── kitchen/           # Kitchen components (1 file)
+│   │   ├── staff/             # Staff components (1 file)
+│   │   ├── common/            # Shared components (1 file)
+│   │   └── ui/                # UI primitives (2 files)
+│   ├── services/              # Domain-specific API services ⭐
+│   │   ├── api.ts             # Base API service class
+│   │   ├── menuService.ts     # Menu operations (8 methods)
+│   │   ├── categoryService.ts # Category operations (5 methods)
+│   │   ├── orderService.ts    # Order operations (4 methods)
+│   │   ├── tableService.ts    # Table operations (9 methods)
+│   │   ├── billService.ts     # Bill operations (2 methods)
+│   │   ├── authService.ts     # Authentication (2 methods)
+│   │   ├── analyticsService.ts# Analytics & history (1 method)
+│   │   └── settingsService.ts # Settings management (2 methods)
 │   ├── store/                 # Zustand state stores
 │   ├── hooks/                 # Custom React hooks
-│   ├── services/              # API service layer
 │   ├── types/                 # TypeScript types
 │   ├── lib/                   # Utilities
 │   ├── config/                # Configuration
@@ -172,6 +181,37 @@ restaurant-frontend/
 ├── .env.example                # Environment variables template
 └── package.json
 ```
+
+**Architecture Pattern:**
+
+- **Service Layer**: Domain-specific services for API calls (33 type-safe methods)
+- **Component Organization**: Role-based structure (Admin, Staff, Kitchen, Customer)
+- **State Management**: Zustand for cart, SWR for server state
+- **Type Safety**: Full TypeScript coverage with proper interfaces
+
+### Frontend Service Layer
+
+The frontend uses a **domain-specific service layer** pattern for all API interactions:
+
+**Services:**
+
+- `menuService` - Menu CRUD operations (8 methods)
+- `categoryService` - Category management (5 methods)
+- `orderService` - Order processing (4 methods)
+- `tableService` - Table operations (9 methods)
+- `billService` - Bill management (2 methods)
+- `authService` - Authentication (2 methods)
+- `analyticsService` - Analytics & reporting (1 method)
+- `settingsService` - Settings management (2 methods)
+
+**Benefits:**
+
+- ✅ Type-safe API calls with proper interfaces
+- ✅ Centralized API logic (easier to maintain)
+- ✅ Reusable across components
+- ✅ Consistent error handling
+- ✅ Better testability
+- ✅ ~130 lines of boilerplate code removed
 
 ---
 
