@@ -23,6 +23,9 @@ export type { TableStatus, OrderDetailItem } from './useStaffData';
 export { useMenuForm } from './useMenuForm';
 export type { Menu } from './useMenuForm';
 
+// Customer Hooks
+export { useCustomerSocket } from './useCustomerSocket';
+
 // Placeholder for future custom hooks
 // Example:
 // export { useAuth } from './useAuth';
