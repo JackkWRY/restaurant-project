@@ -3,23 +3,24 @@
  * @description Central export file for custom React hooks
  * 
  * This module provides:
- * - Placeholder for future custom hooks
- * - Centralized hook exports
+ * - Staff dashboard hooks
+ * - Future custom hooks
  * 
  * @module hooks
  * 
  * @example
- * // Future usage:
- * // export { useAuth } from './useAuth';
- * // export { useSocket } from './useSocket';
+ * ```typescript
+ * import { useStaffSocket, useStaffData } from '@/hooks';
+ * ```
  */
 
-// Placeholder for custom React hooks
-// Add your custom hooks here as needed
+// Staff Dashboard Hooks
+export { useStaffSocket } from './useStaffSocket';
+export { useStaffData } from './useStaffData';
+export type { TableStatus, OrderDetailItem } from './useStaffData';
 
+// Placeholder for future custom hooks
 // Example:
 // export { useAuth } from './useAuth';
 // export { useSocket } from './useSocket';
 // export { useTableData } from './useTableData';
-
-export {};
