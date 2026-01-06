@@ -26,6 +26,11 @@ export type { Menu } from './useMenuForm';
 // Customer Hooks
 export { useCustomerSocket } from './useCustomerSocket';
 
+// Kitchen Hooks
+export { useKitchenSocket } from './useKitchenSocket';
+export { useKitchenData } from './useKitchenData';
+export type { KitchenItem } from './useKitchenData';
+
 // Placeholder for future custom hooks
 // Example:
 // export { useAuth } from './useAuth';
