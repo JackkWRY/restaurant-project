@@ -29,7 +29,7 @@
 
 "use client";
 
-import { API_URL, authFetch } from "@/lib/utils";
+import { analyticsService } from "@/services/analyticsService";
 import { useState, useEffect } from "react";
 import { Calendar, Search, FileText, DollarSign, Eye, X, Receipt, StickyNote } from "lucide-react"; 
 import { logger } from "@/lib/logger";
@@ -129,12 +129,14 @@ export default function HistoryDashboard({ dict }: HistoryDashboardProps) {
   const fetchHistory = async () => {
     setLoading(true);
     try {
-      const res = await authFetch(`${API_URL}/api/analytics/history?startDate=${startDate}&endDate=${endDate}&page=${currentPage}&limit=20`);
-      const json = await res.json();
-      if (json.status === 'success') {
-        setData(json.data);
-        if (json.pagination) {
-          setTotalPages(json.pagination.totalPages);
+      const response = await analyticsService.getHistory(startDate, endDate, currentPage, 20);
+      if (response.status === 'success' && response.data) {
+        setData({
+          summary: response.data.summary,
+          bills: response.data.bills
+        });
+        if (response.data.pagination) {
+          setTotalPages(response.data.pagination.totalPages);
         }
       }
     } catch (error) {

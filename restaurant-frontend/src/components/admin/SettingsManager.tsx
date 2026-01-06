@@ -26,7 +26,7 @@
 
 "use client";
 
-import { API_URL, authFetch } from "@/lib/utils";
+import { settingsService } from "@/services/settingsService";
 import { logger } from "@/lib/logger";
 import { useState, useEffect } from "react";
 import { Settings, Save } from "lucide-react";
@@ -66,9 +66,8 @@ export default function SettingsManager({ dict }: SettingsManagerProps) {
 
   const fetchSettings = async () => {
     try {
-      const res = await authFetch(`${API_URL}/api/settings/name`);
-      const data = await res.json();
-      if (data.status === "success") {
+      const data = await settingsService.getRestaurantName();
+      if (data.status === "success" && data.data) {
         setRestaurantName(data.data);
       }
     } catch (error) {
@@ -81,13 +80,9 @@ export default function SettingsManager({ dict }: SettingsManagerProps) {
     setLoading(true);
 
     try {
-      const res = await authFetch(`${API_URL}/api/settings/name`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: restaurantName }),
-      });
+      const data = await settingsService.updateRestaurantName(restaurantName);
 
-      if (res.ok) {
+      if (data.status === 'success') {
         alert(dict.admin.alertSaved);
       } else {
         alert(dict.admin.alertFailed);

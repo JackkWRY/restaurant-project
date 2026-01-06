@@ -35,7 +35,7 @@
 
 "use client";
 
-import { API_URL } from "@/lib/utils";
+import { authService } from "@/services/authService";
 import { logger } from "@/lib/logger";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -86,17 +86,11 @@ export default function LoginForm({
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_URL}/api/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
+      const data = await authService.login(username, password);
 
-      const data = await res.json();
-
-      if (res.ok && data.status === 'success') {
-        // New response format: { status: 'success', data: { accessToken, refreshToken, user } }
-        const { accessToken, refreshToken, user } = data.data;
+      if (data.status === 'success' && data.data) {
+        // Response format: { status: 'success', data: { accessToken, refreshToken, user } }
+        const { accessToken, refreshToken, user } = data.data as { accessToken: string; refreshToken: string; user: { role: string } };
         
         // Store both access token and refresh token
         localStorage.setItem("token", accessToken);
@@ -114,7 +108,7 @@ export default function LoginForm({
         }
 
       } else {
-        // New error format: { status: 'error', message: '...' }
+        // Error format: { status: 'error', message: '...' }
         setError(data.message || dict.auth.loginFailed);
       }
     } catch (err) {

@@ -29,7 +29,8 @@
 
 "use client";
 
-import { API_URL, authFetch, authFetcher } from "@/lib/utils";
+import { API_URL, authFetcher } from "@/lib/utils";
+import { categoryService } from "@/services/categoryService";
 import { useState } from "react";
 import { logger } from "@/lib/logger";
 import { List, Plus, Pencil, Trash2 } from "lucide-react";
@@ -87,11 +88,7 @@ export default function CategoryManager({ dict }: CategoryManagerProps) {
     if (!newCategoryName.trim()) return;
 
     try {
-      await authFetch(`${API_URL}/api/categories`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newCategoryName }),
-      });
+      await categoryService.createCategory(newCategoryName);
       setNewCategoryName("");
       mutate();
     } catch (error) {
@@ -103,10 +100,8 @@ export default function CategoryManager({ dict }: CategoryManagerProps) {
     if (!confirm(dict.admin.confirmDelete)) return;
 
     try {
-      const res = await authFetch(`${API_URL}/api/categories/${id}`, {
-        method: "DELETE",
-      });
-      if (res.ok) mutate();
+      await categoryService.deleteCategory(id);
+      mutate();
     } catch (error) {
       logger.error("Failed to delete category:", error);
     }
@@ -117,11 +112,7 @@ export default function CategoryManager({ dict }: CategoryManagerProps) {
     if (!newName || newName === oldName) return;
 
     try {
-      await authFetch(`${API_URL}/api/categories/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newName }),
-      });
+      await categoryService.updateCategory(id, newName);
       mutate();
     } catch (error) {
       logger.error("Failed to update category:", error);

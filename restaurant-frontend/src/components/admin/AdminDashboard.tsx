@@ -40,6 +40,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { authService } from "@/services/authService";
 import {
   Globe,
   LogOut,
@@ -50,7 +51,6 @@ import {
   Settings,
 } from "lucide-react";
 import type { Dictionary } from "@/locales/dictionary";
-import { API_URL } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 
 // Lazy load components for better performance
@@ -129,11 +129,7 @@ export default function AdminDashboard({ dict, lang }: AdminDashboardProps) {
       try {
         const refreshToken = localStorage.getItem("refreshToken");
         if (refreshToken) {
-          await fetch(`${API_URL}/api/logout`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ refreshToken }),
-          });
+          await authService.logout(refreshToken);
         }
       } catch (error) {
         logger.error("Logout error:", error);

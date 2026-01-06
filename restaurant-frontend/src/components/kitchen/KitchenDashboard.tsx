@@ -32,7 +32,9 @@
 
 "use client";
 
-import { API_URL, authFetch, authFetcher } from "@/lib/utils";
+import { API_URL, authFetcher } from "@/lib/utils";
+import { orderService } from "@/services/orderService";
+import { authService } from "@/services/authService";
 import { APP_CONFIG } from "@/config/constants";
 import { ORDER_STATUS, ROLE } from "@/config/enums";
 import { useEffect, useState, useRef, useMemo } from "react";
@@ -196,11 +198,7 @@ export default function KitchenDashboard({ dict, lang }: KitchenDashboardProps) 
       try {
         const refreshToken = localStorage.getItem("refreshToken");
         if (refreshToken) {
-          await fetch(`${API_URL}/api/logout`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ refreshToken })
-          });
+          await authService.logout(refreshToken);
         }
       } catch (error) {
         logger.error('Logout error:', error);
@@ -260,11 +258,7 @@ export default function KitchenDashboard({ dict, lang }: KitchenDashboardProps) 
   // 5. Action Handler
   const handleUpdateStatus = async (itemId: number, newStatus: ItemStatus) => {
     try {
-      await authFetch(`${API_URL}/api/orders/items/${itemId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      });
+      await orderService.updateItemStatus(itemId, newStatus);
       mutate();
     } catch (error) { 
         logger.error(error); 

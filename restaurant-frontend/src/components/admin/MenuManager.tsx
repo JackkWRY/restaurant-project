@@ -36,6 +36,7 @@
 "use client";
 
 import { API_URL, authFetch, authFetcher } from "@/lib/utils";
+import { menuService } from "@/services/menuService";
 import { useState, type ChangeEvent } from "react";
 import Image from "next/image";
 import { logger } from "@/lib/logger";
@@ -228,8 +229,8 @@ export default function MenuManager({ dict }: MenuManagerProps) {
     const payload = {
       nameTH: newName,
       nameEN: newName,
-      price: newPrice,
-      categoryId: newCategoryId,
+      price: Number(newPrice),
+      categoryId: Number(newCategoryId),
       imageUrl: newImage,
       isRecommended: isRecommended,
       isAvailable: isAvailable,
@@ -237,31 +238,18 @@ export default function MenuManager({ dict }: MenuManagerProps) {
     };
 
     try {
-      let res;
       if (editingId) {
-        res = await authFetch(`${API_URL}/api/menus/${editingId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
+        await menuService.updateMenu(editingId, payload);
       } else {
-        res = await authFetch(`${API_URL}/api/menus`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
+        await menuService.createMenu(payload);
       }
-
-      if (res.ok) {
-        alert(dict.admin.alertSaved);
-        resetForm();
-        mutateMenus();
-      } else {
-        alert(dict.admin.alertFailed);
-      }
+      
+      alert(dict.admin.alertSaved);
+      resetForm();
+      mutateMenus();
     } catch (error) {
       logger.error("Failed to save menu:", error);
-      alert(dict.common.error);
+      alert(dict.admin.alertFailed);
     }
   };
 
@@ -269,7 +257,7 @@ export default function MenuManager({ dict }: MenuManagerProps) {
     if (!confirm(dict.admin.confirmDelete)) return;
 
     try {
-      await authFetch(`${API_URL}/api/menus/${id}`, { method: "DELETE" });
+      await menuService.deleteMenu(id);
       mutateMenus();
     } catch (error) {
       logger.error("Failed to delete menu:", error);
@@ -278,17 +266,15 @@ export default function MenuManager({ dict }: MenuManagerProps) {
 
   const handleQuickToggle = async (
     id: number,
-    field: "isAvailable" | "isVisible",
-    currentValue: boolean | undefined
+    field: "isAvailable" | "isVisible"
   ) => {
     try {
-      const newValue = !currentValue;
-      const res = await authFetch(`${API_URL}/api/menus/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ [field]: newValue }),
-      });
-      if (res.ok) mutateMenus();
+      if (field === "isAvailable") {
+        await menuService.toggleAvailability(id);
+      } else {
+        await menuService.toggleVisibility(id);
+      }
+      mutateMenus();
     } catch (error) {
       logger.error("Failed to toggle menu:", error);
     }
@@ -555,7 +541,7 @@ export default function MenuManager({ dict }: MenuManagerProps) {
                 <td className="p-4 text-center">
                   <button
                     onClick={() =>
-                      handleQuickToggle(menu.id, "isAvailable", menu.isAvailable)
+                      handleQuickToggle(menu.id, "isAvailable")
                     }
                     className={`px-3 py-1 rounded-full text-xs font-bold border w-24 transition-colors ${
                       menu.isAvailable
@@ -572,7 +558,7 @@ export default function MenuManager({ dict }: MenuManagerProps) {
                 <td className="p-4 text-center">
                   <button
                     onClick={() =>
-                      handleQuickToggle(menu.id, "isVisible", menu.isVisible)
+                      handleQuickToggle(menu.id, "isVisible")
                     }
                     className={`px-3 py-1 rounded-full text-xs font-bold border w-24 transition-colors flex items-center justify-center gap-1 mx-auto ${
                       menu.isVisible

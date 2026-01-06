@@ -34,7 +34,10 @@
 
 "use client";
 
-import { API_URL, fetcher, authFetch } from "@/lib/utils";
+import { API_URL, fetcher } from "@/lib/utils";
+import { tableService } from "@/services/tableService";
+import { orderService } from "@/services/orderService";
+import { authService } from "@/services/authService";
 import { APP_CONFIG } from "@/config/constants";
 import { ORDER_STATUS, ROLE } from "@/config/enums";
 import { useEffect, useState, useRef, useMemo } from "react";
@@ -193,11 +196,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
       try {
         const refreshToken = localStorage.getItem("refreshToken");
         if (refreshToken) {
-          await fetch(`${API_URL}/api/logout`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ refreshToken })
-          });
+          await authService.logout(refreshToken);
         }
       } catch (error) {
         logger.error('Logout error:', error);
@@ -303,10 +302,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
 
   const handleAcknowledgeCall = async (tableId: number) => {
     try {
-        await fetch(`${API_URL}/api/tables/${tableId}/call`, {
-            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ isCalling: false })
-        });
+        await tableService.callStaff(tableId, false);
         mutateTables(); 
         toast.success(dict.staff.callCustomer + " - " + dict.common.success);
     } catch (error) { logger.error(error); }
@@ -340,19 +336,15 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
     if (!confirm(`${dict.common.confirm} ${tableName}?`)) return;
 
     try {
-      const res = await authFetch(`${API_URL}/api/tables/${selectedTableId}/close`, { 
-        method: 'POST' 
-      });
-      const data = await res.json();
+      const data = await tableService.closeTable(selectedTableId);
       
-      if (res.ok) {
+      if (data.status === 'success') {
         toast.success(`💰 ${dict.common.success}!`); 
         setNewOrderAlerts((prev) => prev.filter((tid) => tid !== selectedTableId));
         mutateTables(); 
         closeModal(); 
       } else {
-        // New error format: { status: 'error', message: '...' }
-        toast.error(`${dict.common.error}: ${data.message || data.error || 'Unknown error'}`);
+        toast.error(`${dict.common.error}: ${data.message || 'Unknown error'}`);
       }
     } catch (error) { logger.error(error); toast.error(dict.common.error); }
   };
@@ -363,10 +355,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
         return; 
     }
     try {
-      await authFetch(`${API_URL}/api/tables/${tableId}/availability`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isAvailable: !currentStatus })
-      });
+      await tableService.toggleAvailability(tableId, !currentStatus);
       mutateTables();
       toast.success(dict.common.success);
     } catch (error) { logger.error(error); }
@@ -375,11 +364,8 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
   const handleCreateTable = async () => {
     if (!newTableName.trim()) return;
     try {
-      const res = await authFetch(`${API_URL}/api/tables`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newTableName })
-      });
-      if (res.ok) { 
+      const data = await tableService.createTable(newTableName);
+      if (data.status === 'success') { 
           setNewTableName(""); 
           setIsCreating(false); 
           mutateTables();
@@ -391,7 +377,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
   const handleDeleteTable = async (id: number) => {
     if (!confirm(dict.staff.alertConfirmDelete)) return;
     try {
-      await authFetch(`${API_URL}/api/tables/${id}`, { method: 'DELETE' });
+      await tableService.deleteTable(id);
       mutateTables();
       toast.success(dict.common.success);
     } catch (error) { logger.error(error); }
@@ -401,7 +387,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
     const newName = prompt(dict.staff.promptEditTable, oldName);
     if (!newName || newName === oldName) return;
     try {
-      await authFetch(`${API_URL}/api/tables/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newName }) });
+      await tableService.updateTable(id, newName);
       mutateTables();
       toast.success(dict.common.success);
     } catch (error) { logger.error(error); }
@@ -410,12 +396,8 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
   const handleCancelOrder = async (itemId: number, menuName: string) => {
     if(!confirm(`${dict.common.confirm} ${dict.staff.order} "${menuName}" ?`)) return;
     try {
-        const res = await authFetch(`${API_URL}/api/orders/items/${itemId}/status`, { 
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: 'CANCELLED' })
-        });
-        if (res.ok) { 
+        const data = await orderService.updateItemStatus(itemId, 'CANCELLED');
+        if (data.status === 'success') { 
             mutateDetails(); 
             mutateTables(); 
             toast.success(dict.common.success);
@@ -429,11 +411,8 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
           return;
       }
       try {
-          const res = await authFetch(`${API_URL}/api/orders/items/${itemId}/status`, {
-              method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ status: newStatus })
-          });
-          if (res.ok) {
+          const data = await orderService.updateItemStatus(itemId, newStatus);
+          if (data.status === 'success') {
               mutateDetails();
               toast.success(dict.common.success);
           }
