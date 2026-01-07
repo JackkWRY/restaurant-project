@@ -34,6 +34,9 @@ export type { KitchenItem } from './useKitchenData';
 // Authentication Hook
 export { useAuth } from './useAuth';
 
+// Audio Notification Hook
+export { useAudioNotification } from './useAudioNotification';
+
 // Placeholder for future custom hooks
 // Example:
 // export { useSocket } from './useSocket';

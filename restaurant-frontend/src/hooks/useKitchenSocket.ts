@@ -17,8 +17,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { io, type Socket } from 'socket.io-client';
 import { API_URL } from '@/lib/utils';
-import { APP_CONFIG } from '@/config/constants';
 import { logger } from '@/lib/logger';
+import { useAudioNotification } from './useAudioNotification';
 
 interface UseKitchenSocketReturn {
   isConnected: boolean;
@@ -43,14 +43,17 @@ export function useKitchenSocket(
 ): UseKitchenSocketReturn {
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef<Socket | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  // Initialize audio on client-side only
+  
+  // Use audio notification hook
+  const { playNotification } = useAudioNotification();
+  
+  // Store audio function in ref to avoid re-creating socket on every render
+  const playNotificationRef = useRef(playNotification);
+  
+  // Update ref when function changes
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      audioRef.current = new Audio(APP_CONFIG.SOUNDS.NOTIFICATION);
-    }
-  }, []);
+    playNotificationRef.current = playNotification;
+  }, [playNotification]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -81,15 +84,7 @@ export function useKitchenSocket(
       // Listen to new order events
       socketRef.current.on('new_order', () => {
         mutate();
-        try {
-          if (audioRef.current) {
-            audioRef.current.play().catch((err) =>
-              logger.warn('Audio play blocked (User must interact first):', err)
-            );
-          }
-        } catch (error) {
-          logger.error('Error playing sound:', error);
-        }
+        playNotificationRef.current();
       });
 
       // Listen to item status updates

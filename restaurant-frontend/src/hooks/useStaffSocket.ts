@@ -17,9 +17,9 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { io, type Socket } from 'socket.io-client';
 import { API_URL } from '@/lib/utils';
-import { APP_CONFIG } from '@/config/constants';
 import { ORDER_STATUS } from '@/config/enums';
 import { logger } from '@/lib/logger';
+import { useAudioNotification } from './useAudioNotification';
 
 interface NewOrderPayload {
   id: number;
@@ -78,42 +78,16 @@ export function useStaffSocket(
   const [newOrderAlerts, setNewOrderAlerts] = useState<number[]>([]);
   const [newOrderIds, setNewOrderIds] = useState<number[]>([]);
   
-  // Audio refs - initialized in useEffect to avoid SSR issues
-  const audioRefs = useRef<{
-    notification: HTMLAudioElement | null;
-    bell1: HTMLAudioElement | null;
-    bell2: HTMLAudioElement | null;
-  }>({
-    notification: null,
-    bell1: null,
-    bell2: null,
-  });
-
-  // Initialize audio on client-side only
+  // Use audio notification hook
+  const { playNotification, playBell1, playBell2 } = useAudioNotification();
+  
+  // Store audio functions in ref to avoid re-creating socket on every render
+  const audioFunctionsRef = useRef({ playNotification, playBell1, playBell2 });
+  
+  // Update ref when functions change
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      audioRefs.current = {
-        notification: new Audio(APP_CONFIG.SOUNDS.NOTIFICATION),
-        bell1: new Audio(APP_CONFIG.SOUNDS.BELL_1),
-        bell2: new Audio(APP_CONFIG.SOUNDS.BELL_2),
-      };
-    }
-  }, []);
-
-  // Play audio helper
-  const playAudio = useCallback((type: 'notification' | 'bell1' | 'bell2') => {
-    try {
-      const audio = audioRefs.current[type];
-      if (audio) {
-        audio.currentTime = 0; // Reset to start
-        audio.play().catch((err) => {
-          logger.warn(`Audio play blocked (User must interact first):`, err);
-        });
-      }
-    } catch (error) {
-      logger.error('Error playing sound:', error);
-    }
-  }, []);
+    audioFunctionsRef.current = { playNotification, playBell1, playBell2 };
+  }, [playNotification, playBell1, playBell2]);
 
   // Clear alert for specific table
   const clearAlert = useCallback((tableId: number) => {
@@ -170,7 +144,7 @@ export function useStaffSocket(
       setNewOrderIds((prev) => [...prev, data.id]);
       
       // Play notification sound
-      playAudio('notification');
+      audioFunctionsRef.current.playNotification();
     });
 
     // Event: Table Updated (e.g., customer calls staff)
@@ -182,7 +156,7 @@ export function useStaffSocket(
       
       // Play bell sound when customer calls staff
       if (data && data.isCallingStaff) {
-        playAudio('bell1');
+        audioFunctionsRef.current.playBell1();
       }
     });
 
@@ -202,17 +176,16 @@ export function useStaffSocket(
       
       // Play notification when food is ready for pickup
       if (data && data.status === ORDER_STATUS.READY) {
-        playAudio('bell2');
+        audioFunctionsRef.current.playBell2();
       }
     });
 
-    // Cleanup
     return () => {
       newSocket.disconnect();
       setSocket(null);
       setIsConnected(false);
     };
-  }, [mutateTables, mutateDetails, playAudio]);
+  }, [mutateTables, mutateDetails]);
 
   return {
     socket,
