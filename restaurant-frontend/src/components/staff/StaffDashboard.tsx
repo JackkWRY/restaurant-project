@@ -23,19 +23,18 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Check, Pencil, LogOut, LayoutDashboard, Globe } from "lucide-react";
 import { tableService } from "@/services/tableService";
 import { orderService } from "@/services/orderService";
-import { authService } from "@/services/authService";
 import { ROLE } from "@/config/enums";
 import { logger } from "@/lib/logger";
 import type { Dictionary } from "@/locales/dictionary";
 
 // Custom Hooks
+import { useAuth } from "@/hooks";
 import { useStaffSocket } from "@/hooks/useStaffSocket";
 import { useStaffData } from "@/hooks/useStaffData";
 
@@ -60,14 +59,13 @@ interface StaffDashboardProps {
  * @param lang - Current language (th/en)
  */
 export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
-  const router = useRouter();
+  const { user, logout } = useAuth(lang);
   const toggleLang = lang === "en" ? "th" : "en";
 
   // Local UI State
   const [isEditingMode, setIsEditingMode] = useState(false);
   const [activeModal, setActiveModal] = useState<"details" | "receipt" | null>(null);
   const [selectedTableId, setSelectedTableId] = useState<number | null>(null);
-  const [userRole, setUserRole] = useState("");
 
   // Custom Hooks
   const {
@@ -82,41 +80,11 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
   const { newOrderAlerts, newOrderIds, clearAlert, clearNewOrderBadges } =
     useStaffSocket(mutateTables, mutateDetails);
 
-  // Auth Logic
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const userStr = localStorage.getItem("user");
-
-    if (!token) {
-      router.push(`/${lang}/login`);
-    } else if (userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        setUserRole(user.role);
-      } catch (e) {
-        logger.error("Error parsing user", e);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   // Handler: Logout
   const handleLogout = async () => {
     if (confirm(dict.common.logoutConfirm)) {
-      try {
-        const refreshToken = localStorage.getItem("refreshToken");
-        if (refreshToken) {
-          await authService.logout(refreshToken);
-        }
-      } catch (error) {
-        logger.error("Logout error:", error);
-      } finally {
-        localStorage.removeItem("token");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("user");
-        router.push(`/${lang}/login`);
-        toast.success(dict.common.logout + " " + dict.common.success);
-      }
+      await logout();
+      toast.success(dict.common.logout + " " + dict.common.success);
     }
   };
 
@@ -280,7 +248,7 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
 
         <div className="flex items-center gap-4">
           {/* Admin Dashboard Link */}
-          {userRole === ROLE.ADMIN && (
+          {user?.role === ROLE.ADMIN && (
             <Link
               href={`/${lang}/admin`}
               className="text-sm font-medium text-slate-500 hover:text-slate-900 flex items-center gap-2 transition-colors"

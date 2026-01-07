@@ -36,11 +36,11 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { authService } from "@/services/authService";
+import { useAuth } from "@/hooks";
+import { toast } from "sonner";
 import {
   Globe,
   LogOut,
@@ -51,7 +51,6 @@ import {
   Settings,
 } from "lucide-react";
 import type { Dictionary } from "@/locales/dictionary";
-import { logger } from "@/lib/logger";
 
 // Lazy load components for better performance
 // Loading states prevent layout shift during component load
@@ -111,34 +110,16 @@ interface AdminDashboardProps {
  * <AdminDashboard dict={dictionary} lang="en" />
  */
 export default function AdminDashboard({ dict, lang }: AdminDashboardProps) {
-  const router = useRouter();
+  const { logout } = useAuth(lang);
   const [activeTab, setActiveTab] = useState<
     "analytics" | "history" | "categories" | "menus" | "settings"
   >("analytics");
   const toggleLang = lang === "en" ? "th" : "en";
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push(`/${lang}/login`);
-    }
-  }, [router, lang]);
-
   const handleLogout = async () => {
     if (confirm(dict.common.logoutConfirm)) {
-      try {
-        const refreshToken = localStorage.getItem("refreshToken");
-        if (refreshToken) {
-          await authService.logout(refreshToken);
-        }
-      } catch (error) {
-        logger.error("Logout error:", error);
-      } finally {
-        localStorage.removeItem("token");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("user");
-        router.push(`/${lang}/login`);
-      }
+      await logout();
+      toast.success(dict.common.logout);
     }
   };
 

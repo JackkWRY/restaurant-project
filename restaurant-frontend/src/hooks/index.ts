@@ -31,8 +31,11 @@ export { useKitchenSocket } from './useKitchenSocket';
 export { useKitchenData } from './useKitchenData';
 export type { KitchenItem } from './useKitchenData';
 
+// Authentication Hook
+export { useAuth } from './useAuth';
+
 // Placeholder for future custom hooks
 // Example:
-// export { useAuth } from './useAuth';
 // export { useSocket } from './useSocket';
 // export { useTableData } from './useTableData';
+

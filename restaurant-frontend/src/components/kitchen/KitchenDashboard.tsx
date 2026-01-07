@@ -20,11 +20,8 @@
 "use client";
 
 import { orderService } from "@/services/orderService";
-import { authService } from "@/services/authService";
 import { ORDER_STATUS, ROLE } from "@/config/enums";
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   Clock,
   ChefHat,
@@ -33,10 +30,12 @@ import {
   LayoutDashboard,
   Globe,
 } from "lucide-react";
+import { toast } from "sonner";
 import type { Dictionary } from "@/locales/dictionary";
 import { logger } from "@/lib/logger";
 
 // Custom Hooks
+import { useAuth } from "@/hooks";
 import { useKitchenSocket } from "@/hooks/useKitchenSocket";
 import { useKitchenData } from "@/hooks/useKitchenData";
 
@@ -63,47 +62,17 @@ export default function KitchenDashboard({
   dict,
   lang,
 }: KitchenDashboardProps) {
-  const router = useRouter();
-  const [userRole, setUserRole] = useState("");
+  const { user, logout } = useAuth(lang);
   const toggleLang = lang === "en" ? "th" : "en";
 
   // Custom hooks
   const { items, isLoading, error, mutate } = useKitchenData();
   useKitchenSocket(mutate);
 
-  // Auth logic
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const userStr = localStorage.getItem("user");
-
-    if (!token) {
-      router.push(`/${lang}/login`);
-    } else if (userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        setUserRole(user.role);
-      } catch (e) {
-        logger.error("Error parsing user data", e);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const handleLogout = async () => {
     if (confirm(dict.common.logoutConfirm)) {
-      try {
-        const refreshToken = localStorage.getItem("refreshToken");
-        if (refreshToken) {
-          await authService.logout(refreshToken);
-        }
-      } catch (error) {
-        logger.error("Logout error:", error);
-      } finally {
-        localStorage.removeItem("token");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("user");
-        router.push(`/${lang}/login`);
-      }
+      await logout();
+      toast.success(dict.common.logout);
     }
   };
 
@@ -146,7 +115,7 @@ export default function KitchenDashboard({
           </span>
         </h1>
         <div className="flex items-center gap-2">
-          {userRole === ROLE.ADMIN && (
+          {user?.role === ROLE.ADMIN && (
             <Link
               href={`/${lang}/admin`}
               className="bg-purple-600 hover:bg-purple-700 p-2 rounded-full transition-colors"
