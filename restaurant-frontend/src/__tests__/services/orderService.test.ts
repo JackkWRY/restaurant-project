@@ -31,7 +31,7 @@ describe('OrderService', () => {
       await orderService.createOrder(orderData.tableId, orderData.items);
 
       expect(authFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/api/orders',
+        'http://localhost:3001/api/v1/orders',
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify(orderData),
@@ -49,7 +49,7 @@ describe('OrderService', () => {
 
       await orderService.getActiveOrders();
 
-      expect(authFetch).toHaveBeenCalledWith('http://localhost:3001/api/orders/active');
+      expect(authFetch).toHaveBeenCalledWith('http://localhost:3001/api/v1/orders/active');
     });
   });
 
@@ -63,7 +63,7 @@ describe('OrderService', () => {
       await orderService.updateOrderStatus(1, status);
 
       expect(authFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/api/orders/1/status',
+        'http://localhost:3001/api/v1/orders/1/status',
         expect.objectContaining({
           method: 'PATCH',
           body: JSON.stringify({ status }),
@@ -82,7 +82,7 @@ describe('OrderService', () => {
       await orderService.updateItemStatus(1, status);
 
       expect(authFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/api/orders/items/1/status',
+        'http://localhost:3001/api/v1/orders/items/1/status',
         expect.objectContaining({
           method: 'PATCH',
           body: JSON.stringify({ status }),

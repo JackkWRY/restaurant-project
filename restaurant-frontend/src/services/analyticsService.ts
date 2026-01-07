@@ -38,7 +38,7 @@ class AnalyticsService extends ApiService {
         }>;
       }>;
       pagination?: { page: number; limit: number; total: number; totalPages: number };
-    }>(`/api/analytics/history?startDate=${startDate}&endDate=${endDate}&page=${page}&limit=${limit}`);
+    }>(`/api/v1/analytics/history?startDate=${startDate}&endDate=${endDate}&page=${page}&limit=${limit}`);
   }
 }
 

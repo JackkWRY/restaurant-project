@@ -33,7 +33,7 @@ describe('AuthService', () => {
       const result = await authService.login(credentials.username, credentials.password);
 
       expect(authFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/api/login',
+        'http://localhost:3001/api/v1/login',
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify(credentials),
@@ -53,7 +53,7 @@ describe('AuthService', () => {
       await authService.logout(refreshToken);
 
       expect(authFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/api/logout',
+        'http://localhost:3001/api/v1/logout',
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify({ refreshToken }),

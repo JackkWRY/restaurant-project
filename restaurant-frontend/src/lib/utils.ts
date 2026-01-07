@@ -30,6 +30,12 @@ import { logger } from "./logger";
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 /**
+ * API Version
+ * Current API version for all endpoints
+ */
+export const API_VERSION = 'v1';
+
+/**
  * Merges Tailwind CSS classes with clsx
  * 
  * @param inputs - Class values to merge
@@ -80,7 +86,7 @@ const refreshAccessToken = async (): Promise<string | null> => {
   }
 
   try {
-    const res = await fetch(`${API_URL}/api/refresh`, {
+    const res = await fetch(`${API_URL}/api/${API_VERSION}/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken })

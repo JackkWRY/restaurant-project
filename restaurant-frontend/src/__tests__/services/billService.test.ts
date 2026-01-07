@@ -18,16 +18,16 @@ describe('BillService', () => {
     vi.clearAllMocks();
   });
 
-  describe('getTableBill', () => {
+  describe('getBillByTable', () => {
     it('should fetch bill for specific table', async () => {
       const mockBill = { id: 1, tableId: 1, totalPrice: 500 };
       vi.mocked(authFetch).mockResolvedValue({
         json: async () => ({ status: 'success', data: mockBill }),
       } as Response);
 
-      await billService.getTableBill(1);
+      await billService.getBillByTable(1);
 
-      expect(authFetch).toHaveBeenCalledWith('http://localhost:3001/api/bills/table/1');
+      expect(authFetch).toHaveBeenCalledWith('http://localhost:3001/api/v1/bills/table/1');
     });
   });
 
@@ -41,7 +41,7 @@ describe('BillService', () => {
       await billService.checkout(tableId);
 
       expect(authFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/api/bills/checkout',
+        'http://localhost:3001/api/v1/bills/checkout',
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify({ tableId }),

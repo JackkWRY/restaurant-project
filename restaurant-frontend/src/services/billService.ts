@@ -11,15 +11,15 @@ class BillService extends ApiService {
   /**
    * Get bill for a specific table
    */
-  async getTableBill(tableId: number) {
-    return this.get(`/api/bills/table/${tableId}`);
+  async getBillByTable(tableId: number) {
+    return this.get(`/api/v1/bills/table/${tableId}`);
   }
 
   /**
-   * Process checkout for a table
+   * Checkout and close bill for a table
    */
   async checkout(tableId: number) {
-    return this.post('/api/bills/checkout', { tableId });
+    return this.post('/api/v1/bills/checkout', { tableId });
   }
 }
 

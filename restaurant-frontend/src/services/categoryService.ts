@@ -15,35 +15,35 @@ class CategoryService extends ApiService {
    * Get all categories
    */
   async getCategories() {
-    return this.get<Category[]>('/api/categories');
+    return this.get<Category[]>('/api/v1/categories');
   }
 
   /**
    * Get single category by ID
    */
   async getCategoryById(id: number) {
-    return this.get<Category>(`/api/categories/${id}`);
+    return this.get<Category>(`/api/v1/categories/${id}`);
   }
 
   /**
    * Create new category
    */
   async createCategory(name: string) {
-    return this.post<Category>('/api/categories', { name });
+    return this.post<Category>('/api/v1/categories', { name });
   }
 
   /**
    * Update existing category
    */
   async updateCategory(id: number, name: string) {
-    return this.put<Category>(`/api/categories/${id}`, { name });
+    return this.put<Category>(`/api/v1/categories/${id}`, { name });
   }
 
   /**
    * Delete category
    */
   async deleteCategory(id: number) {
-    return this.delete(`/api/categories/${id}`);
+    return this.delete(`/api/v1/categories/${id}`);
   }
 }
 

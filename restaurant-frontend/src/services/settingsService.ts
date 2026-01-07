@@ -12,7 +12,7 @@ class SettingsService extends ApiService {
    * Get restaurant name setting
    */
   async getRestaurantName() {
-    return this.get<string>('/api/settings/name');
+    return this.get<string>('/api/v1/settings/name');
   }
 
   /**
@@ -21,7 +21,7 @@ class SettingsService extends ApiService {
    * @param name - New restaurant name
    */
   async updateRestaurantName(name: string) {
-    return this.post<{ message: string }>('/api/settings/name', { name });
+    return this.post<{ message: string }>('/api/v1/settings/name', { name });
   }
 }
 

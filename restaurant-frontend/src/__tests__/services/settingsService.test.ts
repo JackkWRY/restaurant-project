@@ -27,7 +27,7 @@ describe('SettingsService', () => {
 
       await settingsService.getRestaurantName();
 
-      expect(authFetch).toHaveBeenCalledWith('http://localhost:3001/api/settings/name');
+      expect(authFetch).toHaveBeenCalledWith('http://localhost:3001/api/v1/settings/name');
     });
   });
 
@@ -41,7 +41,7 @@ describe('SettingsService', () => {
       await settingsService.updateRestaurantName(newName);
 
       expect(authFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/api/settings/name',
+        'http://localhost:3001/api/v1/settings/name',
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify({ name: newName }),

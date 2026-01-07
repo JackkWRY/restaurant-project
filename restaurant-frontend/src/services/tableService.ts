@@ -16,63 +16,63 @@ class TableService extends ApiService {
    * Get status of all tables
    */
   async getTableStatus() {
-    return this.get<Table[]>('/api/tables/status');
+    return this.get<Table[]>('/api/v1/tables/status');
   }
 
   /**
    * Get detailed information for a specific table
    */
   async getTableDetails(id: number) {
-    return this.get(`/api/tables/${id}/details`);
+    return this.get(`/api/v1/tables/${id}/details`);
   }
 
   /**
    * Get single table by ID
    */
   async getTableById(id: number) {
-    return this.get<Table>(`/api/tables/${id}`);
+    return this.get<Table>(`/api/v1/tables/${id}`);
   }
 
   /**
    * Create new table
    */
   async createTable(name: string) {
-    return this.post<Table>('/api/tables', { name });
+    return this.post<Table>('/api/v1/tables', { name });
   }
 
   /**
    * Update table name
    */
   async updateTable(id: number, name: string) {
-    return this.put<Table>(`/api/tables/${id}`, { name });
+    return this.put<Table>(`/api/v1/tables/${id}`, { name });
   }
 
   /**
    * Delete table
    */
   async deleteTable(id: number) {
-    return this.delete(`/api/tables/${id}`);
+    return this.delete(`/api/v1/tables/${id}`);
   }
 
   /**
    * Toggle table availability
    */
   async toggleAvailability(id: number, isAvailable: boolean) {
-    return this.patch(`/api/tables/${id}/availability`, { isAvailable });
+    return this.patch(`/api/v1/tables/${id}/availability`, { isAvailable });
   }
 
   /**
    * Close table and process payment
    */
   async closeTable(id: number) {
-    return this.post(`/api/tables/${id}/close`, {});
+    return this.post(`/api/v1/tables/${id}/close`, {});
   }
 
   /**
-   * Update staff call status
+   * Toggle call staff status for a table
    */
   async callStaff(id: number, isCalling: boolean) {
-    return this.patch(`/api/tables/${id}/call`, { isCalling });
+    return this.patch(`/api/v1/tables/${id}/call`, { isCalling });
   }
 }
 

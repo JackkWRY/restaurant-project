@@ -27,7 +27,7 @@ describe('TableService', () => {
 
       await tableService.getTableStatus();
 
-      expect(authFetch).toHaveBeenCalledWith('http://localhost:3001/api/tables/status');
+      expect(authFetch).toHaveBeenCalledWith('http://localhost:3001/api/v1/tables/status');
     });
   });
 
@@ -39,7 +39,7 @@ describe('TableService', () => {
 
       await tableService.getTableDetails(1);
 
-      expect(authFetch).toHaveBeenCalledWith('http://localhost:3001/api/tables/1/details');
+      expect(authFetch).toHaveBeenCalledWith('http://localhost:3001/api/v1/tables/1/details');
     });
   });
 
@@ -51,7 +51,7 @@ describe('TableService', () => {
 
       await tableService.getTableById(1);
 
-      expect(authFetch).toHaveBeenCalledWith('http://localhost:3001/api/tables/1');
+      expect(authFetch).toHaveBeenCalledWith('http://localhost:3001/api/v1/tables/1');
     });
   });
 
@@ -65,7 +65,7 @@ describe('TableService', () => {
       await tableService.createTable(tableName);
 
       expect(authFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/api/tables',
+        'http://localhost:3001/api/v1/tables',
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify({ name: tableName }),
@@ -84,7 +84,7 @@ describe('TableService', () => {
       await tableService.updateTable(1, newName);
 
       expect(authFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/api/tables/1',
+        'http://localhost:3001/api/v1/tables/1',
         expect.objectContaining({
           method: 'PUT',
           body: JSON.stringify({ name: newName }),
@@ -102,7 +102,7 @@ describe('TableService', () => {
       await tableService.toggleAvailability(1, false);
 
       expect(authFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/api/tables/1/availability',
+        'http://localhost:3001/api/v1/tables/1/availability',
         expect.objectContaining({
           method: 'PATCH',
           body: JSON.stringify({ isAvailable: false }),
@@ -120,7 +120,7 @@ describe('TableService', () => {
       await tableService.callStaff(1, true);
 
       expect(authFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/api/tables/1/call',
+        'http://localhost:3001/api/v1/tables/1/call',
         expect.objectContaining({
           method: 'PATCH',
           body: JSON.stringify({ isCalling: true }),

@@ -94,7 +94,7 @@ export default function FloatingCart({ dict }: FloatingCartProps) {
     if (!confirm(dict.customer.confirmOrderQuestion)) return;
 
     try {
-        const res = await fetch(`${API_URL}/api/orders`, {
+        const res = await fetch(`${API_URL}/api/v1/orders`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

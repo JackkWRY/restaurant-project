@@ -16,7 +16,7 @@ class MenuService extends ApiService {
    * Get all menus grouped by categories (customer view)
    */
   async getMenus() {
-    return this.get<{ categories: Category[] }>('/api/menus');
+    return this.get<{ categories: Category[] }>('/api/v1/menus');
   }
 
   /**
@@ -27,7 +27,7 @@ class MenuService extends ApiService {
       menus: Menu[]; 
       pagination: { page: number; limit: number; total: number; totalPages: number } 
     }>(
-      `/api/menus?scope=all&page=${page}&limit=${limit}`
+      `/api/v1/menus?scope=all&page=${page}&limit=${limit}`
     );
   }
 
@@ -35,42 +35,42 @@ class MenuService extends ApiService {
    * Get single menu by ID
    */
   async getMenuById(id: number) {
-    return this.get<Menu>(`/api/menus/${id}`);
+    return this.get<Menu>(`/api/v1/menus/${id}`);
   }
 
   /**
    * Create new menu item
    */
   async createMenu(data: Partial<Menu>) {
-    return this.post<Menu>('/api/menus', data);
+    return this.post<Menu>('/api/v1/menus', data);
   }
 
   /**
    * Update existing menu item
    */
   async updateMenu(id: number, data: Partial<Menu>) {
-    return this.put<Menu>(`/api/menus/${id}`, data);
+    return this.put<Menu>(`/api/v1/menus/${id}`, data);
   }
 
   /**
    * Delete menu item (soft delete)
    */
   async deleteMenu(id: number) {
-    return this.delete(`/api/menus/${id}`);
+    return this.delete(`/api/v1/menus/${id}`);
   }
 
   /**
    * Toggle menu availability status
    */
   async toggleAvailability(id: number) {
-    return this.patch<Menu>(`/api/menus/${id}/availability`, {});
+    return this.patch<Menu>(`/api/v1/menus/${id}/availability`, {});
   }
 
   /**
    * Toggle menu visibility status
    */
   async toggleVisibility(id: number) {
-    return this.patch<Menu>(`/api/menus/${id}/visibility`, {});
+    return this.patch<Menu>(`/api/v1/menus/${id}/visibility`, {});
   }
 }
 

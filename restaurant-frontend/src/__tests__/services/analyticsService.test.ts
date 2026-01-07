@@ -32,7 +32,7 @@ describe('AnalyticsService', () => {
       await analyticsService.getHistory('2024-01-01', '2024-01-31', 1, 20);
 
       expect(authFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/api/analytics/history?startDate=2024-01-01&endDate=2024-01-31&page=1&limit=20'
+        'http://localhost:3001/api/v1/analytics/history?startDate=2024-01-01&endDate=2024-01-31&page=1&limit=20'
       );
     });
   });

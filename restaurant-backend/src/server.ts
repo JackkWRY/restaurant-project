@@ -240,15 +240,42 @@ publicNamespace.on("connection", (socket) => {
 // ============================================
 // API Routes Registration
 // ============================================
-app.use("/api", authRoutes);
-app.use("/api", settingRoutes);
-app.use("/api", menuRoutes);
-app.use("/api", orderRoutes);
-app.use("/api", tableRoutes);
-app.use("/api", categoryRoutes);
-app.use("/api", billRoutes);
-app.use("/api/upload", uploadRoutes);
-app.use("/api/analytics", analyticsRoutes);
+
+/**
+ * API Version 1 Router
+ * 
+ * All API routes are now versioned under /api/v1/*
+ * This allows for future API changes without breaking existing clients.
+ */
+import { Router } from 'express';
+import { deprecationWarningMiddleware } from './core/middlewares/deprecationMiddleware.js';
+
+const v1Router = Router();
+
+// Register all routes to v1 router
+v1Router.use(authRoutes);
+v1Router.use(settingRoutes);
+v1Router.use(menuRoutes);
+v1Router.use(orderRoutes);
+v1Router.use(tableRoutes);
+v1Router.use(categoryRoutes);
+v1Router.use(billRoutes);
+
+// Mount versioned routes
+app.use('/api/v1', v1Router);
+app.use('/api/v1/upload', uploadRoutes);
+app.use('/api/v1/analytics', analyticsRoutes);
+
+// ============================================
+// Deprecated Routes (Backward Compatibility)
+// ============================================
+// These routes redirect to v1 for backward compatibility
+// They will be removed in a future version
+// TODO: Remove after migration period (recommended: 3-6 months)
+
+app.use('/api', deprecationWarningMiddleware, v1Router);
+app.use('/api/upload', deprecationWarningMiddleware, uploadRoutes);
+app.use('/api/analytics', deprecationWarningMiddleware, analyticsRoutes);
 
 // ============================================
 // Health Check Endpoint

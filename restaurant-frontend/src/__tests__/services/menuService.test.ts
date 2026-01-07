@@ -28,7 +28,7 @@ describe('MenuService', () => {
 
       const result = await menuService.getMenus();
 
-      expect(authFetch).toHaveBeenCalledWith('http://localhost:3001/api/menus');
+      expect(authFetch).toHaveBeenCalledWith('http://localhost:3001/api/v1/menus');
       expect(result.status).toBe('success');
       expect(result.data).toEqual(mockData);
     });
@@ -47,7 +47,7 @@ describe('MenuService', () => {
       await menuService.getMenusPaginated(1, 10);
 
       expect(authFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/api/menus?scope=all&page=1&limit=10'
+        'http://localhost:3001/api/v1/menus?scope=all&page=1&limit=10'
       );
     });
   });
@@ -61,7 +61,7 @@ describe('MenuService', () => {
 
       const result = await menuService.getMenuById(1);
 
-      expect(authFetch).toHaveBeenCalledWith('http://localhost:3001/api/menus/1');
+      expect(authFetch).toHaveBeenCalledWith('http://localhost:3001/api/v1/menus/1');
       expect(result.data).toEqual(mockMenu);
     });
   });
@@ -77,7 +77,7 @@ describe('MenuService', () => {
       await menuService.createMenu(menuData);
 
       expect(authFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/api/menus',
+        'http://localhost:3001/api/v1/menus',
         expect.objectContaining({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -97,7 +97,7 @@ describe('MenuService', () => {
       await menuService.updateMenu(1, updateData);
 
       expect(authFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/api/menus/1',
+        'http://localhost:3001/api/v1/menus/1',
         expect.objectContaining({
           method: 'PUT',
           body: JSON.stringify(updateData),
@@ -115,7 +115,7 @@ describe('MenuService', () => {
       await menuService.deleteMenu(1);
 
       expect(authFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/api/menus/1',
+        'http://localhost:3001/api/v1/menus/1',
         expect.objectContaining({ method: 'DELETE' })
       );
     });
@@ -130,7 +130,7 @@ describe('MenuService', () => {
       await menuService.toggleAvailability(1);
 
       expect(authFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/api/menus/1/availability',
+        'http://localhost:3001/api/v1/menus/1/availability',
         expect.objectContaining({ method: 'PATCH' })
       );
     });
@@ -145,7 +145,7 @@ describe('MenuService', () => {
       await menuService.toggleVisibility(1);
 
       expect(authFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/api/menus/1/visibility',
+        'http://localhost:3001/api/v1/menus/1/visibility',
         expect.objectContaining({ method: 'PATCH' })
       );
     });

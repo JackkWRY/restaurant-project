@@ -101,21 +101,21 @@ export default function CustomerOrder({ dict, lang }: CustomerOrderProps) {
   const [showHistory, setShowHistory] = useState(false);
 
   // Data fetching
-  const { data: menuData } = useSWR(`${API_URL}/api/menus`, fetcher, {
+  const { data: menuData } = useSWR(`${API_URL}/api/v1/menus`, fetcher, {
     refreshInterval: 60000,
   });
   const categories: Category[] =
     menuData?.status === "success" ? menuData.data : [];
 
   const { data: tableData, mutate: mutateTable } = useSWR(
-    tableIdParam ? `${API_URL}/api/tables/${tableIdParam}` : null,
+    tableIdParam ? `${API_URL}/api/v1/tables/${tableIdParam}` : null,
     fetcher,
     { refreshInterval: 5000 }
   );
   const tableInfo: TableInfo | null =
     tableData?.status === "success" ? tableData.data : null;
 
-  const { data: settingsData } = useSWR(`${API_URL}/api/settings/name`, fetcher);
+  const { data: settingsData } = useSWR(`${API_URL}/api/v1/settings/name`, fetcher);
   const restaurantName =
     settingsData?.status === "success"
       ? settingsData.data
@@ -123,7 +123,7 @@ export default function CustomerOrder({ dict, lang }: CustomerOrderProps) {
 
   const { data: historyData, mutate: mutateHistory } = useSWR(
     showHistory && tableIdParam
-      ? `${API_URL}/api/bills/table/${tableIdParam}`
+      ? `${API_URL}/api/v1/bills/table/${tableIdParam}`
       : null,
     fetcher,
     { refreshInterval: 5000 }
@@ -157,7 +157,7 @@ export default function CustomerOrder({ dict, lang }: CustomerOrderProps) {
     );
 
     try {
-      await fetch(`${API_URL}/api/tables/${tableIdParam}/call`, {
+      await fetch(`${API_URL}/api/v1/tables/${tableIdParam}/call`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isCalling: newStatus }),

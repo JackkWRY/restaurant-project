@@ -12,14 +12,14 @@ class AuthService extends ApiService {
    * Login user with username and password
    */
   async login(username: string, password: string) {
-    return this.post('/api/login', { username, password });
+    return this.post('/api/v1/login', { username, password });
   }
 
   /**
    * Logout user and invalidate refresh token
    */
   async logout(refreshToken: string) {
-    return this.post('/api/logout', { refreshToken });
+    return this.post('/api/v1/logout', { refreshToken });
   }
 }
 

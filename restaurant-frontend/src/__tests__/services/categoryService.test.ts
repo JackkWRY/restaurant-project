@@ -27,7 +27,7 @@ describe('CategoryService', () => {
 
       const result = await categoryService.getCategories();
 
-      expect(authFetch).toHaveBeenCalledWith('http://localhost:3001/api/categories');
+      expect(authFetch).toHaveBeenCalledWith('http://localhost:3001/api/v1/categories');
       expect(result.data).toEqual(mockCategories);
     });
   });
@@ -41,7 +41,7 @@ describe('CategoryService', () => {
 
       await categoryService.getCategoryById(1);
 
-      expect(authFetch).toHaveBeenCalledWith('http://localhost:3001/api/categories/1');
+      expect(authFetch).toHaveBeenCalledWith('http://localhost:3001/api/v1/categories/1');
     });
   });
 
@@ -55,7 +55,7 @@ describe('CategoryService', () => {
       await categoryService.createCategory(categoryName);
 
       expect(authFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/api/categories',
+        'http://localhost:3001/api/v1/categories',
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify({ name: categoryName }),
@@ -74,7 +74,7 @@ describe('CategoryService', () => {
       await categoryService.updateCategory(1, newName);
 
       expect(authFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/api/categories/1',
+        'http://localhost:3001/api/v1/categories/1',
         expect.objectContaining({
           method: 'PUT',
           body: JSON.stringify({ name: newName }),
@@ -92,7 +92,7 @@ describe('CategoryService', () => {
       await categoryService.deleteCategory(1);
 
       expect(authFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/api/categories/1',
+        'http://localhost:3001/api/v1/categories/1',
         expect.objectContaining({ method: 'DELETE' })
       );
     });
