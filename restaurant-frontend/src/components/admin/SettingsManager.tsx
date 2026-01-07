@@ -30,6 +30,7 @@ import { settingsService } from "@/services/settingsService";
 import { logger } from "@/lib/logger";
 import { useState, useEffect } from "react";
 import { Settings, Save } from "lucide-react";
+import { toast } from "sonner";
 import type { Dictionary } from "@/locales/dictionary";
 
 /**
@@ -83,13 +84,13 @@ export default function SettingsManager({ dict }: SettingsManagerProps) {
       const data = await settingsService.updateRestaurantName(restaurantName);
 
       if (data.status === 'success') {
-        alert(dict.admin.alertSaved);
+        toast.success(dict.admin.alertSaved);
       } else {
-        alert(dict.admin.alertFailed);
+        toast.error(dict.admin.alertFailed);
       }
     } catch (error) {
       logger.error("Failed to save settings:", error);
-      alert(dict.common.error);
+      toast.error(dict.common.error);
     } finally {
       setLoading(false);
     }

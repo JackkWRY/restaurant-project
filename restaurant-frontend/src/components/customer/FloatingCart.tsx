@@ -38,6 +38,7 @@
 import { API_URL } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 import { useState } from "react";
+import { toast } from "sonner";
 import { useSearchParams } from "next/navigation";
 import { ShoppingCart, X, Plus, Minus, Trash2, Utensils, MessageSquare } from "lucide-react"; 
 import { useCartStore } from "@/store/useCartStore";
@@ -86,7 +87,10 @@ export default function FloatingCart({ dict }: FloatingCartProps) {
    * Validates table ID and sends order data
    */
   const handleSendOrder = async () => {
-    if (!tableId) return alert(dict.customer.tableNotFound);
+    if (!tableId) {
+      toast.error(dict.customer.tableNotFound);
+      return;
+    }
     if (!confirm(dict.customer.confirmOrderQuestion)) return;
 
     try {
@@ -105,13 +109,16 @@ export default function FloatingCart({ dict }: FloatingCartProps) {
         });
 
         if (res.ok) {
-            alert(dict.customer.orderSent);
+            toast.success(dict.customer.orderSent);
             clearCart();
             setIsOpen(false);
         } else {
-            alert(dict.customer.orderFailed);
+            toast.error(dict.customer.orderFailed);
         }
-    } catch (error) { logger.error(error); alert(dict.customer.serverError); }
+    } catch (error) { 
+      logger.error(error); 
+      toast.error(dict.customer.serverError); 
+    }
   };
 
   return (
