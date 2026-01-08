@@ -78,14 +78,26 @@ export class OrderService {
 
       // 2. Calculate total from menu prices
       // We calculate here instead of trusting client to prevent price manipulation
-      let orderTotal = 0;
-      for (const item of data.items) {
-        const menu = await tx.menu.findUnique({ where: { id: item.menuId } });
-        if (!menu) {
-          throw new NotFoundError(`Menu with ID ${item.menuId}`);
-        }
-        orderTotal += Number(menu.price) * item.quantity;
+      // Use batch query to prevent N+1 problem
+      const menuIds = data.items.map(item => item.menuId);
+      const menus = await tx.menu.findMany({
+        where: { id: { in: menuIds } }
+      });
+
+      // Create menu map for O(1) lookup
+      const menuMap = new Map(menus.map(m => [m.id, m]));
+
+      // Validate all menus exist
+      const missingMenuIds = menuIds.filter(id => !menuMap.has(id));
+      if (missingMenuIds.length > 0) {
+        throw new NotFoundError(`Menus not found: ${missingMenuIds.join(', ')}`);
       }
+
+      // Calculate total using reduce (functional approach)
+      const orderTotal = data.items.reduce((total, item) => {
+        const menu = menuMap.get(item.menuId)!;
+        return total + Number(menu.price) * item.quantity;
+      }, 0);
 
       // 3. Find or create active bill for this table
       // Each table can only have one OPEN bill at a time
