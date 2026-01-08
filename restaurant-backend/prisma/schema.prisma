@@ -105,9 +105,13 @@ model Bill {
   table         Table      @relation(fields: [tableId], references: [id])
   orders        Order[]
 
+  // Single column indexes
   @@index([status])
   @@index([closedAt])
   @@index([tableId])
+  // Composite indexes for common queries
+  @@index([tableId, status]) // For active bill lookup
+  @@index([status, closedAt]) // For bill history queries
 }
 
 // --------------------------------------------------------
@@ -124,11 +128,15 @@ model Order {
   billId     String?
   bill       Bill?       @relation(fields: [billId], references: [id])
 
+  // Single column indexes
   @@index([status])
   @@index([tableId])
   @@index([billId])
   @@index([createdAt])
-  @@index([tableId, status])
+  // Composite indexes for common queries
+  @@index([tableId, status]) // For table-specific order filtering
+  @@index([status, createdAt]) // For kitchen queue (FIFO)
+  @@index([billId, status]) // For bill calculation
 }
 
 // --------------------------------------------------------
@@ -146,9 +154,12 @@ model OrderItem {
   orderId Int
   order   Order @relation(fields: [orderId], references: [id])
 
+  // Single column indexes
   @@index([menuId])
   @@index([status])
   @@index([orderId])
+  // Composite index for order item filtering
+  @@index([orderId, status]) // For filtering items by order and status
 }
 
 // --------------------------------------------------------
