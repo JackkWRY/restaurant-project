@@ -25,6 +25,7 @@
  */
 
 import { env } from './env.js';
+import { TIME_CONSTANTS, RATE_LIMIT_DEFAULTS, PAGINATION_DEFAULTS } from './constants.js';
 
 // Environment detection for conditional logic
 export const NODE_ENV = env.NODE_ENV;
@@ -47,7 +48,7 @@ export const JWT_CONFIG = {
   accessTokenExpiry: env.JWT_ACCESS_EXPIRY,
   refreshTokenExpiry: env.JWT_REFRESH_EXPIRY,
   // Milliseconds for cookie expiry calculation
-  refreshTokenExpiryMs: 7 * 24 * 60 * 60 * 1000, // 7 days
+  refreshTokenExpiryMs: TIME_CONSTANTS.ONE_WEEK_MS, // 7 days
 } as const;
 
 /**
@@ -57,8 +58,8 @@ export const JWT_CONFIG = {
  * Default: 300 requests per 15 minutes
  */
 export const RATE_LIMIT_CONFIG = {
-  windowMs: env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000, // 15 minutes
-  maxRequests: env.RATE_LIMIT_MAX || 300,
+  windowMs: env.RATE_LIMIT_WINDOW_MS || RATE_LIMIT_DEFAULTS.WINDOW_MINUTES * TIME_CONSTANTS.ONE_MINUTE_MS,
+  maxRequests: env.RATE_LIMIT_MAX || RATE_LIMIT_DEFAULTS.MAX_REQUESTS,
   message: 'Too many requests from this IP, please try again later.',
 } as const;
 
@@ -68,8 +69,8 @@ export const RATE_LIMIT_CONFIG = {
  * Default limits for list endpoints to prevent performance issues.
  */
 export const PAGINATION_CONFIG = {
-  defaultLimit: env.PAGINATION_DEFAULT_LIMIT || 10,
-  maxLimit: env.PAGINATION_MAX_LIMIT || 100,
+  defaultLimit: env.PAGINATION_DEFAULT_LIMIT || PAGINATION_DEFAULTS.DEFAULT_LIMIT,
+  maxLimit: env.PAGINATION_MAX_LIMIT || PAGINATION_DEFAULTS.MAX_LIMIT,
 } as const;
 
 // Logging
