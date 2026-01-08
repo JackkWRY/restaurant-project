@@ -275,7 +275,7 @@ export class OrderService {
   }
 
   /**
-   * Recalculates bill total from all orders
+   * Recalculate bill total from orders
    * 
    * Called after order status changes to ensure bill accuracy.
    * Excludes cancelled items from the total.
@@ -288,24 +288,37 @@ export class OrderService {
    * // Automatically called when order item is cancelled
    * await this.recalculateBill(billId);
    */
-  private async recalculateBill(billId: string) {
+  private async recalculateBill(billId: string): Promise<void> {
     const bill = await billRepository.findById(billId);
     if (!bill) return;
 
-    // Recalculate total by summing all non-cancelled items
-    // This ensures bill total is always accurate after status changes
-    let newTotal = 0;
-    bill.orders.forEach((order) => {
-      order.items.forEach((item) => {
-        if (item.status !== OrderStatus.CANCELLED) {
-          newTotal += Number(item.menu.price) * item.quantity;
-        }
-      });
-    });
+    const newTotal = this.calculateBillTotal(bill);
 
     await billRepository.update(billId, {
       totalPrice: newTotal,
     });
+  }
+
+  /**
+   * Calculate total from bill orders
+   * 
+   * Sums all non-cancelled order items.
+   * Uses functional programming approach for clarity.
+   * 
+   * @param bill - Bill with orders and items
+   * @returns Total price
+   * @private
+   * 
+   * @example
+   * const total = this.calculateBillTotal(bill);
+   */
+  private calculateBillTotal(bill: any): number {
+    return bill.orders
+      .flatMap((order: any) => order.items)
+      .filter((item: any) => item.status !== OrderStatus.CANCELLED)
+      .reduce((total: number, item: any) => {
+        return total + Number(item.menu.price) * item.quantity;
+      }, 0);
   }
 }
 
