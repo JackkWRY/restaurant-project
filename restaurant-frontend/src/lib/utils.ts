@@ -114,7 +114,20 @@ const refreshAccessToken = async (): Promise<string | null> => {
 };
 
 /**
- * Authenticated fetch wrapper with automatic token refresh
+ * Handle authentication failure by clearing storage and redirecting to login
+ * @private
+ */
+const handleAuthFailure = (): void => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    window.location.href = '/th/login';
+  }
+};
+
+/**
+ * Core fetch with authentication and automatic token refresh
  * 
  * Features:
  * - Automatically adds Authorization header
@@ -124,13 +137,13 @@ const refreshAccessToken = async (): Promise<string | null> => {
  * @param url - API endpoint URL
  * @param options - Fetch options
  * @returns Fetch response
- * 
- * @example
- * ```typescript
- * const res = await authFetch('/api/orders', { method: 'POST', body: JSON.stringify(data) });
- * ```
+ * @throws {Error} If authentication fails after token refresh
+ * @private
  */
-export const authFetch = async (url: string, options: RequestInit = {}) => {
+const fetchWithAuth = async (
+  url: string,
+  options: RequestInit = {}
+): Promise<Response> => {
   const token = getToken();
   const headers: Record<string, string> = {
     ...(options.headers as Record<string, string> || {}),
@@ -153,12 +166,8 @@ export const authFetch = async (url: string, options: RequestInit = {}) => {
       res = await fetch(url, { ...options, headers });
     } else {
       // Refresh failed, redirect to login
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
-        window.location.href = '/th/login';
-      }
+      handleAuthFailure();
+      throw new Error('Authentication failed');
     }
   }
   
@@ -166,10 +175,28 @@ export const authFetch = async (url: string, options: RequestInit = {}) => {
 };
 
 /**
+ * Authenticated fetch wrapper
+ * 
+ * Wrapper around fetchWithAuth for backward compatibility.
+ * Use this for general API calls that need authentication.
+ * 
+ * @param url - API endpoint URL
+ * @param options - Fetch options
+ * @returns Fetch response
+ * 
+ * @example
+ * ```typescript
+ * const res = await authFetch('/api/orders', { method: 'POST', body: JSON.stringify(data) });
+ * ```
+ */
+export const authFetch = fetchWithAuth;
+
+/**
  * Authenticated fetcher for SWR with automatic token refresh
  * 
  * Designed for use with SWR's useSWR hook.
  * Automatically handles authentication and token refresh.
+ * Uses the shared fetchWithAuth function for consistency.
  * 
  * @param url - API endpoint URL
  * @returns Parsed JSON response
@@ -181,35 +208,7 @@ export const authFetch = async (url: string, options: RequestInit = {}) => {
  * ```
  */
 export const authFetcher = async (url: string) => {
-  const token = getToken();
-  const headers: Record<string, string> = {};
-  
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  
-  // First attempt
-  let res = await fetch(url, { headers });
-  
-  // If 401, try to refresh token
-  if (res.status === 401) {
-    const newToken = await refreshAccessToken();
-    
-    if (newToken) {
-      // Retry with new token
-      headers['Authorization'] = `Bearer ${newToken}`;
-      res = await fetch(url, { headers });
-    } else {
-      // Refresh failed, redirect to login
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
-        window.location.href = '/th/login';
-      }
-      throw new Error('Authentication failed');
-    }
-  }
+  const res = await fetchWithAuth(url);
   
   if (!res.ok) {
     throw new Error('API Error');
