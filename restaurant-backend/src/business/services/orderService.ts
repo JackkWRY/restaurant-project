@@ -40,6 +40,7 @@ import {
 import { OrderDto } from "../dtos/orderDto.js";
 import { OrderStatus, BillStatus } from "../../core/config/enums.js";
 import { sanitizeArray } from "../../core/utils/sanitize.js";
+import { ERROR_MESSAGES } from "../../core/constants/errorMessages.js";
 
 interface CreateOrderInput {
   tableId: number;
@@ -71,10 +72,10 @@ export class OrderService {
       // 1. Validate table
       const table = await tx.table.findUnique({ where: { id: data.tableId } });
       if (!table) {
-        throw new NotFoundError("Table");
+        throw new NotFoundError(ERROR_MESSAGES.NOT_FOUND.TABLE);
       }
       if (!table.isAvailable) {
-        throw new ValidationError("Table is not available");
+        throw new ValidationError(ERROR_MESSAGES.VALIDATION.TABLE_NOT_AVAILABLE);
       }
 
       // 2. Calculate total from menu prices
@@ -91,7 +92,7 @@ export class OrderService {
       // Validate all menus exist
       const missingMenuIds = menuIds.filter(id => !menuMap.has(id));
       if (missingMenuIds.length > 0) {
-        throw new NotFoundError(`Menus not found: ${missingMenuIds.join(', ')}`);
+        throw new NotFoundError(ERROR_MESSAGES.NOT_FOUND.MENUS(missingMenuIds));
       }
 
       // Calculate total using reduce (functional approach)
@@ -209,7 +210,7 @@ export class OrderService {
   async updateOrderStatus(id: number, status: OrderStatus) {
     const order = await orderRepository.findById(id);
     if (!order) {
-      throw new NotFoundError("Order");
+      throw new NotFoundError(ERROR_MESSAGES.NOT_FOUND.ORDER);
     }
 
     const updatedOrder = await prisma.order.update({
@@ -261,7 +262,7 @@ export class OrderService {
   async updateOrderItemStatus(itemId: number, status: OrderStatus) {
     const item = await orderItemRepository.findById(itemId);
     if (!item) {
-      throw new NotFoundError("Order item");
+      throw new NotFoundError(ERROR_MESSAGES.NOT_FOUND.ORDER_ITEM);
     }
 
     const updatedItem = await orderItemRepository.updateStatus(itemId, status);
