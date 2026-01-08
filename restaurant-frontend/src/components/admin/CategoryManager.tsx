@@ -36,6 +36,7 @@ import { logger } from "@/lib/logger";
 import { List, Plus, Pencil, Trash2 } from "lucide-react";
 import useSWR from "swr";
 import type { Dictionary } from "@/locales/dictionary";
+import { toast } from "sonner";
 
 /**
  * Category data structure
@@ -96,13 +97,26 @@ export default function CategoryManager({ dict }: CategoryManagerProps) {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: number, menuCount: number) => {
+    // Show warning if category has active menus
+    if (menuCount > 0) {
+      toast.error(`${dict.admin.cannotDeleteCategory} ${menuCount} ${dict.admin.activeMenus}`);
+      return;
+    }
+
     if (!confirm(dict.admin.confirmDelete)) return;
 
     try {
       await categoryService.deleteCategory(id);
       mutate();
-    } catch (error) {
+    } catch (error: unknown) {
+      // Display error message from backend
+      const apiError = error as { response?: { data?: { message?: string } } };
+      const errorMessage = 
+        apiError?.response?.data?.message || 
+        (error as Error)?.message ||
+        dict.admin.alertFailed;
+      toast.error(errorMessage);
       logger.error("Failed to delete category:", error);
     }
   };
@@ -167,7 +181,7 @@ export default function CategoryManager({ dict }: CategoryManagerProps) {
                   <Pencil size={18} />
                 </button>
                 <button
-                  onClick={() => handleDelete(cat.id)}
+                  onClick={() => handleDelete(cat.id, cat._count?.menus || 0)}
                   className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
                 >
                   <Trash2 size={18} />

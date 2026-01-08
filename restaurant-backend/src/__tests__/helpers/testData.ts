@@ -25,7 +25,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 /**
  * Create a mock Menu item
  */
-export function createMockMenu(overrides: Partial<Menu> = {}): Menu & { category: { id: number; name: string } } {
+export function createMockMenu(overrides: Partial<Menu> = {}): Menu & { category: { id: number; name: string; deletedAt: Date | null } } {
   return {
     id: 1,
     nameTH: 'ข้าวผัด',
@@ -41,19 +41,21 @@ export function createMockMenu(overrides: Partial<Menu> = {}): Menu & { category
     category: {
       id: 1,
       name: 'Main Dishes',
+      deletedAt: null,
     },
     ...overrides,
-  } as Menu & { category: { id: number; name: string } };
+  } as Menu & { category: { id: number; name: string; deletedAt: Date | null } };
 }
 
 /**
  * Create a mock Category
  */
-export function createMockCategory(overrides: Partial<Category> = {}): Category {
+export function createMockCategory(overrides?: Partial<Category>): Category {
   return {
     id: 1,
-    name: 'Main Dishes',
-    ...overrides,
+    name: 'Test Category',
+    deletedAt: null,
+    ...overrides
   };
 }
 

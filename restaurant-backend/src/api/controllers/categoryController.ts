@@ -45,6 +45,9 @@ type CategoryInput = z.infer<typeof createCategorySchema>;
 export const getCategories = async (req: Request, res: Response) => {
   try {
     const categories = await prisma.category.findMany({
+      where: {
+        deletedAt: null  // Filter out soft-deleted categories
+      },
       include: {
         // Include count of non-deleted menus for each category
         // This helps admins see which categories are in use
@@ -122,32 +125,36 @@ export const updateCategory = async (req: Request, res: Response) => {
 };
 
 /**
- * Deletes a category if it has no associated menus
+ * Soft deletes a category
  * 
- * Validates that no menus exist in this category before deletion
- * to maintain referential integrity.
+ * Uses soft delete pattern to preserve data and avoid foreign key issues.
+ * Categories with soft-deleted menus can be deleted safely.
  * 
  * @param req - Express request with category ID in params
  * @param res - Express response
- * @returns 200 on success, 400 if category has menus
+ * @returns 200 on success
  */
 export const deleteCategory = async (req: Request, res: Response) => {
   const { id } = req.params;
   
   try {
-    // Check if category has any menus (including soft-deleted ones)
-    // This prevents orphaned menus and maintains data integrity
-    const menuCount = await prisma.menu.count({
-      where: { categoryId: Number(id) }
+    // Check if category has any active (non-deleted) menus
+    const activeMenuCount = await prisma.menu.count({
+      where: { 
+        categoryId: Number(id),
+        deletedAt: null  // Only count active menus
+      }
     });
 
-    if (menuCount > 0) {
-      sendBadRequest(res, 'Cannot delete category with existing menus. Please move or delete menus first.');
+    if (activeMenuCount > 0) {
+      sendBadRequest(res, 'Cannot delete category with active menus. Please delete or move menus first.');
       return; 
     }
 
-    await prisma.category.delete({
-      where: { id: Number(id) }
+    // Soft delete the category
+    await prisma.category.update({
+      where: { id: Number(id) },
+      data: { deletedAt: new Date() }
     });
 
     sendSuccess(res, undefined, 'Category deleted');

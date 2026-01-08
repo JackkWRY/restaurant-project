@@ -90,6 +90,8 @@ const th = {
     placeholderCategory: "ชื่อหมวดหมู่ใหม่...",
     alertSaved: "บันทึกเรียบร้อยแล้ว ✅",
     alertFailed: "บันทึกไม่สำเร็จ",
+    cannotDeleteCategory: "ไม่สามารถลบหมวดหมู่นี้ได้ เนื่องจากมี",
+    activeMenus: "เมนูที่ใช้งานอยู่ กรุณาลบหรือย้ายเมนูก่อน",
     promptEdit: "กรอกชื่อใหม่:",
     confirmDelete: "ยืนยันการลบ?",
   },

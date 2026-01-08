@@ -90,6 +90,8 @@ const en = {
     placeholderCategory: "New Category Name...",
     alertSaved: "Saved successfully ✅",
     alertFailed: "Save failed",
+    cannotDeleteCategory: "Cannot delete this category. It has",
+    activeMenus: "active menu(s). Please delete or move the menus first.",
     promptEdit: "Enter new name:",
     confirmDelete: "Confirm delete?",
   },

@@ -47,9 +47,10 @@ model RefreshToken {
 // 3. Category & Menu
 // --------------------------------------------------------
 model Category {
-  id    Int    @id @default(autoincrement())
-  name  String
-  menus Menu[]
+  id        Int       @id @default(autoincrement())
+  name      String
+  deletedAt DateTime?
+  menus     Menu[]
 }
 
 model Menu {

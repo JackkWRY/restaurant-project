@@ -28,6 +28,7 @@ export class CategoryRepository {
     // Conditionally include menus to optimize query performance
     // Only load menus when needed (e.g., customer menu view)
     return await prisma.category.findMany({
+      where: { deletedAt: null },  // Filter out soft-deleted categories
       include: options?.includeMenus ? {
         menus: {
           // Filter out soft-deleted menus
@@ -50,7 +51,7 @@ export class CategoryRepository {
    */
   async findById(id: number, includeMenus = false) {
     // Primary key lookup with optional menu relation
-    return await prisma.category.findUnique({
+    const category = await prisma.category.findUnique({
       where: { id },
       include: includeMenus ? {
         menus: {
@@ -58,6 +59,10 @@ export class CategoryRepository {
         }
       } : undefined
     });
+    
+    // Return null if category is soft-deleted
+    if (category?.deletedAt) return null;
+    return category;
   }
 
   /**
@@ -65,7 +70,10 @@ export class CategoryRepository {
    */
   async findByName(name: string) {
     return await prisma.category.findFirst({
-      where: { name }
+      where: { 
+        name,
+        deletedAt: null  // Only find active categories
+      }
     });
   }
 
@@ -89,11 +97,24 @@ export class CategoryRepository {
   }
 
   /**
-   * Delete category
+   * Hard delete category (use softDelete instead)
    */
   async delete(id: number) {
     return await prisma.category.delete({
       where: { id }
+    });
+  }
+
+  /**
+   * Soft delete category by setting deletedAt timestamp
+   * 
+   * Preserves data for audit trail and potential recovery.
+   * Category will be filtered out from queries but remains in database.
+   */
+  async softDelete(id: number) {
+    return await prisma.category.update({
+      where: { id },
+      data: { deletedAt: new Date() }
     });
   }
 
