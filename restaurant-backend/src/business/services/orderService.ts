@@ -39,6 +39,7 @@ import {
 } from "../../core/errors/AppError.js";
 import { OrderDto } from "../dtos/orderDto.js";
 import { OrderStatus, BillStatus } from "../../core/config/enums.js";
+import { sanitizeArray } from "../../core/utils/sanitize.js";
 
 interface CreateOrderInput {
   tableId: number;
@@ -99,6 +100,10 @@ export class OrderService {
         return total + Number(menu.price) * item.quantity;
       }, 0);
 
+      // Sanitize user input to prevent XSS attacks
+      // Sanitize notes in order items before saving to database
+      const sanitizedItems = sanitizeArray(data.items, ['note']);
+
       // 3. Find or create active bill for this table
       // Each table can only have one OPEN bill at a time
       let activeBill = await tx.bill.findFirst({
@@ -128,7 +133,7 @@ export class OrderService {
           status: OrderStatus.PENDING,
           billId: activeBill.id,
           items: {
-            create: data.items.map((item) => ({
+            create: sanitizedItems.map((item) => ({
               menuId: item.menuId,
               quantity: item.quantity,
               note: item.note || "",
