@@ -158,8 +158,24 @@ app.use(
   })
 );
 
-// Body Parser - Parse JSON request bodies
-app.use(express.json());
+// Body Parser - Parse JSON request bodies with size limits
+// Limit: 10MB to prevent DoS attacks via large payloads
+app.use(express.json({ 
+  limit: '10mb',
+  verify: (req, res, buf, encoding) => {
+    // Additional verification to ensure payload size is within limits
+    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+    if (buf.length > maxSize) {
+      throw new Error('Request body too large');
+    }
+  }
+}));
+
+// URL-encoded body parser with size limits
+app.use(express.urlencoded({ 
+  extended: true, 
+  limit: '10mb' 
+}));
 
 // Request Logging - Log all incoming requests
 app.use(requestLogger);
