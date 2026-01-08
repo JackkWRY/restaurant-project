@@ -90,7 +90,7 @@ export function useStaffData(
     mutate: mutateTables, 
     isLoading: loadingTables 
   } = useSWR(
-    `${API_URL}/api/tables/status`, 
+    `${API_URL}/api/v1/tables/status`, 
     fetcher, 
     {
       refreshInterval: 5000, // Auto-refresh every 5 seconds
@@ -109,7 +109,7 @@ export function useStaffData(
     mutate: mutateDetails, 
     isLoading: loadingDetails 
   } = useSWR(
-    selectedTableId ? `${API_URL}/api/tables/${selectedTableId}/details` : null,
+    selectedTableId ? `${API_URL}/api/v1/tables/${selectedTableId}/details` : null,
     fetcher,
     { refreshInterval: 5000 }
   );

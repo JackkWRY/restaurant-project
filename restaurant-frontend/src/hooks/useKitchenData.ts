@@ -72,7 +72,7 @@ interface UseKitchenDataReturn {
  */
 export function useKitchenData(): UseKitchenDataReturn {
   const { data: swrData, error, isLoading, mutate } = useSWR(
-    `${API_URL}/api/orders/active`,
+    `${API_URL}/api/v1/orders/active`,
     authFetcher,
     {
       refreshInterval: 5000,

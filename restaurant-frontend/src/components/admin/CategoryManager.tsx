@@ -77,7 +77,7 @@ export default function CategoryManager({ dict }: CategoryManagerProps) {
   const [newCategoryName, setNewCategoryName] = useState("");
 
   const { data: catData, mutate } = useSWR(
-    `${API_URL}/api/categories`,
+    `${API_URL}/api/v1/categories`,
     authFetcher
   );
   const categories: Category[] =

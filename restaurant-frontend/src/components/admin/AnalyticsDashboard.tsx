@@ -103,14 +103,14 @@ export default function AnalyticsDashboard({ dict }: AnalyticsDashboardProps) {
     data: summaryData,
     isLoading: summaryLoading,
     error: summaryError,
-  } = useSWR<ApiResponse>(`${API_URL}/api/analytics/summary`, authFetcher, {
+  } = useSWR<ApiResponse>(`${API_URL}/api/v1/analytics/summary`, authFetcher, {
     refreshInterval: 30000,
   });
 
   // Fetch recent orders with 10-second auto-refresh
   const { data: ordersData, isLoading: ordersLoading } =
     useSWR<OrderHistoryResponse>(
-      `${API_URL}/api/analytics/orders`,
+      `${API_URL}/api/v1/analytics/orders`,
       authFetcher,
       { refreshInterval: 10000 }
     );

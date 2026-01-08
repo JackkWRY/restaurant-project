@@ -54,10 +54,10 @@ interface MenuManagerProps {
 export default function MenuManager({ dict }: MenuManagerProps) {
   // Data fetching
   const { data: menusData, mutate: mutateMenus } = useSWR(
-    `${API_URL}/api/menus?scope=all`,
+    `${API_URL}/api/v1/menus?scope=all`,
     authFetcher
   );
-  const { data: catsData } = useSWR(`${API_URL}/api/categories`, authFetcher);
+  const { data: catsData } = useSWR(`${API_URL}/api/v1/categories`, authFetcher);
 
   // Transform data
   const menus =

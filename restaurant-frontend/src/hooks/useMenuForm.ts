@@ -185,7 +185,7 @@ export function useMenuForm(
     formDataObj.append('file', file);
 
     try {
-      const res = await authFetch(`${API_URL}/api/upload`, {
+      const res = await authFetch(`${API_URL}/api/v1/upload`, {
         method: 'POST',
         body: formDataObj,
       });
