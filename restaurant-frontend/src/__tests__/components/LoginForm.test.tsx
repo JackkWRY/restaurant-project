@@ -431,14 +431,16 @@ describe('LoginForm', () => {
         expect(screen.getByText('Logging in...')).toBeInTheDocument();
       });
 
-      // Cleanup - Resolve promise
-      resolveLogin!({
-        status: 'success',
-        data: {
-          accessToken: 'token',
-          refreshToken: 'refresh',
-          user: { role: ROLE.STAFF, id: 1, username: 'user' },
-        },
+      // Cleanup - Resolve promise and wait for state updates
+      await waitFor(() => {
+        resolveLogin!({
+          status: 'success',
+          data: {
+            accessToken: 'token',
+            refreshToken: 'refresh',
+            user: { role: ROLE.STAFF, id: 1, username: 'user' },
+          },
+        });
       });
     });
 
@@ -464,14 +466,16 @@ describe('LoginForm', () => {
         expect(submitButton).toBeDisabled();
       });
 
-      // Cleanup
-      resolveLogin!({
-        status: 'success',
-        data: {
-          accessToken: 'token',
-          refreshToken: 'refresh',
-          user: { role: ROLE.STAFF, id: 1, username: 'user' },
-        },
+      // Cleanup - Resolve promise and wait for state updates
+      await waitFor(() => {
+        resolveLogin!({
+          status: 'success',
+          data: {
+            accessToken: 'token',
+            refreshToken: 'refresh',
+            user: { role: ROLE.STAFF, id: 1, username: 'user' },
+          },
+        });
       });
     });
 
