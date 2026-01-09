@@ -34,12 +34,14 @@
 - [API Documentation](#-api-documentation)
 - [Security Features](#-security-features)
 - [Internationalization](#-internationalization)
+- [Testing](#-testing)
 - [Deployment](#-deployment)
 - [Troubleshooting](#-troubleshooting)
 - [Performance & Scalability](#-performance--scalability)
 - [Contributing](#-contributing)
 - [FAQ](#-faq)
 - [Development](#-development)
+- [Roadmap](#️-roadmap)
 - [License](#-license)
 
 ---
@@ -1290,9 +1292,11 @@ This project wouldn't be possible without these excellent open-source projects:
 
 ### Planned Features
 
-- [ ] **Testing Suite**
+- [x] **Testing Suite** ✅
 
-  - [ ] Unit tests (Jest)
+  - [x] Unit tests (Vitest) - **535/535 passing (100%)**
+  - [x] Backend tests - **405/405 passing (100%)**
+  - [x] Frontend tests - **130/130 passing (100%)**
   - [ ] Integration tests
   - [ ] E2E tests (Playwright)
 
@@ -1329,6 +1333,60 @@ This project wouldn't be possible without these excellent open-source projects:
   - [ ] Docker optimization
   - [ ] Kubernetes deployment
   - [ ] Monitoring and alerting
+
+---
+
+## 🧪 Testing
+
+### Test Status
+
+✅ **535/535 tests passing (100%)**
+
+| Project  | Tests   | Status  | Coverage |
+| -------- | ------- | ------- | -------- |
+| Backend  | 405/405 | ✅ 100% | ~70%     |
+| Frontend | 130/130 | ✅ 100% | ~55%     |
+
+**Test Framework:** Vitest + React Testing Library  
+**Duration:** ~4.2s total
+
+### Running Tests
+
+```bash
+# Backend
+cd restaurant-backend && npm test
+
+# Frontend
+cd restaurant-frontend && npm test
+
+# With coverage
+npm test -- --coverage
+
+# Watch mode
+npm test -- --watch
+```
+
+### Test Coverage
+
+**Backend (405 tests):** Controllers, Services, Repositories, Middlewares, Utils, DTOs, Schemas  
+**Frontend (130 tests):** Components, Services, Store, Utils
+
+**Key Tests:**
+
+- Authentication & Authorization
+- CRUD Operations (Menu, Category, Table, Order)
+- Error Handling & Validation
+- Real-time Features (Socket.IO)
+- Accessibility (WCAG 2.1)
+- Internationalization (i18n)
+
+### Best Practices
+
+- ✅ AAA Pattern (Arrange-Act-Assert)
+- ✅ User-centric testing (React Testing Library)
+- ✅ Comprehensive coverage (happy path, errors, edge cases)
+- ✅ Mock external dependencies
+- ✅ Consistent API response format
 
 ---
 
