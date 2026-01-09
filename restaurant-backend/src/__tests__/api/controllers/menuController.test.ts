@@ -278,8 +278,8 @@ describe('MenuController', () => {
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
         status: 'success',
-        data: undefined,
-        message: 'Menu deleted'
+        message: 'SUCCESS_MENU_001',
+        code: 'SUCCESS_MENU_001',
       });
     });
   });

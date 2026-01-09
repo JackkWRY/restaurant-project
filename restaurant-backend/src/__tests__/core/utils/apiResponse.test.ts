@@ -68,6 +68,7 @@ describe('API Response Utilities', () => {
         status: 'success',
         data,
         message,
+        code: message,
       });
     });
 
@@ -110,6 +111,7 @@ describe('API Response Utilities', () => {
       expect(res.json).toHaveBeenCalledWith({
         status: 'success',
         message,
+        code: message,
       });
     });
 
@@ -152,6 +154,7 @@ describe('API Response Utilities', () => {
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
         message,
+        code: message,
       });
     });
 
@@ -168,6 +171,7 @@ describe('API Response Utilities', () => {
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
         message,
+        code: message,
       });
     });
 
@@ -188,7 +192,8 @@ describe('API Response Utilities', () => {
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
         message,
-        errors,
+        code: message,
+        details: errors,
       });
     });
 
@@ -203,6 +208,7 @@ describe('API Response Utilities', () => {
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
         message,
+        code: message,
       });
     });
   });
@@ -237,6 +243,7 @@ describe('API Response Utilities', () => {
         status: 'success',
         data,
         message,
+        code: message,
       });
     });
   });
@@ -262,6 +269,7 @@ describe('API Response Utilities', () => {
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
         message: 'Resource not found',
+        code: 'Resource not found',
       });
     });
 
@@ -277,6 +285,7 @@ describe('API Response Utilities', () => {
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
         message,
+        code: message,
       });
     });
   });
@@ -294,6 +303,7 @@ describe('API Response Utilities', () => {
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
         message,
+        code: message,
       });
     });
 
@@ -310,6 +320,7 @@ describe('API Response Utilities', () => {
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
         message,
+        code: message,
         errors,
       });
     });
@@ -325,6 +336,7 @@ describe('API Response Utilities', () => {
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
         message: 'Unauthorized',
+        code: 'Unauthorized',
       });
     });
 
@@ -340,6 +352,7 @@ describe('API Response Utilities', () => {
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
         message,
+        code: message,
       });
     });
   });
@@ -354,6 +367,7 @@ describe('API Response Utilities', () => {
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
         message: 'Forbidden',
+        code: 'Forbidden',
       });
     });
 
@@ -369,6 +383,7 @@ describe('API Response Utilities', () => {
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
         message,
+        code: message,
       });
     });
   });

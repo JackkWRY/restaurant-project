@@ -97,7 +97,8 @@ describe('UploadController', () => {
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
-        message: 'No file provided'
+        message: 'UPLOAD_001',
+        code: 'UPLOAD_001',
       });
     });
 
@@ -129,7 +130,8 @@ describe('UploadController', () => {
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
-        message: 'Image too small. Minimum dimensions: 100x100px'
+        message: 'Image too small. Minimum dimensions: 100x100px',
+        code: 'Image too small. Minimum dimensions: 100x100px',
       });
     });
 
@@ -161,7 +163,8 @@ describe('UploadController', () => {
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
-        message: 'Image too large. Maximum dimensions: 4000x4000px'
+        message: 'Image too large. Maximum dimensions: 4000x4000px',
+        code: 'Image too large. Maximum dimensions: 4000x4000px',
       });
     });
 
@@ -190,7 +193,8 @@ describe('UploadController', () => {
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
-        message: 'Invalid image file'
+        message: 'UPLOAD_002',
+        code: 'UPLOAD_002',
       });
     });
 

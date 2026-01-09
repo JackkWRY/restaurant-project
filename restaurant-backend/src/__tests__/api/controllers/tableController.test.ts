@@ -36,6 +36,7 @@ vi.mock('../../../database/client/prisma.js', () => ({
     table: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
       update: vi.fn(),
     },
   },
@@ -91,6 +92,9 @@ describe('TableController', () => {
 
       // Assert
       expect(prisma.table.findMany).toHaveBeenCalledWith({
+        where: {
+          deletedAt: null
+        },
         orderBy: { name: 'asc' },
         include: {
           orders: {
@@ -190,7 +194,8 @@ describe('TableController', () => {
       expect(res.status).toHaveBeenCalledWith(404);
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
-        message: 'Table not found'
+        message: 'Table not found',
+        code: 'Table not found',
       });
     });
   });
@@ -222,14 +227,14 @@ describe('TableController', () => {
         ]
       };
 
-      vi.mocked(prisma.table.findUnique).mockResolvedValue(mockTable as any);
+      vi.mocked(prisma.table.findFirst).mockResolvedValue(mockTable as any);
 
       // Act
       await getTableDetails(req as Request, res as Response);
 
       // Assert
-      expect(prisma.table.findUnique).toHaveBeenCalledWith({
-        where: { id: 1 },
+      expect(prisma.table.findFirst).toHaveBeenCalledWith({
+        where: { id: 1, deletedAt: null },
         include: {
           orders: {
             where: { status: { notIn: ['COMPLETED'] } },
@@ -245,7 +250,7 @@ describe('TableController', () => {
       const req = mockRequest({ params: { id: '999' } });
       const res = mockResponse();
 
-      vi.mocked(prisma.table.findUnique).mockResolvedValue(null);
+      vi.mocked(prisma.table.findFirst).mockResolvedValue(null);
 
       // Act
       await getTableDetails(req as Request, res as Response);

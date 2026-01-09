@@ -1,7 +1,7 @@
 /**
  * @file Error Handler Middleware Tests
  * @description Unit tests for global error handling middleware
- * 
+ *
  * Tests cover:
  * - AppError handling (4xx, 5xx)
  * - Unknown error handling
@@ -9,7 +9,7 @@
  * - asyncHandler wrapper
  * - Error logging
  * - Development vs production mode
- * 
+ *
  * Best Practices:
  * - Mock Express req/res/next
  * - Test error transformation
@@ -17,18 +17,22 @@
  * - Test async error handling
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { errorHandler, asyncHandler } from '@/core/middlewares/errorHandler';
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { errorHandler, asyncHandler } from "@/core/middlewares/errorHandler";
 import {
   AppError,
   ValidationError,
   NotFoundError,
   UnauthorizedError,
   InternalServerError,
-} from '@/core/errors/AppError';
-import { mockRequest, mockResponse, mockNext } from '@/__tests__/helpers/mockExpress';
+} from "@/core/errors/AppError";
+import {
+  mockRequest,
+  mockResponse,
+  mockNext,
+} from "@/__tests__/helpers/mockExpress";
 
-describe('Error Handler Middleware', () => {
+describe("Error Handler Middleware", () => {
   let req: ReturnType<typeof mockRequest>;
   let res: ReturnType<typeof mockResponse>;
   let next: ReturnType<typeof mockNext>;
@@ -40,10 +44,10 @@ describe('Error Handler Middleware', () => {
     vi.clearAllMocks();
   });
 
-  describe('errorHandler', () => {
-    it('should handle AppError with correct status code', () => {
+  describe("errorHandler", () => {
+    it("should handle AppError with correct status code", () => {
       // Arrange
-      const error = new ValidationError('Invalid input');
+      const error = new ValidationError("Invalid input");
 
       // Act
       errorHandler(error, req as any, res as any, next);
@@ -51,14 +55,15 @@ describe('Error Handler Middleware', () => {
       // Assert
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({
-        status: 'error',
-        message: 'Invalid input',
+        status: "error",
+        message: "Invalid input",
+        code: "Invalid input",
       });
     });
 
-    it('should handle NotFoundError (404)', () => {
+    it("should handle NotFoundError (404)", () => {
       // Arrange
-      const error = new NotFoundError('User');
+      const error = new NotFoundError("User");
 
       // Act
       errorHandler(error, req as any, res as any, next);
@@ -66,14 +71,15 @@ describe('Error Handler Middleware', () => {
       // Assert
       expect(res.status).toHaveBeenCalledWith(404);
       expect(res.json).toHaveBeenCalledWith({
-        status: 'error',
-        message: 'User not found',
+        status: "error",
+        message: "User not found",
+        code: "User not found",
       });
     });
 
-    it('should handle UnauthorizedError (401)', () => {
+    it("should handle UnauthorizedError (401)", () => {
       // Arrange
-      const error = new UnauthorizedError('Invalid token');
+      const error = new UnauthorizedError("Invalid token");
 
       // Act
       errorHandler(error, req as any, res as any, next);
@@ -81,14 +87,15 @@ describe('Error Handler Middleware', () => {
       // Assert
       expect(res.status).toHaveBeenCalledWith(401);
       expect(res.json).toHaveBeenCalledWith({
-        status: 'error',
-        message: 'Invalid token',
+        status: "error",
+        message: "Invalid token",
+        code: "Invalid token",
       });
     });
 
-    it('should handle InternalServerError (500)', () => {
+    it("should handle InternalServerError (500)", () => {
       // Arrange
-      const error = new InternalServerError('Database error');
+      const error = new InternalServerError("Database error");
 
       // Act
       errorHandler(error, req as any, res as any, next);
@@ -96,14 +103,15 @@ describe('Error Handler Middleware', () => {
       // Assert
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith({
-        status: 'error',
-        message: 'Database error',
+        status: "error",
+        message: "Database error",
+        code: "Database error",
       });
     });
 
-    it('should handle unknown errors as 500', () => {
+    it("should handle unknown errors as 500", () => {
       // Arrange
-      const error = new Error('Unknown error');
+      const error = new Error("Unknown error");
 
       // Act
       errorHandler(error, req as any, res as any, next);
@@ -111,12 +119,13 @@ describe('Error Handler Middleware', () => {
       // Assert
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith({
-        status: 'error',
-        message: 'Internal server error',
+        status: "error",
+        message: "Internal server error",
+        code: "Internal server error",
       });
     });
 
-    it('should handle errors without message', () => {
+    it("should handle errors without message", () => {
       // Arrange
       const error = new Error();
 
@@ -128,12 +137,13 @@ describe('Error Handler Middleware', () => {
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
         message: 'Internal server error',
+        code: 'Internal server error',
       });
     });
 
-    it('should handle non-Error objects', () => {
+    it("should handle non-Error objects", () => {
       // Arrange
-      const error = 'String error';
+      const error = "String error";
 
       // Act
       errorHandler(error as any, req as any, res as any, next);
@@ -143,12 +153,13 @@ describe('Error Handler Middleware', () => {
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
         message: 'Internal server error',
+        code: 'Internal server error',
       });
     });
 
-    it('should not include stack trace by default', () => {
+    it("should not include stack trace by default", () => {
       // Arrange
-      const error = new AppError(500, 'Test error');
+      const error = new AppError(500, "Test error");
 
       // Act
       errorHandler(error, req as any, res as any, next);
@@ -156,32 +167,33 @@ describe('Error Handler Middleware', () => {
       // Assert
       const callArg = (res.json as any).mock.calls[0][0];
       expect(callArg).toEqual({
-        status: 'error',
-        message: 'Test error',
+        status: "error",
+        message: "Test error",
+        code: "Test error",
       });
-      expect(callArg).not.toHaveProperty('stack');
+      expect(callArg).not.toHaveProperty("stack");
     });
 
-    it('should not include stack trace in production mode', () => {
+    it("should not include stack trace in production mode", () => {
       // Arrange
       const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'production';
-      const error = new AppError(500, 'Test error');
+      process.env.NODE_ENV = "production";
+      const error = new AppError(500, "Test error");
 
       // Act
       errorHandler(error, req as any, res as any, next);
 
       // Assert
       const callArg = (res.json as any).mock.calls[0][0];
-      expect(callArg).not.toHaveProperty('stack');
+      expect(callArg).not.toHaveProperty("stack");
 
       // Cleanup
       process.env.NODE_ENV = originalEnv;
     });
   });
 
-  describe('asyncHandler', () => {
-    it('should handle successful async operations', async () => {
+  describe("asyncHandler", () => {
+    it("should handle successful async operations", async () => {
       // Arrange
       const handler = vi.fn().mockResolvedValue(undefined);
       const wrappedHandler = asyncHandler(handler);
@@ -194,9 +206,9 @@ describe('Error Handler Middleware', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('should catch async errors and pass to next', async () => {
+    it("should catch async errors and pass to next", async () => {
       // Arrange
-      const error = new Error('Async error');
+      const error = new Error("Async error");
       const handler = vi.fn().mockRejectedValue(error);
       const wrappedHandler = asyncHandler(handler);
 
@@ -207,9 +219,9 @@ describe('Error Handler Middleware', () => {
       expect(next).toHaveBeenCalledWith(error);
     });
 
-    it('should catch AppError and pass to next', async () => {
+    it("should catch AppError and pass to next", async () => {
       // Arrange
-      const error = new ValidationError('Invalid data');
+      const error = new ValidationError("Invalid data");
       const handler = vi.fn().mockRejectedValue(error);
       const wrappedHandler = asyncHandler(handler);
 
@@ -220,9 +232,9 @@ describe('Error Handler Middleware', () => {
       expect(next).toHaveBeenCalledWith(error);
     });
 
-    it('should handle synchronous errors thrown in handler', async () => {
+    it("should handle synchronous errors thrown in handler", async () => {
       // Arrange
-      const error = new Error('Sync error');
+      const error = new Error("Sync error");
       const handler = async () => {
         throw error;
       };
@@ -235,7 +247,7 @@ describe('Error Handler Middleware', () => {
       expect(next).toHaveBeenCalledWith(error);
     });
 
-    it('should preserve handler context', async () => {
+    it("should preserve handler context", async () => {
       // Arrange
       let capturedReq: any;
       let capturedRes: any;

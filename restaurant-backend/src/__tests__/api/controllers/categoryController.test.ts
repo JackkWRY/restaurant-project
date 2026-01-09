@@ -71,6 +71,9 @@ describe('CategoryController', () => {
 
       // Assert
       expect(prisma.category.findMany).toHaveBeenCalledWith({
+        where: {
+          deletedAt: null
+        },
         include: {
           _count: {
             select: {
@@ -230,16 +233,17 @@ describe('CategoryController', () => {
 
       // Assert
       expect(prisma.menu.count).toHaveBeenCalledWith({
-        where: { categoryId: 1 }
+        where: { categoryId: 1, deletedAt: null }
       });
-      expect(prisma.category.delete).toHaveBeenCalledWith({
-        where: { id: 1 }
+      expect(prisma.category.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { deletedAt: expect.any(Date) }
       });
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
         status: 'success',
-        data: undefined,
-        message: 'Category deleted'
+        message: 'SUCCESS_CATEGORY_001',
+        code: 'SUCCESS_CATEGORY_001',
       });
     });
 
@@ -257,13 +261,14 @@ describe('CategoryController', () => {
 
       // Assert
       expect(prisma.menu.count).toHaveBeenCalledWith({
-        where: { categoryId: 1 }
+        where: { categoryId: 1, deletedAt: null }
       });
-      expect(prisma.category.delete).not.toHaveBeenCalled();
+      expect(prisma.category.update).not.toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
-        message: 'Cannot delete category with existing menus. Please move or delete menus first.'
+        message: 'CATEGORY_005',
+        code: 'CATEGORY_005',
       });
     });
 
@@ -281,7 +286,7 @@ describe('CategoryController', () => {
       await deleteCategory(req as Request, res as Response);
 
       // Assert
-      expect(prisma.menu.count).toHaveBeenCalledBefore(prisma.category.delete as any);
+      expect(prisma.menu.count).toHaveBeenCalledBefore(prisma.category.update as any);
     });
   });
 });

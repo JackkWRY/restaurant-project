@@ -128,7 +128,8 @@ describe('AuthController', () => {
       expect(res.status).toHaveBeenCalledWith(401);
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
-        message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'
+        message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
+        code: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
       });
     });
 
@@ -159,7 +160,8 @@ describe('AuthController', () => {
       expect(res.status).toHaveBeenCalledWith(401);
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
-        message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'
+        message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
+        code: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
       });
     });
 
@@ -268,7 +270,8 @@ describe('AuthController', () => {
       expect(res.status).toHaveBeenCalledWith(401);
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
-        message: 'Invalid or expired refresh token'
+        message: 'Invalid or expired refresh token',
+        code: 'Invalid or expired refresh token',
       });
     });
 
@@ -292,7 +295,8 @@ describe('AuthController', () => {
       expect(res.status).toHaveBeenCalledWith(401);
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
-        message: 'Refresh token expired'
+        message: 'Refresh token expired',
+        code: 'Refresh token expired',
       });
     });
 
@@ -316,7 +320,8 @@ describe('AuthController', () => {
       expect(res.status).toHaveBeenCalledWith(401);
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
-        message: 'Invalid refresh token'
+        message: 'Invalid refresh token',
+        code: 'Invalid refresh token',
       });
     });
   });
@@ -343,8 +348,8 @@ describe('AuthController', () => {
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
         status: 'success',
-        data: undefined,
-        message: 'Logged out successfully'
+        message: 'SUCCESS_AUTH_001',
+        code: 'SUCCESS_AUTH_001',
       });
     });
 
@@ -366,8 +371,8 @@ describe('AuthController', () => {
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
         status: 'success',
-        data: undefined,
-        message: 'Logged out successfully'
+        message: 'SUCCESS_AUTH_001',
+        code: 'SUCCESS_AUTH_001',
       });
     });
   });
