@@ -35,7 +35,6 @@ import FloatingCart from "@/components/customer/FloatingCart";
 import TableDetector from "@/components/customer/TableDetector";
 import { useCartStore } from "@/store/useCartStore";
 import type { Dictionary } from "@/locales/dictionary";
-import { logger } from "@/lib/logger";
 
 // Custom Hook
 import { useCustomerSocket } from "@/hooks/useCustomerSocket";

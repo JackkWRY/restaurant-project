@@ -36,10 +36,9 @@
 "use client";
 
 import { API_URL } from "@/lib/utils";
-import { logger } from "@/lib/logger";
 import { useState } from "react";
 import { toast } from "sonner";
-import { getErrorMessage, getSuccessMessage } from '@/lib/errorHandler';
+import { getErrorMessage } from '@/lib/errorHandler';
 import { useSearchParams } from "next/navigation";
 import { ShoppingCart, X, Plus, Minus, Trash2, Utensils, MessageSquare } from "lucide-react"; 
 import { useCartStore } from "@/store/useCartStore";
