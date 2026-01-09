@@ -24,6 +24,7 @@ import { Request, Response } from 'express';
 import { v2 as cloudinary } from 'cloudinary';
 import sharp from 'sharp';
 import { CLOUDINARY_CONFIG } from '../../core/config/index.js';
+import { ErrorCodes } from '../../core/constants/errorCodes.js';
 import { sendSuccess, sendBadRequest, sendError } from '../../core/utils/apiResponse.js';
 
 cloudinary.config({
@@ -53,7 +54,7 @@ cloudinary.config({
 export const uploadImage = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.file) {
-      sendBadRequest(res, 'No file provided');
+      sendBadRequest(res, ErrorCodes.UPLOAD_NO_FILE);
       return;
     }
 
@@ -79,7 +80,7 @@ export const uploadImage = async (req: Request, res: Response): Promise<void> =>
         }
       }
     } catch (sharpError) {
-      sendBadRequest(res, 'Invalid image file');
+      sendBadRequest(res, ErrorCodes.UPLOAD_INVALID_FILE);
       return;
     }
 
@@ -96,7 +97,7 @@ export const uploadImage = async (req: Request, res: Response): Promise<void> =>
 
   } catch (error) {
     if (error instanceof Error && error.message.includes('File too large')) {
-      sendBadRequest(res, 'File size exceeds 5MB limit');
+      sendBadRequest(res, ErrorCodes.UPLOAD_FILE_TOO_LARGE);
       return;
     }
     
@@ -105,6 +106,6 @@ export const uploadImage = async (req: Request, res: Response): Promise<void> =>
       return;
     }
     
-    sendError(res, 'Upload failed');
+    sendError(res, ErrorCodes.UPLOAD_FAILED);
   }
 };

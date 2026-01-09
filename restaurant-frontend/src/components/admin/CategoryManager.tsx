@@ -37,6 +37,7 @@ import { List, Plus, Pencil, Trash2 } from "lucide-react";
 import useSWR from "swr";
 import type { Dictionary } from "@/locales/dictionary";
 import { toast } from "sonner";
+import { getErrorMessage } from '@/lib/errorHandler';
 
 /**
  * Category data structure
@@ -93,6 +94,8 @@ export default function CategoryManager({ dict }: CategoryManagerProps) {
       setNewCategoryName("");
       mutate();
     } catch (error) {
+      const message = getErrorMessage(error, dict);
+      toast.error(message);
       logger.error("Failed to create category:", error);
     }
   };
@@ -110,13 +113,8 @@ export default function CategoryManager({ dict }: CategoryManagerProps) {
       await categoryService.deleteCategory(id);
       mutate();
     } catch (error: unknown) {
-      // Display error message from backend
-      const apiError = error as { response?: { data?: { message?: string } } };
-      const errorMessage = 
-        apiError?.response?.data?.message || 
-        (error as Error)?.message ||
-        dict.admin.alertFailed;
-      toast.error(errorMessage);
+      const message = getErrorMessage(error, dict);
+      toast.error(message);
       logger.error("Failed to delete category:", error);
     }
   };
@@ -129,6 +127,8 @@ export default function CategoryManager({ dict }: CategoryManagerProps) {
       await categoryService.updateCategory(id, newName);
       mutate();
     } catch (error) {
+      const message = getErrorMessage(error, dict);
+      toast.error(message);
       logger.error("Failed to update category:", error);
     }
   };

@@ -18,6 +18,7 @@
  */
 
 import type { Request, Response } from 'express';
+import { ErrorCodes } from '../../core/constants/errorCodes.js';
 import { Prisma } from '@prisma/client';
 import prisma from '../../database/client/prisma.js';
 import { BillStatus, OrderStatus } from '../../core/config/enums.js';
@@ -127,7 +128,7 @@ export const getAnalyticsSummary = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        sendError(res, 'Failed to fetch analytics summary');
+        sendError(res, ErrorCodes.ANALYTICS_FETCH_FAILED);
     }
 };
 
@@ -202,7 +203,7 @@ export const getDailyBills = async (req: Request, res: Response) => {
 
         sendSuccess(res, formattedBills);
     } catch (error) {
-        sendError(res, 'Failed to fetch daily bills');
+        sendError(res, ErrorCodes.ANALYTICS_BILLS_FETCH_FAILED);
     }
 };
 
@@ -296,6 +297,6 @@ export const getBillHistory = async (req: Request, res: Response) => {
             }
         });
     } catch (error) {
-        sendError(res, 'Failed to fetch bill history');
+        sendError(res, ErrorCodes.ANALYTICS_HISTORY_FETCH_FAILED);
     }
 };

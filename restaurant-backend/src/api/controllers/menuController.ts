@@ -18,6 +18,7 @@
 import type { Request, Response } from 'express';
 import { asyncHandler } from '../../core/middlewares/errorHandler.js';
 import { menuService } from '../../business/services/menuService.js';
+import { SuccessCodes } from '../../core/constants/errorCodes.js';
 import { sendSuccess, sendCreated } from '../../core/utils/apiResponse.js';
 
 /**
@@ -124,7 +125,7 @@ export const deleteMenu = asyncHandler(async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   await menuService.deleteMenu(id);
   
-  sendSuccess(res, undefined, 'Menu deleted');
+  sendSuccess(res, undefined, SuccessCodes.MENU_DELETED);
 });
 
 /**

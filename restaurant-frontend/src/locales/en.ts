@@ -204,6 +204,32 @@ const en = {
     total: "Total",
     loading: "Loading data...",
     noData: "No records found for this period."
+  },
+  errors: {
+    TABLE_001: 'Table not found', TABLE_002: 'Failed to create table', TABLE_003: 'Failed to update table',
+    TABLE_004: 'Failed to delete table', TABLE_005: 'Failed to fetch table', TABLE_006: 'Cannot delete table with active customers',
+    TABLE_007: 'Cannot delete available table. Please disable it first', TABLE_008: 'Failed to close table',
+    TABLE_009: 'Cannot close table. Some items are not yet served', TABLE_010: 'Failed to update availability',
+    TABLE_011: 'Failed to update call staff status', TABLE_012: 'Failed to fetch table details',
+    CATEGORY_001: 'Category not found', CATEGORY_002: 'Failed to create category', CATEGORY_003: 'Failed to update category',
+    CATEGORY_004: 'Failed to delete category', CATEGORY_005: 'Cannot delete category with active menus', CATEGORY_006: 'Failed to fetch categories',
+    MENU_001: 'Menu not found', MENU_002: 'Failed to create menu', MENU_003: 'Failed to update menu',
+    MENU_004: 'Failed to delete menu', MENU_005: 'Failed to fetch menu',
+    AUTH_001: 'Login failed', AUTH_002: 'Logout failed', AUTH_003: 'Session expired. Please login again',
+    AUTH_004: 'Server configuration error', AUTH_005: 'Invalid credentials', AUTH_006: 'Unauthorized',
+    UPLOAD_001: 'No file provided', UPLOAD_002: 'Invalid image file', UPLOAD_003: 'File size exceeds 5MB limit', UPLOAD_004: 'Upload failed',
+    ANALYTICS_001: 'Failed to fetch analytics', ANALYTICS_002: 'Failed to fetch bills', ANALYTICS_003: 'Failed to fetch history',
+    SETTINGS_001: 'Failed to fetch settings', SETTINGS_002: 'Failed to update settings',
+    ORDER_001: 'Failed to create order', ORDER_002: 'Failed to update order', ORDER_003: 'Failed to update order item', ORDER_004: 'Failed to fetch order',
+    BILL_001: 'Failed to fetch bill', BILL_002: 'Failed to create bill',
+    ERROR_001: 'An error occurred', ERROR_002: 'Validation error', ERROR_003: 'Not found', ERROR_004: 'Bad request'
+  },
+  success: {
+    SUCCESS_TABLE_001: 'Table deleted successfully', SUCCESS_TABLE_002: 'Table closed successfully',
+    SUCCESS_TABLE_003: 'Table created successfully', SUCCESS_TABLE_004: 'Table updated successfully',
+    SUCCESS_CATEGORY_001: 'Category deleted successfully', SUCCESS_CATEGORY_002: 'Category created successfully', SUCCESS_CATEGORY_003: 'Category updated successfully',
+    SUCCESS_MENU_001: 'Menu deleted successfully', SUCCESS_MENU_002: 'Menu created successfully', SUCCESS_MENU_003: 'Menu updated successfully',
+    SUCCESS_AUTH_001: 'Logged out successfully', SUCCESS_AUTH_002: 'Logged in successfully'
   }
 };
 

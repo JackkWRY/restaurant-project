@@ -32,6 +32,7 @@ import { useState, useEffect } from "react";
 import { Settings, Save } from "lucide-react";
 import { toast } from "sonner";
 import type { Dictionary } from "@/locales/dictionary";
+import { getErrorMessage, getSuccessMessage } from '@/lib/errorHandler';
 
 /**
  * Props for SettingsManager component
@@ -84,13 +85,13 @@ export default function SettingsManager({ dict }: SettingsManagerProps) {
       const data = await settingsService.updateRestaurantName(restaurantName);
 
       if (data.status === 'success') {
-        toast.success(dict.admin.alertSaved);
+        const message = getSuccessMessage(data, dict); toast.success(message);
       } else {
-        toast.error(dict.admin.alertFailed);
+        const message = getErrorMessage(data, dict); toast.error(message);
       }
     } catch (error) {
       logger.error("Failed to save settings:", error);
-      toast.error(dict.common.error);
+      const message = getErrorMessage(error, dict); toast.error(message);
     } finally {
       setLoading(false);
     }

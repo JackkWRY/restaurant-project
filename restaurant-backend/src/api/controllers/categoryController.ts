@@ -25,6 +25,7 @@ import { z } from 'zod';
 import prisma from '../../database/client/prisma.js';
 import logger from '../../core/config/logger.js';
 import { createCategorySchema } from '../schemas/categorySchema.js';
+import { ErrorCodes, SuccessCodes } from '../../core/constants/errorCodes.js';
 import { sendSuccess, sendCreated, sendError, sendBadRequest } from '../../core/utils/apiResponse.js';
 
 type CategoryInput = z.infer<typeof createCategorySchema>;
@@ -65,7 +66,7 @@ export const getCategories = async (req: Request, res: Response) => {
     });
     sendSuccess(res, categories);
   } catch (error) {
-    sendError(res, 'Failed to fetch categories');
+    sendError(res, ErrorCodes.CATEGORY_FETCH_FAILED);
   }
 };
 
@@ -92,7 +93,7 @@ export const createCategory = async (req: Request, res: Response) => {
     sendCreated(res, newCategory);
   } catch (error) {
     logger.error('Create category error', { error: error instanceof Error ? error.message : 'Unknown error' });
-    sendError(res, 'Failed to create category');
+    sendError(res, ErrorCodes.CATEGORY_CREATE_FAILED);
   }
 };
 
@@ -120,7 +121,7 @@ export const updateCategory = async (req: Request, res: Response) => {
 
     sendSuccess(res, updatedCategory);
   } catch (error) {
-    sendError(res, 'Failed to update category');
+    sendError(res, ErrorCodes.CATEGORY_UPDATE_FAILED);
   }
 };
 
@@ -147,7 +148,7 @@ export const deleteCategory = async (req: Request, res: Response) => {
     });
 
     if (activeMenuCount > 0) {
-      sendBadRequest(res, 'Cannot delete category with active menus. Please delete or move menus first.');
+      sendBadRequest(res, ErrorCodes.CATEGORY_HAS_MENUS);
       return; 
     }
 
@@ -157,9 +158,9 @@ export const deleteCategory = async (req: Request, res: Response) => {
       data: { deletedAt: new Date() }
     });
 
-    sendSuccess(res, undefined, 'Category deleted');
+    sendSuccess(res, undefined, SuccessCodes.CATEGORY_DELETED);
   } catch (error) {
     logger.error('Delete category error', { error: error instanceof Error ? error.message : 'Unknown error', categoryId: id });
-    sendError(res, 'Failed to delete category');
+    sendError(res, ErrorCodes.CATEGORY_DELETE_FAILED);
   }
 };

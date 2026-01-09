@@ -25,6 +25,7 @@ import prisma from '../../database/client/prisma.js';
 import logger from '../../core/config/logger.js';
 import { CLIENT_URL } from '../../core/config/index.js';
 import { OrderStatus, BillStatus } from '../../core/config/enums.js';
+import { ErrorCodes, SuccessCodes } from '../../core/constants/errorCodes.js';
 import { sendSuccess, sendCreated, sendError, sendBadRequest, sendNotFound } from '../../core/utils/apiResponse.js';
 import { 
   createTableSchema, 
@@ -81,7 +82,7 @@ export const createTable = async (req: Request, res: Response) => {
 
     sendCreated(res, updatedTable);
   } catch (error) {
-    sendError(res, 'Failed to create table');
+    sendError(res, ErrorCodes.TABLE_CREATE_FAILED);
   }
 };
 
@@ -107,7 +108,7 @@ export const updateTable = async (req: Request, res: Response) => {
     sendSuccess(res, updatedTable);
   } catch (error) {
     logger.error('Update table name error', { error: error instanceof Error ? error.message : 'Unknown error', tableId: id });
-    sendError(res, 'Failed to update table name');
+    sendError(res, ErrorCodes.TABLE_UPDATE_FAILED);
   }
 };
 
@@ -144,14 +145,14 @@ export const deleteTable = async (req: Request, res: Response) => {
     // Business rule: Cannot delete occupied tables
     // Prevents accidental deletion of tables with active customers
     if (table.isOccupied) {
-      sendBadRequest(res, 'Cannot delete table with active customers');
+      sendBadRequest(res, ErrorCodes.TABLE_OCCUPIED);
       return;
     }
 
     // Business rule: Cannot delete available tables
     // Admin must disable table first before deletion
     if (table.isAvailable) {
-      sendBadRequest(res, 'Cannot delete available table. Please disable it first');
+      sendBadRequest(res, ErrorCodes.TABLE_AVAILABLE);
       return;
     }
 
@@ -167,13 +168,13 @@ export const deleteTable = async (req: Request, res: Response) => {
       }
     });
 
-    sendSuccess(res, undefined, 'Table deleted');
+    sendSuccess(res, undefined, SuccessCodes.TABLE_DELETED);
   } catch (error) {
     logger.error('Delete table error', { 
       error: error instanceof Error ? error.message : 'Unknown error',
       tableId: req.params.id 
     });
-    sendError(res, 'Failed to delete table');
+    sendError(res, ErrorCodes.TABLE_DELETE_FAILED);
   }
 };
 
@@ -196,7 +197,7 @@ export const toggleAvailability = async (req: Request, res: Response) => {
 
     sendSuccess(res, updatedTable);
   } catch (error) {
-    sendError(res, 'Failed to update availability');
+    sendError(res, ErrorCodes.TABLE_AVAILABILITY_UPDATE_FAILED);
   }
 };
 
@@ -219,7 +220,7 @@ export const getTableById = async (req: Request, res: Response) => {
     
     sendSuccess(res, table);
   } catch (error) {
-    sendError(res, 'Error fetching table');
+    sendError(res, ErrorCodes.TABLE_FETCH_FAILED);
   }
 };
 
@@ -266,7 +267,7 @@ export const updateCallStaff = async (req: Request, res: Response) => {
 
     sendSuccess(res, payload);
   } catch (error) {
-    sendError(res, 'Failed to update call staff status');
+    sendError(res, ErrorCodes.TABLE_CALL_STAFF_UPDATE_FAILED);
   }
 };
 
@@ -301,7 +302,7 @@ export const closeTable = async (req: Request, res: Response) => {
     });
 
     if (unservedItems) {
-      sendBadRequest(res, 'Cannot close table. Some items are not yet SERVED or COMPLETED.');
+      sendBadRequest(res, ErrorCodes.TABLE_UNSERVED_ITEMS);
       return; 
     }
 
@@ -381,10 +382,10 @@ export const closeTable = async (req: Request, res: Response) => {
       isAvailable: false
     });
 
-    sendSuccess(res, undefined, 'Table and Bill closed successfully');
+    sendSuccess(res, undefined, SuccessCodes.TABLE_CLOSED);
 
   } catch (error) {
-    sendError(res, 'Failed to close table');
+    sendError(res, ErrorCodes.TABLE_CLOSE_FAILED);
   }
 };
 
@@ -453,7 +454,7 @@ export const getTablesStatus = async (req: Request, res: Response) => {
     sendSuccess(res, tableData);
   } catch (error) {
     logger.error('Fetch table status error', { error: error instanceof Error ? error.message : 'Unknown error' });
-    sendError(res, 'Failed to fetch table status');
+    sendError(res, ErrorCodes.TABLE_FETCH_FAILED);
   }
 };
 
@@ -516,6 +517,6 @@ export const getTableDetails = async (req: Request, res: Response) => {
     sendSuccess(res, { ...table, items: allItems });
   } catch (error) {
     logger.error('Fetch table details error', { error: error instanceof Error ? error.message : 'Unknown error' });
-    sendError(res, 'Failed to fetch details');
+    sendError(res, ErrorCodes.TABLE_DETAILS_FETCH_FAILED);
   }
 };

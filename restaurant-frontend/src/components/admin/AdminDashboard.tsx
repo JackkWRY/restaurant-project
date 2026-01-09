@@ -41,6 +41,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useAuth } from "@/hooks";
 import { toast } from "sonner";
+import { getSuccessMessage } from '@/lib/errorHandler';
 import {
   Globe,
   LogOut,
@@ -118,8 +119,9 @@ export default function AdminDashboard({ dict, lang }: AdminDashboardProps) {
 
   const handleLogout = async () => {
     if (confirm(dict.common.logoutConfirm)) {
-      await logout();
-      toast.success(dict.common.logout);
+       logout();
+      const message = getSuccessMessage({ code: 'SUCCESS_AUTH_001' }, dict);
+      toast.success(message);
     }
   };
 

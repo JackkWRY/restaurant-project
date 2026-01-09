@@ -29,6 +29,7 @@ import { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import useSWR from "swr";
 import { toast } from "sonner";
+import { getErrorMessage } from '@/lib/errorHandler';
 import { QrCode, Lock } from "lucide-react";
 import FloatingCart from "@/components/customer/FloatingCart";
 import TableDetector from "@/components/customer/TableDetector";
@@ -168,8 +169,8 @@ export default function CustomerOrder({ dict, lang }: CustomerOrderProps) {
 
       mutateTable();
     } catch (error) {
-      logger.error(error);
-      toast.error(dict.customer.alertFailed);
+      const message = getErrorMessage(error, dict);
+      toast.error(message);
       mutateTable();
     }
   };

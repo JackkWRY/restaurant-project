@@ -27,6 +27,7 @@ import logger from '../../core/config/logger.js';
 import { JWT_CONFIG } from '../../core/config/index.js';
 import { loginSchema, refreshSchema, logoutSchema } from '../schemas/authSchema.js';
 import { sendSuccess, sendError, sendUnauthorized } from '../../core/utils/apiResponse.js';
+import { ErrorCodes, SuccessCodes } from '../../core/constants/errorCodes.js';
 
 type LoginInput = z.infer<typeof loginSchema>;
 type RefreshInput = z.infer<typeof refreshSchema>;
@@ -83,7 +84,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     
     if (!secret || !refreshSecret) {
       logger.error('JWT_SECRET or REFRESH_TOKEN_SECRET is not defined');
-      sendError(res, 'Server configuration error');
+      sendError(res, ErrorCodes.AUTH_CONFIG_ERROR);
       return;
     }
 
@@ -120,7 +121,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
   } catch (error) {
     logger.error('Login error', { error: error instanceof Error ? error.message : 'Unknown error' });
-    sendError(res, 'Login failed');
+    sendError(res, ErrorCodes.AUTH_LOGIN_FAILED);
   }
 };
 
@@ -143,7 +144,7 @@ export const refresh = async (req: Request, res: Response): Promise<void> => {
 
     if (!refreshSecret || !accessSecret) {
       logger.error('JWT secrets not configured');
-      sendError(res, 'Server configuration error');
+      sendError(res, ErrorCodes.AUTH_CONFIG_ERROR);
       return;
     }
 
@@ -189,7 +190,7 @@ export const refresh = async (req: Request, res: Response): Promise<void> => {
       return;
     }
     logger.error('Refresh token error', { error: error instanceof Error ? error.message : 'Unknown error' });
-    sendError(res, 'Token refresh failed');
+    sendError(res, ErrorCodes.AUTH_TOKEN_REFRESH_FAILED);
   }
 };
 
@@ -217,10 +218,10 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
 
     logger.info('User logged out');
 
-    sendSuccess(res, undefined, 'Logged out successfully');
+    sendSuccess(res, undefined, SuccessCodes.LOGOUT_SUCCESS);
 
   } catch (error) {
     logger.error('Logout error', { error: error instanceof Error ? error.message : 'Unknown error' });
-    sendError(res, 'Logout failed');
+    sendError(res, ErrorCodes.AUTH_LOGOUT_FAILED);
   }
 };

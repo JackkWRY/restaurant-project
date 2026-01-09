@@ -43,6 +43,7 @@ import TableCard from "./TableCard";
 import OrderDetailModal from "./OrderDetailModal";
 import BillCheckoutModal from "./BillCheckoutModal";
 import TableManagementSection from "./TableManagementSection";
+import { getErrorMessage, getSuccessMessage } from '@/lib/errorHandler';
 
 interface StaffDashboardProps {
   dict: Dictionary;
@@ -127,11 +128,13 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
         mutateTables();
         closeModal();
       } else {
-        toast.error(`${dict.common.error}: ${data.message || "Unknown error"}`);
+        const message = getErrorMessage(data, dict);
+        toast.error(message);
       }
     } catch (error) {
       logger.error(error);
-      toast.error(dict.common.error);
+      const message = getErrorMessage(error, dict);
+      toast.error(message);
     }
   };
 
@@ -150,6 +153,8 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
       mutateTables();
       toast.success(dict.common.success);
     } catch (error) {
+      const message = getErrorMessage(error, dict);
+      toast.error(message);
       logger.error(error);
     }
   };
@@ -160,9 +165,12 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
       const data = await tableService.createTable(name);
       if (data.status === "success") {
         mutateTables();
-        toast.success(dict.staff.addTable + " " + dict.common.success);
+        const message = getSuccessMessage(data, dict);
+        toast.success(message);
       }
     } catch (error) {
+      const message = getErrorMessage(error, dict);
+      toast.error(message);
       logger.error(error);
     }
   };
@@ -221,7 +229,8 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
     try {
       await tableService.callStaff(tableId, false);
       mutateTables();
-      toast.success(dict.staff.callCustomer + " - " + dict.common.success);
+      const message = getSuccessMessage({ code: 'SUCCESS_TABLE_004' }, dict);
+      toast.success(message);
     } catch (error) {
       logger.error(error);
     }

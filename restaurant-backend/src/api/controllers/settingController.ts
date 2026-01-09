@@ -23,6 +23,7 @@ import { z } from 'zod';
 import prisma from '../../database/client/prisma.js';
 import { updateSettingSchema } from '../schemas/settingSchema.js';
 import { sendSuccess, sendError } from '../../core/utils/apiResponse.js';
+import { ErrorCodes, SuccessCodes } from '../../core/constants/errorCodes.js';
 
 type UpdateSettingInput = z.infer<typeof updateSettingSchema>;
 
@@ -51,7 +52,7 @@ export const getRestaurantName = async (req: Request, res: Response) => {
     
     sendSuccess(res, setting ? setting.value : 'Restaurant 🍳');
   } catch (error) {
-    sendError(res, 'Failed to fetch settings');
+    sendError(res, ErrorCodes.SETTINGS_FETCH_FAILED);
   }
 };
 
@@ -84,6 +85,6 @@ export const updateRestaurantName = async (req: Request, res: Response) => {
 
     sendSuccess(res, setting);
   } catch (error) {
-    sendError(res, 'Failed to update settings');
+    sendError(res, ErrorCodes.SETTINGS_UPDATE_FAILED);
   }
 };

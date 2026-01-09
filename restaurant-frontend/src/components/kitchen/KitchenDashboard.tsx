@@ -31,6 +31,7 @@ import {
   Globe,
 } from "lucide-react";
 import { toast } from "sonner";
+import { getSuccessMessage } from '@/lib/errorHandler';
 import type { Dictionary } from "@/locales/dictionary";
 import { logger } from "@/lib/logger";
 
@@ -71,8 +72,9 @@ export default function KitchenDashboard({
 
   const handleLogout = async () => {
     if (confirm(dict.common.logoutConfirm)) {
-      await logout();
-      toast.success(dict.common.logout);
+       logout();
+      const message = getSuccessMessage({ code: 'SUCCESS_AUTH_001' }, dict);
+      toast.success(message);
     }
   };
 
