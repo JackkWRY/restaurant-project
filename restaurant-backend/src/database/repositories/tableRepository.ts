@@ -28,49 +28,62 @@ import type { Table, Prisma } from '@prisma/client';
 
 export class TableRepository {
   /**
-   * Retrieves all tables with optional filtering
+   * Retrieves all non-deleted tables with optional filtering
    * 
    * Performance: Simple query, indexed by id for efficient sorting.
+   * Soft delete: Filters out tables where deletedAt is not null.
    * 
    * @param where - Optional Prisma where clause
-   * @returns Array of tables ordered by ID
+   * @returns Array of active tables ordered by ID
    */
   async findAll(where?: Prisma.TableWhereInput) {
     // Order by ID for consistent table numbering display
+    // Filter out soft-deleted tables
     return await prisma.table.findMany({
-      where,
+      where: {
+        ...where,
+        deletedAt: null
+      },
       orderBy: { id: 'asc' }
     });
   }
 
   /**
-   * Retrieves a single table by ID
+   * Retrieves a single non-deleted table by ID
    * 
    * Performance: Uses primary key for O(1) lookup.
+   * Soft delete: Returns null if table is deleted.
    * 
    * @param id - Table ID
-   * @returns Table or null if not found
+   * @returns Table or null if not found or deleted
    */
   async findById(id: number) {
-    // Primary key lookup - fastest query type
-    return await prisma.table.findUnique({
-      where: { id }
+    // Primary key lookup with soft delete filter
+    return await prisma.table.findFirst({
+      where: { 
+        id,
+        deletedAt: null
+      }
     });
   }
 
   /**
-   * Retrieves a table by name (unique constraint)
+   * Retrieves a non-deleted table by name
    * 
    * Validation: Used for uniqueness checks before create/update.
+   * Soft delete: Only checks among non-deleted tables.
    * Performance: Requires unique index on name column.
    * 
    * @param name - Table name
-   * @returns Table or null if not found
+   * @returns Table or null if not found or deleted
    */
   async findByName(name: string) {
-    // Unique constraint check - requires unique index on 'name'
-    return await prisma.table.findUnique({
-      where: { name }
+    // Check uniqueness only among non-deleted tables
+    return await prisma.table.findFirst({
+      where: { 
+        name,
+        deletedAt: null
+      }
     });
   }
 
@@ -101,14 +114,22 @@ export class TableRepository {
   }
 
   /**
-   * Deletes a table
+   * Soft deletes a table by setting deletedAt timestamp
+   * 
+   * Preserves all related data (Bills, Orders) for analytics.
+   * Table will be filtered out from all queries but data remains.
    * 
    * @param id - Table ID
-   * @returns Deleted table
+   * @returns Soft deleted table
    */
-  async delete(id: number) {
-    return await prisma.table.delete({
-      where: { id }
+  async softDelete(id: number) {
+    return await prisma.table.update({
+      where: { id },
+      data: { 
+        deletedAt: new Date(),
+        isAvailable: false,
+        isOccupied: false
+      }
     });
   }
 

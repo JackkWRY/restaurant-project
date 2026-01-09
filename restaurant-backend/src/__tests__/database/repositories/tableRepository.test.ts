@@ -161,18 +161,20 @@ describe('TableRepository', () => {
     });
   });
 
-  describe('delete', () => {
-    it('should delete table', async () => {
-      // Arrange
-      const mockTable = createMockTable({ id: 1 });
-      vi.mocked(prisma.table.delete).mockResolvedValue(mockTable);
+  describe('softDelete', () => {
+    it('should soft delete a table', async () => {
+      const mockTable = createMockTable({ deletedAt: new Date() });
+      vi.mocked(prisma.table.update).mockResolvedValue(mockTable);
 
-      // Act
-      const result = await tableRepository.delete(1);
+      const result = await tableRepository.softDelete(1);
 
-      // Assert
-      expect(prisma.table.delete).toHaveBeenCalledWith({
-        where: { id: 1 }
+      expect(prisma.table.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: {
+          deletedAt: expect.any(Date),
+          isAvailable: false,
+          isOccupied: false
+        }
       });
       expect(result).toEqual(mockTable);
     });

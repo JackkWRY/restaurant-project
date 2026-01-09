@@ -77,17 +77,18 @@ export function createMockOrder(overrides: Partial<Order> = {}): Order {
 /**
  * Create a mock Table
  */
-export function createMockTable(overrides: Partial<Table> = {}): Table {
+export const createMockTable = (overrides?: Partial<Table>): Table => {
   return {
     id: 1,
     name: 'Table 1',
-    qrCode: null,
+    qrCode: 'http://example.com/table/1',
     isOccupied: false,
     isAvailable: true,
     isCallingStaff: false,
-    ...overrides,
+    deletedAt: null,
+    ...overrides
   };
-}
+};
 
 /**
  * Create a mock Bill

@@ -171,11 +171,35 @@ export default function StaffDashboard({ dict, lang }: StaffDashboardProps) {
   const handleDeleteTable = async (id: number) => {
     if (!confirm(dict.staff.alertConfirmDelete)) return;
     try {
-      await tableService.deleteTable(id);
-      mutateTables();
-      toast.success(dict.common.success);
-    } catch (error) {
+      const response = await tableService.deleteTable(id);
+      
+      // Check if deletion was successful
+      if (response.status === 'success') {
+        mutateTables();
+        toast.success(dict.common.success);
+      } else {
+        // Show error message from backend
+        toast.error(response.message || dict.common.error);
+      }
+    } catch (error: unknown) {
       logger.error(error);
+      
+      // Type guard for error with response
+      const isErrorWithResponse = (err: unknown): err is { response: { data: { message?: string } } } => {
+        return (
+          typeof err === 'object' &&
+          err !== null &&
+          'response' in err &&
+          typeof (err as Record<string, unknown>).response === 'object' &&
+          (err as Record<string, unknown>).response !== null
+        );
+      };
+      
+      // Show specific error message if available
+      const errorMessage = isErrorWithResponse(error)
+        ? error.response.data.message || dict.common.error
+        : dict.common.error;
+      toast.error(errorMessage);
     }
   };
 

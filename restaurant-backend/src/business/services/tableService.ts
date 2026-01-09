@@ -124,9 +124,10 @@ export class TableService {
   }
 
   /**
-   * Deletes a table with safety checks
+   * Soft deletes a table with safety checks
    * 
-   * Validates table is not occupied before deletion.
+   * Validates table is not occupied before soft deletion.
+   * Preserves all related data for analytics.
    * 
    * @param id - Table ID
    * @returns Success message
@@ -138,12 +139,12 @@ export class TableService {
     const table = await this.getTableById(id);
 
     // Business rule: Cannot delete tables with active customers
-    // This prevents data loss and maintains referential integrity
+    // This prevents accidental deletion of tables in use
     if (table.isOccupied) {
       throw new ConflictError('Cannot delete occupied table');
     }
 
-    await tableRepository.delete(id);
+    await tableRepository.softDelete(id);
 
     return { message: 'Table deleted successfully' };
   }

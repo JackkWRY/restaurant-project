@@ -64,7 +64,8 @@ export const createTable = async (req: Request, res: Response) => {
     const newTable = await prisma.table.create({
       data: {
         name: body.name,
-        qrCode: "" 
+        qrCode: "",
+        deletedAt: null  // Explicitly set to null for new tables
       }
     });
 
@@ -111,15 +112,15 @@ export const updateTable = async (req: Request, res: Response) => {
 };
 
 /**
- * Deletes a table and all associated orders
+ * Soft deletes a table by setting deletedAt timestamp
  * 
- * Cascades deletion to remove all orders and order items for this table
- * to maintain data integrity.
+ * Preserves all related data (Bills, Orders, OrderItems) for analytics.
+ * Table will be hidden from UI but sales data remains intact.
  * 
  * @param req - Express request with table ID in params
  * @param res - Express response
- * @returns 200 on successful deletion
- * @throws {Error} If table doesn't exist or has active orders
+ * @returns 200 on successful soft deletion
+ * @throws {Error} If table doesn't exist or is already deleted
  * 
  * @see {@link closeTable} for proper table closure workflow
  */
@@ -127,26 +128,51 @@ export const deleteTable = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    const table = await prisma.table.findUnique({
-      where: { id: Number(id) },
-      include: { orders: true }
+    // Check table exists and is not already deleted
+    const table = await prisma.table.findFirst({
+      where: { 
+        id: Number(id),
+        deletedAt: null
+      }
     });
 
-    if (table && table.orders.length > 0) {
-      await prisma.orderItem.deleteMany({
-        where: { order: { tableId: Number(id) } }
-      });
-      await prisma.order.deleteMany({
-        where: { tableId: Number(id) }
-      });
+    if (!table) {
+      sendNotFound(res, 'Table not found');
+      return;
     }
 
-    await prisma.table.delete({
-      where: { id: Number(id) }
+    // Business rule: Cannot delete occupied tables
+    // Prevents accidental deletion of tables with active customers
+    if (table.isOccupied) {
+      sendBadRequest(res, 'Cannot delete table with active customers');
+      return;
+    }
+
+    // Business rule: Cannot delete available tables
+    // Admin must disable table first before deletion
+    if (table.isAvailable) {
+      sendBadRequest(res, 'Cannot delete available table. Please disable it first');
+      return;
+    }
+
+    // Soft delete: Set deletedAt timestamp
+    // Bills, Orders, and OrderItems remain intact for analytics
+    await prisma.table.update({
+      where: { id: Number(id) },
+      data: { 
+        deletedAt: new Date(),
+        isAvailable: false,
+        isOccupied: false,
+        isCallingStaff: false
+      }
     });
 
     sendSuccess(res, undefined, 'Table deleted');
   } catch (error) {
+    logger.error('Delete table error', { 
+      error: error instanceof Error ? error.message : 'Unknown error',
+      tableId: req.params.id 
+    });
     sendError(res, 'Failed to delete table');
   }
 };
@@ -375,6 +401,7 @@ export const closeTable = async (req: Request, res: Response) => {
 export const getTablesStatus = async (req: Request, res: Response) => {
   try {
     const tables = await prisma.table.findMany({
+      where: { deletedAt: null },  // Filter out soft-deleted tables
       orderBy: { name: 'asc' },
       include: {
         orders: {
@@ -453,8 +480,11 @@ export const getTableDetails = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    const table = await prisma.table.findUnique({
-      where: { id: Number(id) },
+    const table = await prisma.table.findFirst({
+      where: { 
+        id: Number(id),
+        deletedAt: null  // Filter out soft-deleted tables
+      },
       include: {
         orders: {
           where: { status: { notIn: [OrderStatus.COMPLETED] } },

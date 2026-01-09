@@ -78,17 +78,20 @@ model Menu {
 // 4. Table
 // --------------------------------------------------------
 model Table {
-  id             Int     @id @default(autoincrement())
-  name           String  @unique
+  id             Int       @id @default(autoincrement())
+  name           String    // Removed @unique, using partial index instead
   qrCode         String?
-  isOccupied     Boolean @default(false)
-  isAvailable    Boolean @default(true)
-  isCallingStaff Boolean @default(false)
+  isOccupied     Boolean   @default(false)
+  isAvailable    Boolean   @default(true)
+  isCallingStaff Boolean   @default(false)
+  deletedAt      DateTime?
   orders         Order[]
   bills          Bill[]
 
   @@index([isAvailable])
   @@index([isOccupied])
+  @@index([deletedAt])
+  @@unique([name, deletedAt])  // Unique constraint including deletedAt
 }
 
 // --------------------------------------------------------
