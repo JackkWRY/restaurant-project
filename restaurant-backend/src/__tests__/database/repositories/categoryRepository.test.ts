@@ -59,6 +59,7 @@ describe('CategoryRepository', () => {
 
       // Assert
       expect(prisma.category.findMany).toHaveBeenCalledWith({
+        where: { deletedAt: null },
         include: undefined,
         orderBy: { id: 'asc' }
       });
@@ -75,6 +76,7 @@ describe('CategoryRepository', () => {
 
       // Assert
       expect(prisma.category.findMany).toHaveBeenCalledWith({
+        where: { deletedAt: null },
         include: {
           menus: {
             where: { deletedAt: null }
@@ -95,6 +97,7 @@ describe('CategoryRepository', () => {
 
       // Assert
       expect(prisma.category.findMany).toHaveBeenCalledWith({
+        where: { deletedAt: null },
         include: undefined,
         orderBy: { name: 'desc' }
       });
@@ -161,7 +164,7 @@ describe('CategoryRepository', () => {
 
       // Assert
       expect(prisma.category.findFirst).toHaveBeenCalledWith({
-        where: { name: 'Appetizers' }
+        where: { name: 'Appetizers', deletedAt: null }
       });
       expect(result).toEqual(mockCategory);
     });

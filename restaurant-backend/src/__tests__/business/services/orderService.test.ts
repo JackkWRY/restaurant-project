@@ -96,9 +96,7 @@ describe('OrderService', () => {
             update: vi.fn(),
           },
           menu: {
-            findUnique: vi.fn()
-              .mockResolvedValueOnce(mockMenu1)
-              .mockResolvedValueOnce(mockMenu2),
+            findMany: vi.fn().mockResolvedValue([mockMenu1, mockMenu2]),
           },
           bill: {
             findFirst: vi.fn().mockResolvedValue(mockBill),
@@ -177,7 +175,7 @@ describe('OrderService', () => {
             findUnique: vi.fn().mockResolvedValue(mockTable),
           },
           menu: {
-            findUnique: vi.fn().mockResolvedValue(null),
+            findMany: vi.fn().mockResolvedValue([]),
           },
         };
         return callback(tx);
@@ -208,7 +206,7 @@ describe('OrderService', () => {
             update: vi.fn(),
           },
           menu: {
-            findUnique: vi.fn().mockResolvedValue(mockMenu),
+            findMany: vi.fn().mockResolvedValue([mockMenu]),
           },
           bill: {
             findFirst: vi.fn().mockResolvedValue(null),
@@ -258,7 +256,7 @@ describe('OrderService', () => {
             update: vi.fn(),
           },
           menu: {
-            findUnique: vi.fn().mockResolvedValue(mockMenu),
+            findMany: vi.fn().mockResolvedValue([mockMenu]),
           },
           bill: {
             findFirst: vi.fn().mockResolvedValue(mockBill),

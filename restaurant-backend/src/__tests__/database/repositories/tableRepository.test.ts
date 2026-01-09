@@ -28,6 +28,7 @@ vi.mock('@/database/client/prisma', () => ({
   default: {
     table: {
       findMany: vi.fn(),
+      findFirst: vi.fn(),
       findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
@@ -55,7 +56,7 @@ describe('TableRepository', () => {
 
       // Assert
       expect(prisma.table.findMany).toHaveBeenCalledWith({
-        where: undefined,
+        where: { deletedAt: null },
         orderBy: { id: 'asc' }
       });
       expect(result).toEqual(mockTables);
@@ -72,7 +73,7 @@ describe('TableRepository', () => {
 
       // Assert
       expect(prisma.table.findMany).toHaveBeenCalledWith({
-        where: filters,
+        where: { ...filters, deletedAt: null },
         orderBy: { id: 'asc' }
       });
       expect(result).toEqual(mockTables);
@@ -83,21 +84,21 @@ describe('TableRepository', () => {
     it('should find table by id', async () => {
       // Arrange
       const mockTable = createMockTable({ id: 1 });
-      vi.mocked(prisma.table.findUnique).mockResolvedValue(mockTable);
+      vi.mocked(prisma.table.findFirst).mockResolvedValue(mockTable);
 
       // Act
       const result = await tableRepository.findById(1);
 
       // Assert
-      expect(prisma.table.findUnique).toHaveBeenCalledWith({
-        where: { id: 1 }
+      expect(prisma.table.findFirst).toHaveBeenCalledWith({
+        where: { id: 1, deletedAt: null }
       });
       expect(result).toEqual(mockTable);
     });
 
     it('should return null if table not found', async () => {
       // Arrange
-      vi.mocked(prisma.table.findUnique).mockResolvedValue(null);
+      vi.mocked(prisma.table.findFirst).mockResolvedValue(null);
 
       // Act
       const result = await tableRepository.findById(999);
@@ -111,14 +112,14 @@ describe('TableRepository', () => {
     it('should find table by name', async () => {
       // Arrange
       const mockTable = createMockTable({ name: 'A1' });
-      vi.mocked(prisma.table.findUnique).mockResolvedValue(mockTable);
+      vi.mocked(prisma.table.findFirst).mockResolvedValue(mockTable);
 
       // Act
       const result = await tableRepository.findByName('A1');
 
       // Assert
-      expect(prisma.table.findUnique).toHaveBeenCalledWith({
-        where: { name: 'A1' }
+      expect(prisma.table.findFirst).toHaveBeenCalledWith({
+        where: { name: 'A1', deletedAt: null }
       });
       expect(result).toEqual(mockTable);
     });

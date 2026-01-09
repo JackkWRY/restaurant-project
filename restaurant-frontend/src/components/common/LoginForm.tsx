@@ -140,29 +140,35 @@ export default function LoginForm({
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">{dict.auth.username}</label>
+            <label htmlFor="username" className="block text-sm font-medium text-slate-700 mb-1">{dict.auth.username}</label>
             <div className="relative">
               <User className="absolute left-3 top-3 text-slate-400" size={18} />
               <input 
+                id="username"
+                name="username"
                 type="text" 
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500 outline-none transition-all"
                 required
+                aria-label="Username"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">{dict.auth.password}</label>
+            <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1">{dict.auth.password}</label>
             <div className="relative">
               <Lock className="absolute left-3 top-3 text-slate-400" size={18} />
               <input 
+                id="password"
+                name="password"
                 type="password" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500 outline-none transition-all"
                 required
+                aria-label="Password"
               />
             </div>
           </div>
@@ -172,6 +178,7 @@ export default function LoginForm({
           <button 
             type="submit" 
             disabled={loading}
+            aria-label="Login button"
             className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-lg transition-all flex justify-center items-center gap-2 shadow-md disabled:bg-slate-400"
           >
             {loading ? dict.auth.loggingIn : <><LogIn size={20} /> {dict.auth.loginBtn}</>}
